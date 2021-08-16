@@ -1,10 +1,10 @@
 package org.efflex.mx.maskEffects.shapeFactories
 {
 	import flash.display.Shape;
-	
+
 	import mx.core.IFactory;
-	
-	public class Rectangle implements IFactory
+
+	public class RoundedRectangleComplex implements IFactory
 	{
 		public var x					: Number = 0;
 		public var y					: Number = 0;
@@ -14,12 +14,12 @@ package org.efflex.mx.maskEffects.shapeFactories
 		public var topRightRadius		: Number = 2;
 		public var bottomLeftRadius		: Number = 2;
 		public var bottomRightRadius	: Number = 2;
-		
-		public function Rectangle()
+
+		public function RoundedRectangleComplex()
 		{
 			super();
 		}
-		
+
 		public function newInstance():*
 		{
 			var shape:Shape = new Shape();
@@ -29,6 +29,6 @@ package org.efflex.mx.maskEffects.shapeFactories
 			return shape;
 		}
 
-		
+
 	}
 }

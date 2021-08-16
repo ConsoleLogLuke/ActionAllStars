@@ -115,7 +115,7 @@ package fl.controls {
      * @playerversion Flash 9.0.28.0
 	 */
 	[Style(name="embedFonts", type="Boolean")]
-	
+
 	//--------------------------------------
     //  Class description
     //--------------------------------------
@@ -139,7 +139,7 @@ package fl.controls {
          * @playerversion Flash 9.0.28.0
 		 */
 		public var textField:TextField;
-		
+
 		/**
          * @private (protected)
          *
@@ -172,7 +172,7 @@ package fl.controls {
 		 */
 		protected var _verticalScrollPolicy:String = ScrollPolicy.AUTO;
 
-		
+
 		/**
          * @private (protected)
          *
@@ -180,7 +180,7 @@ package fl.controls {
          * @playerversion Flash 9.0.28.0
 		 */
 		protected var _horizontalScrollBar:UIScrollBar;
-		
+
 		/**
          * @private (protected)
          *
@@ -188,7 +188,7 @@ package fl.controls {
          * @playerversion Flash 9.0.28.0
 		 */
 		protected var _verticalScrollBar:UIScrollBar;
-		
+
 		/**
          * @private (protected)
          *
@@ -267,7 +267,7 @@ package fl.controls {
          *
          * @includeExample ../core/examples/UIComponent.getStyleDefinition.1.as -noswf
          *
-         * @see fl.core.UIComponent#getStyle() UIComponent.getStyle() 
+         * @see fl.core.UIComponent#getStyle() UIComponent.getStyle()
          * @see fl.core.UIComponent#setStyle() UIComponent.setStyle()
          * @see fl.managers.StyleManager StyleManager
          *
@@ -278,7 +278,7 @@ package fl.controls {
 			return UIComponent.mergeStyles(defaultStyles, ScrollBar.getStyleDefinition());
 		}
 
-		/** 
+		/**
          * @private (internal)
          *
          * @langversion 3.0
@@ -294,7 +294,7 @@ package fl.controls {
 		 */
 		public function TextArea() { super(); }
 
-		
+
 		/**
          * Gets a reference to the horizontal scroll bar.
          *
@@ -303,10 +303,10 @@ package fl.controls {
          * @langversion 3.0
          * @playerversion Flash 9.0.28.0
 		 */
-		public function get horizontalScrollBar():UIScrollBar { 
+		public function get horizontalScrollBar():UIScrollBar {
 			return _horizontalScrollBar;
-		}		
-		
+		}
+
 		/**
          * Gets a reference to the vertical scroll bar.
          *
@@ -317,11 +317,11 @@ package fl.controls {
          * @langversion 3.0
          * @playerversion Flash 9.0.28.0
 		 */
-		public function get verticalScrollBar():UIScrollBar { 
+		public function get verticalScrollBar():UIScrollBar {
 			return _verticalScrollBar;
-		}		
-		
-		
+		}
+
+
 		[Inspectable(defaultValue=true, verbose=1)]
 		/**
          * @copy fl.core.UIComponent#enabled
@@ -343,12 +343,12 @@ package fl.controls {
 			mouseChildren = enabled;  //Disables mouseWheel interaction.
 			invalidate(InvalidationType.STATE);
 		}
-		
+
         [Inspectable(defaultValue="")]
 		/**
-         * Gets or sets a string which contains the text that is currently in 
-		 * the TextInput component. This property contains text that is unformatted 
-		 * and does not have HTML tags. To retrieve this text formatted as HTML, use 
+         * Gets or sets a string which contains the text that is currently in
+		 * the TextInput component. This property contains text that is unformatted
+		 * and does not have HTML tags. To retrieve this text formatted as HTML, use
 		 * the <code>htmlText</code> property.
 		 *
 		 * @default ""
@@ -371,11 +371,11 @@ package fl.controls {
 			if (componentInspectorSetting && value == "") {
 				return;
 			}
-			
+
 			textField.text = value;
 			_html = false;
 			invalidate(InvalidationType.DATA);
-			invalidate(InvalidationType.STYLES);			
+			invalidate(InvalidationType.STYLES);
 			textHasChanged = true;
 		}
 
@@ -408,7 +408,7 @@ package fl.controls {
 			if (componentInspectorSetting && value == "") {
 				return;
 			}
-			if (value == "") { 
+			if (value == "") {
 				text = "";
 				return;
 			}
@@ -419,22 +419,22 @@ package fl.controls {
 			invalidate(InvalidationType.STYLES);
 			textHasChanged = true;
 		}
-		
+
 		[Inspectable(defaultValue=false)]
 		/**
          * Gets or sets a Boolean value that indicates whether extra white space
-		 * is removed from a TextArea component that contains HTML text. Examples 
-		 * of extra white space in the component include spaces and line breaks. 
-		 * A value of <code>true</code> indicates that extra white space is removed; 
+		 * is removed from a TextArea component that contains HTML text. Examples
+		 * of extra white space in the component include spaces and line breaks.
+		 * A value of <code>true</code> indicates that extra white space is removed;
 		 * a value of <code>false</code> indicates that extra white space is not removed.
 		 *
-         * <p>This property affects only text that is set by using the <code>htmlText</code> 
-		 * property; it does not affect text that is set by using the <code>text</code> property. 
-         * If you use the <code>text</code> property to set text, the <code>condenseWhite</code> 
+         * <p>This property affects only text that is set by using the <code>htmlText</code>
+		 * property; it does not affect text that is set by using the <code>text</code> property.
+         * If you use the <code>text</code> property to set text, the <code>condenseWhite</code>
          * property is ignored.</p>
 		 *
-         * <p>If the <code>condenseWhite</code> property is set to <code>true</code>, you 
-		 * must use standard HTML commands, such as &lt;br&gt; and &lt;p&gt;, to place line 
+         * <p>If the <code>condenseWhite</code> property is set to <code>true</code>, you
+		 * must use standard HTML commands, such as &lt;br&gt; and &lt;p&gt;, to place line
          * breaks in the text field.</p>
          *
 		 * @default false
@@ -459,10 +459,10 @@ package fl.controls {
 			textField.condenseWhite = value;
 			invalidate(InvalidationType.DATA);
 		}
-		
+
 		[Inspectable(defaultValue="auto", enumeration="auto,on,off")]
 		/**
-		 * Gets or sets the scroll policy for the horizontal scroll bar. 
+		 * Gets or sets the scroll policy for the horizontal scroll bar.
 		 * This can be one of the following values:
 		 *
 		 * <ul>
@@ -495,10 +495,10 @@ package fl.controls {
 			_horizontalScrollPolicy = value;
 			invalidate(InvalidationType.SIZE);
 		}
-		
+
 		[Inspectable(defaultValue="auto", enumeration="auto,on,off")]
 		/**
-         * Gets or sets the scroll policy for the vertical scroll bar. 
+         * Gets or sets the scroll policy for the vertical scroll bar.
 		 * This can be one of the following values:
 		 *
 		 * <ul>
@@ -639,27 +639,27 @@ package fl.controls {
 		public function get length():Number {
 			return textField.text.length;
 		}
-		
+
         [Inspectable(defaultValue="")]
 		/**
-         * Gets or sets the string of characters that the text field  
-		 * accepts from a user. 
+         * Gets or sets the string of characters that the text field
+		 * accepts from a user.
 		 *
-		 * <p>Note that characters that are not included in this string 
+		 * <p>Note that characters that are not included in this string
 		 * are accepted in the text field if they are entered programmatically.</p>
 		 *
-		 * <p>The characters in the string are read from left to right. You can 
+		 * <p>The characters in the string are read from left to right. You can
 		 * specify a character range by using the hyphen (-) character. </p>
          *
-         * <p>If the value of this property is <code>null</code>, the text field 
-		 * accepts all characters. If this property is set to an empty string (""), 
+         * <p>If the value of this property is <code>null</code>, the text field
+		 * accepts all characters. If this property is set to an empty string (""),
 		 * the text field accepts no characters. </p>
 		 *
-         * <p>If the string begins with a caret (^) character, all characters 
-         * are initially accepted and succeeding characters in the string 
-         * are excluded from the set of accepted characters. If the string 
-         * does not begin with a caret (^) character, no characters are 
-         * initially accepted and succeeding characters in the string are 
+         * <p>If the string begins with a caret (^) character, all characters
+         * are initially accepted and succeeding characters in the string
+         * are excluded from the set of accepted characters. If the string
+         * does not begin with a caret (^) character, no characters are
+         * initially accepted and succeeding characters in the string are
          * included in the set of accepted characters.</p>
 		 *
 		 * @default null
@@ -681,19 +681,19 @@ package fl.controls {
          *
          * @langversion 3.0
          * @playerversion Flash 9.0.28.0
-		 */		
+		 */
 		public function set restrict(value:String):void {
-			if (componentInspectorSetting && value == "") { 
+			if (componentInspectorSetting && value == "") {
 				value = null;
 			}
 			textField.restrict = value;
 		}
-		
+
 		[Inspectable(defaultValue=0)]
 		/**
 		 * Gets or sets the maximum number of characters that a user can enter
 		 * in the text field.
-		 * 
+		 *
          * @default 0
          *
          * @includeExample examples/TextArea.maxChars.1.as -noswf
@@ -714,12 +714,12 @@ package fl.controls {
          * @playerversion Flash 9.0.28.0
 		 */
 		public function set maxChars(value:int):void {
-			textField.maxChars = value;	
+			textField.maxChars = value;
 		}
 
 		/**
          * Gets the maximum value of the <code>horizontalScrollPosition</code> property.
-		 * 
+		 *
          * @default 0
          *
          * @see #horizontalScrollPosition
@@ -746,13 +746,13 @@ package fl.controls {
 		public function get maxVerticalScrollPosition():int {
 			return textField.maxScrollV;
 		}
-		
+
         [Inspectable(defaultValue="true")]
 		/**
 		 * Gets or sets a Boolean value that indicates whether the text
-		 * wraps at the end of the line. A value of <code>true</code> 
+		 * wraps at the end of the line. A value of <code>true</code>
 		 * indicates that the text wraps; a value of <code>false</code>
-		 * indicates that the text does not wrap. 
+		 * indicates that the text does not wrap.
          *
          * @default true
          *
@@ -760,7 +760,7 @@ package fl.controls {
          *
          * @langversion 3.0
          * @playerversion Flash 9.0.28.0
-		 */		
+		 */
 		public function get wordWrap():Boolean {
 			return _wordWrap;
 		}
@@ -774,35 +774,35 @@ package fl.controls {
 			_wordWrap = value;
 			invalidate(InvalidationType.STATE);
 		}
-		
+
 		/**
 		 * Gets the index position of the first selected character in a selection of one or more
-		 * characters. 
+		 * characters.
 		 *
 		 * <p>The index position of a selected character is zero-based and calculated
-		 * from the first character that appears in the text area. If there is no selection, 
+		 * from the first character that appears in the text area. If there is no selection,
 		 * this value is set to the position of the caret.</p>
-		 * 
+		 *
          * @default 0
 		 *
 		 * @see #selectionEndIndex
          *
          * @langversion 3.0
          * @playerversion Flash 9.0.28.0
-		 * 
+		 *
 		 */
 		public function get selectionBeginIndex():int {
 			return textField.selectionBeginIndex;
 		}
-		
+
 		/**
 		 * Gets the index position of the last selected character in a selection of one or more
-		 * characters. 
+		 * characters.
 		 *
 		 * <p>The index position of a selected character is zero-based and calculated
-		 * from the first character that appears in the text area. If there is no selection, 
+		 * from the first character that appears in the text area. If there is no selection,
 		 * this value is set to the position of the caret.</p>
-		 * 
+		 *
          * @default 0
 		 *
 		 * @see #selectionBeginIndex
@@ -814,14 +814,14 @@ package fl.controls {
 		public function get selectionEndIndex():int {
 			return textField.selectionEndIndex;
 		}
-		
+
 		/**
-         * Gets or sets a Boolean value that indicates whether the TextArea component 
+         * Gets or sets a Boolean value that indicates whether the TextArea component
 		 * instance is the text field for a password. A value of <code>true</code>
 		 * indicates that the current instance was created to contain a password;
-		 * a value of <code>false</code> indicates that it was not. 
+		 * a value of <code>false</code> indicates that it was not.
 		 *
-		 * <p>If the value of this property is <code>true</code>, the characters 
+		 * <p>If the value of this property is <code>true</code>, the characters
 		 * that the user enters in the text area cannot be seen. Instead,
 		 * an asterisk is displayed in place of each character that the
 		 * user enters. Additionally, the Cut and Copy commands and their keyboard
@@ -832,7 +832,7 @@ package fl.controls {
          *
          * @langversion 3.0
          * @playerversion Flash 9.0.28.0
-		 */		
+		 */
 		public function get displayAsPassword():Boolean {
 			return textField.displayAsPassword;
 		}
@@ -845,19 +845,19 @@ package fl.controls {
 		public function set displayAsPassword(value:Boolean):void {
 			textField.displayAsPassword = value;
 		}
-		
+
         [Inspectable(defaultValue=true)]
 		/**
 		 * Gets or sets a Boolean value that indicates whether the user can
 		 * edit the text in the component. A value of <code>true</code> indicates
 		 * that the user can edit the text that the component contains; a value of <code>false</code>
-		 * indicates that it cannot. 
+		 * indicates that it cannot.
 		 *
          * @default true
          *
          * @langversion 3.0
          * @playerversion Flash 9.0.28.0
-		 */		
+		 */
 		public function get editable():Boolean {
 			return _editable;
 		}
@@ -871,19 +871,19 @@ package fl.controls {
 			_editable = value;
 			invalidate(InvalidationType.STATE);
 		}
-		
+
 		/**
          * Gets or sets the mode of the input method editor (IME). The IME makes
-		 * it possible for users to use a QWERTY keyboard to enter characters from 
+		 * it possible for users to use a QWERTY keyboard to enter characters from
 		 * the Chinese, Japanese, and Korean character sets.
 		 *
-		 * <p>Flash sets the IME to the specified mode when the component gets focus, 
+		 * <p>Flash sets the IME to the specified mode when the component gets focus,
 		 * and restores it to the original value after the component loses focus. </p>
 		 *
-		 * <p>The flash.system.IMEConversionMode class defines constants for 
-         * the valid values for this property. Set this property to <code>null</code> to 
+		 * <p>The flash.system.IMEConversionMode class defines constants for
+         * the valid values for this property. Set this property to <code>null</code> to
 		 * prevent the use of the IME with the component.</p>
-		 * 
+		 *
          * @see flash.system.IMEConversionMode
          *
          * @langversion 3.0
@@ -892,7 +892,7 @@ package fl.controls {
 		 public function get imeMode():String {
 			return IME.conversionMode;
 		 }
-		
+
 		/**
          * @private (protected)
          *
@@ -902,17 +902,17 @@ package fl.controls {
 		public function set imeMode(value:String):void {
 			_imeMode = value;
 		}
-		
+
 
 		/**
 		 * Gets or sets a Boolean value that indicates whether Flash Player
-		 * highlights a selection in the text field when the text field 
-		 * does not have focus. 
+		 * highlights a selection in the text field when the text field
+		 * does not have focus.
 		 *
 		 * If this value is set to <code>true</code> and the text field does not
-		 * have focus, Flash Player highlights the selection in gray. If this value 
-		 * is set to <code>false</code> and the text field does not have focus, Flash 
-		 * Player does not highlight the selection.  
+		 * have focus, Flash Player highlights the selection in gray. If this value
+		 * is set to <code>false</code> and the text field does not have focus, Flash
+		 * Player does not highlight the selection.
 		 *
 		 * @default false
 		 *
@@ -931,9 +931,9 @@ package fl.controls {
          * @playerversion Flash 9.0.28.0
 		 */
 		public function set alwaysShowSelection(value:Boolean):void {
-			textField.alwaysShowSelection = value;	
+			textField.alwaysShowSelection = value;
 		}
-		
+
 		/**
          * @copy fl.core.UIComponent#drawFocus()
          *
@@ -947,12 +947,12 @@ package fl.controls {
 			}
 			super.drawFocus(draw);
    	 	}
-		
+
 		/**
          * Retrieves information about a specified line of text.
-		 * 
+		 *
 		 * @param lineIndex The line number for which information is to be retrieved.
-		 * 
+		 *
          * @default null
          *
          * @langversion 3.0
@@ -961,20 +961,20 @@ package fl.controls {
 		public function getLineMetrics(lineIndex:int):TextLineMetrics {
 			return textField.getLineMetrics(lineIndex);
 		}
-		
+
 		/**
 		 * Sets the range of a selection made in a text area that has focus.
-		 * The selection range begins at the index that is specified by the start 
+		 * The selection range begins at the index that is specified by the start
 		 * parameter, and ends at the index that is specified by the end parameter.
 		 * The selected text is treated as a zero-based string of characters in which
-		 * the first selected character is located at index 0, the second 
+		 * the first selected character is located at index 0, the second
 		 * character at index 1, and so on.
 		 *
 		 * <p>This method has no effect if the text field does not have focus.</p>
 		 *
 		 * @param setSelection The index location of the first character in the selection.
 		 * @param endIndex The index position of the last character in the selection.
-         * 
+         *
          * @langversion 3.0
          * @playerversion Flash 9.0.28.0
 		 *
@@ -985,14 +985,14 @@ package fl.controls {
 		public function setSelection(setSelection:int, endIndex:int):void {
 			textField.setSelection(setSelection, endIndex);
 		}
-		
+
 		/**
-         * Appends the specified string after the last character that the TextArea 
-		 * component contains. This method is more efficient than concatenating two strings 
-		 * by using an addition assignment on a text property--for example, 
+         * Appends the specified string after the last character that the TextArea
+		 * component contains. This method is more efficient than concatenating two strings
+		 * by using an addition assignment on a text property--for example,
 		 * <code>myTextArea.text += moreText</code>. This method is particularly
 		 * useful when the TextArea component contains a significant amount of
-		 * content. 
+		 * content.
          *
          * @param text The string to be appended to the existing text.
          *
@@ -1003,7 +1003,7 @@ package fl.controls {
 			textField.appendText(text);
 			invalidate(InvalidationType.DATA);
 		}
-		
+
 		/**
          * @private (protected)
          *
@@ -1017,7 +1017,7 @@ package fl.controls {
 			textField = new TextField();
 			addChild(textField);
 			updateTextFieldType();
-			
+
 			_verticalScrollBar = new UIScrollBar();
 			_verticalScrollBar.name = "V";
 			_verticalScrollBar.visible = false;
@@ -1025,7 +1025,7 @@ package fl.controls {
 			copyStylesToChild(_verticalScrollBar, SCROLL_BAR_STYLES);
 			_verticalScrollBar.addEventListener(ScrollEvent.SCROLL,handleScroll,false,0,true);
 			addChild(_verticalScrollBar);
-			
+
 			_horizontalScrollBar = new UIScrollBar();
 			_horizontalScrollBar.name = "H";
 			_horizontalScrollBar.visible = false;
@@ -1034,11 +1034,11 @@ package fl.controls {
 			copyStylesToChild(_horizontalScrollBar, SCROLL_BAR_STYLES);
 			_horizontalScrollBar.addEventListener(ScrollEvent.SCROLL,handleScroll,false,0,true);
 			addChild(_horizontalScrollBar);
-			
+
 			textField.addEventListener(TextEvent.TEXT_INPUT, handleTextInput, false, 0, true);
 			textField.addEventListener(Event.CHANGE, handleChange, false, 0, true);
 			textField.addEventListener(KeyboardEvent.KEY_DOWN, handleKeyDown, false, 0, true);
-			
+
 			_horizontalScrollBar.scrollTarget = textField;
 			_verticalScrollBar.scrollTarget = textField;
 			addEventListener(MouseEvent.MOUSE_WHEEL, handleWheel, false, 0, true);
@@ -1120,13 +1120,13 @@ package fl.controls {
          * @langversion 3.0
          * @playerversion Flash 9.0.28.0
 		 */
-		protected function setEmbedFont() {
+		protected function setEmbedFont():void {
 			var embed:Object = getStyleValue("embedFonts");
 			if (embed != null) {
 				textField.embedFonts = embed;
-			}	
+			}
 		}
-		
+
 		/**
          * @private (protected)
          *
@@ -1137,23 +1137,23 @@ package fl.controls {
 			if (isInvalid(InvalidationType.STATE)) {
 				updateTextFieldType();
 			}
-			
+
 			if (isInvalid(InvalidationType.STYLES)) {
-				setStyles();				
-				setEmbedFont();				
+				setStyles();
+				setEmbedFont();
 			}
-			
+
 			if (isInvalid(InvalidationType.STYLES, InvalidationType.STATE)) {
 				drawTextFormat();
 				drawBackground();
 				invalidate(InvalidationType.SIZE, false);
 			}
-			
+
 			if (isInvalid(InvalidationType.SIZE, InvalidationType.DATA)) {
 				drawLayout();
 			}
-			
-			
+
+
 			super.draw();
 		}
 
@@ -1179,7 +1179,7 @@ package fl.controls {
 			var uiStyles:Object = UIComponent.getStyleDefinition();
 			var defaultTF:TextFormat = enabled ? uiStyles.defaultTextFormat as TextFormat : uiStyles.defaultDisabledTextFormat as TextFormat;
 			textField.setTextFormat(defaultTF);
-			
+
 			var tf:TextFormat = getStyleValue(enabled?"textFormat":"disabledTextFormat") as TextFormat;
 			if (tf != null) {
 				textField.setTextFormat(tf);
@@ -1187,7 +1187,7 @@ package fl.controls {
 				tf = defaultTF;
 			}
 			textField.defaultTextFormat = tf;
-			
+
 			setEmbedFont();
 			if (_html) { textField.htmlText = _savedHTML; }
 		}
@@ -1205,8 +1205,8 @@ package fl.controls {
 			if (background != null) {
 				addChildAt(background, 0);
 			}
-			if (bg != null && bg != background && contains(bg)) { 
-				removeChild(bg); 
+			if (bg != null && bg != background && contains(bg)) {
+				removeChild(bg);
 			}
 		}
 
@@ -1226,13 +1226,13 @@ package fl.controls {
 			var availHeight:Number = height;
 			var vScrollBar:Boolean = needVScroll();
 			var availWidth:Number = width - (vScrollBar?_verticalScrollBar.width:0);
-		
+
 			var hScrollBar:Boolean = needHScroll();
 			if (hScrollBar) {
 				availHeight -= _horizontalScrollBar.height;
-			}			
+			}
 			setTextSize(availWidth, availHeight, txtPad);
-			
+
 			// catch the edge case of the horizontal scroll bar necessitating a vertical one:
 			if (hScrollBar && !vScrollBar && needVScroll()) {
 				vScrollBar = true;
@@ -1250,7 +1250,7 @@ package fl.controls {
 			} else {
 				_verticalScrollBar.visible = false;
 			}
-			
+
 			if (hScrollBar) {
 				_horizontalScrollBar.visible = true;
 				_horizontalScrollBar.y = height - _horizontalScrollBar.height;
@@ -1260,12 +1260,12 @@ package fl.controls {
 			} else {
 				_horizontalScrollBar.visible = false;
 			}
-			
-			updateScrollBars();	
-			
+
+			updateScrollBars();
+
 			addEventListener(Event.ENTER_FRAME, delayedLayoutUpdate, false, 0, true);
 		}
-		
+
 		/**
          * @private (protected)
          *
@@ -1280,20 +1280,20 @@ package fl.controls {
 			}
 			removeEventListener(Event.ENTER_FRAME, delayedLayoutUpdate);
 		}
-		
+
 		/**
          * @private (protected)
          *
          * @langversion 3.0
          * @playerversion Flash 9.0.28.0
 		 */
-		protected function updateScrollBars() {
+		protected function updateScrollBars():void {
 			_horizontalScrollBar.update();
 			_verticalScrollBar.update();
 			_verticalScrollBar.enabled = enabled;
 			_horizontalScrollBar.enabled = enabled;
 			_horizontalScrollBar.drawNow();
-			_verticalScrollBar.drawNow();			
+			_verticalScrollBar.drawNow();
 		}
 
 		/**
@@ -1328,13 +1328,13 @@ package fl.controls {
 		protected function setTextSize(width:Number, height:Number, padding:Number):void {
 			var w:Number = width - padding*2;
 			var h:Number = height - padding*2;
-			
+
 			if (w != textField.width) {
 				textField.width = w;
 			}
 			if (h != textField.height) {
 				textField.height = h
-			}			
+			}
 		}
 
 		/**
@@ -1346,7 +1346,7 @@ package fl.controls {
 		override protected function isOurFocus(target:DisplayObject):Boolean {
 			return target == textField || super.isOurFocus(target);
 		}
-				
+
 		/**
          * @private (protected)
          *
@@ -1355,7 +1355,7 @@ package fl.controls {
 		 */
 		override protected function focusInHandler(event:FocusEvent):void {
 			setIMEMode(true);
-						
+
 			if (event.target == this) {
 				stage.focus = textField;
 			}
@@ -1367,12 +1367,12 @@ package fl.controls {
 				fm.defaultButtonEnabled = false;
 			}
 			super.focusInHandler(event);
-			
+
 			if(editable) {
 				setIMEMode(true);
 			}
 		}
-		
+
 		/**
          * @private (protected)
          *
@@ -1386,7 +1386,7 @@ package fl.controls {
 			}
 			setSelection(0, 0);
 			super.focusOutHandler(event);
-			
+
 			if(editable) {
 				setIMEMode(false);
 			}

@@ -12,14 +12,14 @@ package com.sdg.components.controls
 	import com.sdg.net.QuickLoader;
 	import com.sdg.net.socket.SocketClient;
 	import com.sdg.utils.CurrencyUtil;
-	
+
 	import flash.display.DisplayObject;
 	import flash.display.Loader;
 	import flash.display.Sprite;
 	import flash.text.TextField;
 	import flash.text.TextFieldAutoSize;
 	import flash.text.TextFormat;
-	
+
 	import mx.binding.utils.BindingUtils;
 	import mx.core.Container;
 
@@ -27,12 +27,12 @@ package com.sdg.components.controls
 	public class HomeTurfVotingPanel extends Container implements ISetAvatar
 	{
 		// Constants
-		private static var WIDTH:uint = 165;		
+		private static var WIDTH:uint = 165;
 		private static var STARS_WIDTH:uint = 85;
 		private static var HEIGHT:uint = 180;
 		private static var TOP_HEIGHT:uint = 60;
 		private static var BOTTOM_HEIGHT:uint = 120;
-		
+
 		// Primary Components
 		protected var _backing:Sprite;
 		protected var _translucentBacking:Sprite;
@@ -47,10 +47,10 @@ package com.sdg.components.controls
 		protected var _outlineLoader:Loader;
 		protected var _badgeIconLoader:Loader;
 		protected var _badgeLinkIcon:DisplayObject;
-		
+
 		// Only Set Once
 		protected var _initialized:Boolean = false;
-		
+
 		// State Data
 		protected var _alreadyVoted:Boolean;
 		protected var _roomAvatarLevel:uint = 0;
@@ -58,42 +58,42 @@ package com.sdg.components.controls
 		protected var _roomId:String;
 		protected var _roomOwnerId:int;
 		protected var _ownerAvatar:Avatar;
-		
+
 		// Socket Client
 		private var _socketClient:SocketClient = SocketClient.getInstance();
-		
+
 		public function HomeTurfVotingPanel()
 		{
 			super();
-			
+
 			// Set Location
 			this.x = 755;
 			this.y = 5;
-			
+
 			// Listen to visible var
 			BindingUtils.bindSetter(visibleUpdate, this, "visible");
-						
+
 			// Listen for room data from socket event
 			_socketClient.addEventListener(SocketEvent.PLUGIN_EVENT, onPluginEvent);
 		}
-		
+
 		// Render Is Only Ever Executed Once
 		protected function render():void
 		{
 			// Only execute once
 			if (_initialized)
 				return;
-				
+
 			// Set Height and Width
 			this.height = HomeTurfVotingPanel.TOP_HEIGHT;
 			this.width = HomeTurfVotingPanel.WIDTH;
-			
+
 			_backing = new Sprite();
 			this.rawChildren.addChild(_backing);
-			
+
 			_translucentBacking = new Sprite();
 			this.rawChildren.addChild(_translucentBacking);
-				
+
 			// Render Backgrounds
 			var cornerSize:Number = 8;
 			_backing.graphics.clear();
@@ -103,7 +103,7 @@ package com.sdg.components.controls
 			_translucentBacking.graphics.beginFill(0x222222, 0.9);
 			_translucentBacking.graphics.drawRoundRectComplex(0,HomeTurfVotingPanel.TOP_HEIGHT,
 				HomeTurfVotingPanel.WIDTH,HomeTurfVotingPanel.BOTTOM_HEIGHT,0,0,cornerSize,cornerSize);
-			
+
 			// Render Name
 			_name = new TextField();
 			_name.defaultTextFormat = new TextFormat('EuroStyle', 13, 0xffcc00, true,true);
@@ -116,7 +116,7 @@ package com.sdg.components.controls
 			_name.x = 3;
 			_name.y = 3;
 			this.rawChildren.addChild(_name);
-			
+
 			// Render Text of Ratings Count
 			_totalRatingsText = new TextField();
 			_totalRatingsText.defaultTextFormat = new TextFormat('EuroStyle', 10, 0xffffff, true);
@@ -127,7 +127,7 @@ package com.sdg.components.controls
 			_totalRatingsText.x = 3;
 			_totalRatingsText.y = 42;
 			this.rawChildren.addChild(_totalRatingsText);
-			
+
 			// Render Ratings Count
 			_ratingsCount = new TextField();
 			_ratingsCount.defaultTextFormat = new TextFormat('EuroStyle', 10, 0xffffff, true);
@@ -138,7 +138,7 @@ package com.sdg.components.controls
 			_ratingsCount.x = 80;
 			_ratingsCount.y = 42;
 			this.rawChildren.addChild(_ratingsCount);
-			
+
 			// Render Turf Value Text
 			_turfValueText = new TextField();
 			_turfValueText.defaultTextFormat = new TextFormat('EuroStyle', 10, 0xffffff, true);
@@ -149,7 +149,7 @@ package com.sdg.components.controls
 			_turfValueText.x = 3;
 			_turfValueText.y = 160;
 			this.rawChildren.addChild(_turfValueText);
-			
+
 			// Render Turf Value
 			_turfValue = new TextField();
 			_turfValue.defaultTextFormat = new TextFormat('EuroStyle', 10, 0xffcc00, true);
@@ -160,7 +160,7 @@ package com.sdg.components.controls
 			_turfValue.x = 65;
 			_turfValue.y = 160;
 			this.rawChildren.addChild(_turfValue);
-			
+
 			// Stars Display
 			_stars = new VoteStars();
 			_stars.x = 3;
@@ -171,18 +171,18 @@ package com.sdg.components.controls
 			// Record that panel is rendered
 			_initialized = true;
 		}
-		
+
 		// PUBLIC DATA SETTERS
 		// setRoom is called whenever a person enters a room
 		public function setRoom(roomId:String,roomOwnerId:int):void
 		{
 			// Build Panel if this is the first usuage of the panel
 			render();
-			
+
 			// Set RoomId
 			_roomId = roomId;
 			_roomOwnerId = roomOwnerId;
-			
+
 			// Reset State
 			_ownerAvatar = null;
 			_alreadyVoted = false;
@@ -192,27 +192,27 @@ package com.sdg.components.controls
 
 			// Get the Avatar for the _roomAvatarLevel
 			dispatchEvent(new AvatarEvent(_roomOwnerId, this));
-			
+
 			// Voting Panel Data Should Be Reset
 			//this.updateTurfTitle();
 			_ratingsCount.text = '0';
 			_stars.reset();
 		}
-		
+
 		public function setVoteCount(count:String):void
 		{
 			_ratingsCount.text = count;
 		}
-		
+
 		public function setTurfValue(value:String):void
 		{
 			_turfValue.text = value;
 		}
-		
+
 		public function set avatar(value:Avatar):void
 		{
 			_ownerAvatar = value;
-			
+
 			// Determine Level of Avatar
 			var levelStatus:AvatarLevelStatus = LevelManager.GetAvatarLevelStatus(_ownerAvatar);
 			if (levelStatus)
@@ -228,19 +228,19 @@ package com.sdg.components.controls
 				}
 			}
 		}
-		
+
 		public function loadHouseOutline():void
 		{
 			// Load House Display
 			_houseOutline = new QuickLoader(this.getHouseOutlineURL(),onOutlineReady,onOutlineIOError,3);
-			
+
 			// OLD LOADER
 			//_outlineLoader = new Loader();
 			//_outlineLoader.contentLoaderInfo.addEventListener(Event.COMPLETE, onOutlineReady);
 			//_outlineLoader.contentLoaderInfo.addEventListener(IOErrorEvent.IO_ERROR, onOutlineIOError);
 			//_outlineLoader.load(new URLRequest(this.getHouseOutlineURL()));
 		}
-		
+
 //		public function loadBadgeIcon():void
 //		{
 //			// Load Badge Icon
@@ -249,39 +249,42 @@ package com.sdg.components.controls
 //			_badgeIconLoader.contentLoaderInfo.addEventListener(IOErrorEvent.IO_ERROR, onIconIOError);
 //			_badgeIconLoader.load(new URLRequest(Environment.getAssetUrl()+"/test/gameSwf/gameId/73/gameFile/house1.swf"));
 //		}
-		
+
 		public function getTurfValueFromServer():void
 		{
 			trace("Getting Turf Value");
 			_socketClient.sendPluginMessage("avatar_handler", "getTurfRoomValue",{ getTurfRoomValue:"0"});
 		}
-		
+
 		public function updateTurfTitle():void
 		{
 			_name.text = this.determineTurfTitle();
 		}
-		
+
 		// LISTENERS
 		private function onPluginEvent(e:SocketEvent):void
 		{
 			var params:Object = e.params;
 			var action:String = params.action as String;
 
+			var paramString:String
+			var rawTurfValue:String
+
 			if (action == 'turfRating')
 			{
 				trace("TURF RATING PLUGIN EVENT RECEIVED");
 
 				// Parse Values
-				var paramString:String = params.payload as String;
+				paramString = params.payload as String;
 				var paramArray:Array = paramString.split(";",10);
-				
+
 				// Parse Data and then utilize setters
-				var rawTurfValue:String = paramArray.pop() as String;
+				rawTurfValue = paramArray.pop() as String;
 				var userVote:String = paramArray.pop() as String;
 				var numVotes:String = paramArray.pop() as String;
 				var roomRating:String = paramArray.pop() as String;
-				
-				
+
+
 				this._stars.setAverage(Number(roomRating));
 				this.setVoteCount(numVotes);
 				if (userVote != "-1")
@@ -297,15 +300,15 @@ package com.sdg.components.controls
 				{
 					this._turfValue.text = "0";
 				}
-				
+
 			}
 			else if (action == 'turfValue')
 			{
 				trace("TURF VALUE PLUGIN EVENT RECEIVED");
-				var paramString:String = params.payload as String;
-				
+				paramString = params.payload as String;
+
 				// Parse Data and then utilize setters
-				var rawTurfValue:String = paramString;
+				rawTurfValue = paramString;
 
 				if (this._turfValue)
 				{
@@ -320,17 +323,17 @@ package com.sdg.components.controls
 				}
 			}
 		}
-		
+
 		private function onVote(e:TurfVoteEvent):void
 		{
 			//Log Vote
 			LoggingUtil.sendClickLogging(LoggingUtil.TURF_PANEL_RATE_TURF);
-			
+
 			// Send Vote to Server
 			//trace("voting on turf = " + e.vote);
 			_socketClient.sendPluginMessage("avatar_handler", "setTurfRoomRating", { setTurfRoomRating:String(e.vote)});
 		}
-		
+
 		private function onOutlineReady():void
 		{
 			//_outlineLoader.removeEventListener(Event.COMPLETE, onOutlineReady);
@@ -348,13 +351,13 @@ package com.sdg.components.controls
 				trace("Home Turf House Outline Image Error: " + e.message);
 			}
 		}
-		
+
 		private function onOutlineIOError():void
 		{
 			//_outlineLoader.removeEventListener(Event.COMPLETE, onOutlineReady);
 			//_outlineLoader.removeEventListener(IOErrorEvent.IO_ERROR, onOutlineIOError);
 		}
-		
+
 //		private function onIconReady(event:Event):void
 //		{
 //			_badgeIconLoader.removeEventListener(Event.COMPLETE, onIconReady);
@@ -366,7 +369,7 @@ package com.sdg.components.controls
 //				_badgeLinkIcon.x = 0;
 //				_badgeLinkIcon.y = 0;
 //				this.rawChildren.addChild(_badgeLinkIcon);
-//				
+//
 //				// TBD - Add Listener to Clicks on the Icon to launch Badge Conparison Screen
 //			}
 //			catch(e:Error)
@@ -374,21 +377,21 @@ package com.sdg.components.controls
 //				trace("Badge Icon Error: " + e.message);
 //			}
 //		}
-		
+
 //		private function onIconIOError(event:Event):void
 //		{
 //			_badgeIconLoader.removeEventListener(Event.COMPLETE, onIconReady);
 //			_badgeIconLoader.removeEventListener(IOErrorEvent.IO_ERROR, onIconIOError);
-//			
+//
 //		}
-		
+
 		private function visibleUpdate(visible:Boolean):void
 		{
 			//if (visible == true)
 				//this.getTurfValueFromServer();
 			var x:int = 0;
 		}
-		
+
 		// PRIVATE FUNCTIONS
 		private function getHouseOutlineURL():String
 		{
@@ -408,12 +411,12 @@ package com.sdg.components.controls
 					return Environment.getAssetUrl()+"/test/gameSwf/gameId/73/gameFile/house3.swf";
 			}
 		}
-		
+
 		private function determineTurfTitle():String
 		{
 			// Default to Empty String
 			var themeName:String = "";
-			
+
 			var titleSuffix:String = "";
 			trace("Turf Title Room_Avatar_Level :"+_roomAvatarLevel);
 			switch (_roomAvatarLevel)
@@ -426,7 +429,7 @@ package com.sdg.components.controls
 					break;
 				case 3:
 					titleSuffix = "Pro House";
-					break; 
+					break;
 				case 4:
 					titleSuffix = "Veteran Mansion";
 					break;
@@ -436,10 +439,10 @@ package com.sdg.components.controls
 				default:
 					titleSuffix = "Pro House";
 			}
-			
+
 			return titleSuffix;
-			//return themeName+" "+titleSuffix;	
+			//return themeName+" "+titleSuffix;
 		}
-		
+
 	}
 }

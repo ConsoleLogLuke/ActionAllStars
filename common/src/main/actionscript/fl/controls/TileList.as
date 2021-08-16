@@ -1,5 +1,5 @@
 // Copyright 2007. Adobe Systems Incorporated. All Rights Reserved.
-package fl.controls {	
+package fl.controls {
 
 	import fl.controls.listClasses.CellRenderer;
 	import fl.controls.listClasses.ICellRenderer;
@@ -30,7 +30,7 @@ package fl.controls {
 	//--------------------------------------
     //  Events
     //--------------------------------------
-	
+
 	//--------------------------------------
     //  Styles
     //--------------------------------------
@@ -53,8 +53,8 @@ package fl.controls {
      * @playerversion Flash 9.0.28.0
      */
     [Style(name="cellRenderer", type="Class")]
-	
-	
+
+
     //--------------------------------------
     //  Class description
     //--------------------------------------
@@ -66,7 +66,7 @@ package fl.controls {
 	 * TileList component, use the CellRenderer class.
 	 *
 	 * <p>To modify the padding that separates the cell border from the image, you
-	 * can globally set the <code>imagePadding</code> style, or set it on the ImageCell 
+	 * can globally set the <code>imagePadding</code> style, or set it on the ImageCell
 	 * class. Like other cell styles, the <code>imagePadding</code> style cannot be
 	 * set on the TileList component instance.</p>
      *
@@ -149,7 +149,7 @@ package fl.controls {
          * @playerversion Flash 9.0.28.0
 		 */
 		protected var _iconFunction:Function;
-		
+
 		/**
 		 * @private (protected)
 		 */
@@ -158,7 +158,7 @@ package fl.controls {
 		 * @private (protected)
 		 */
 		protected var _sourceFunction:Function;
-		
+
 		/**
 		 * @private (protected)
 		 */
@@ -167,7 +167,7 @@ package fl.controls {
 		 * @private (protected)
 		 */
 		protected var __columnCount:uint = 0;
-		
+
 		/**
 		 * @private
 		 */
@@ -235,7 +235,7 @@ package fl.controls {
          * @playerversion Flash 9.0.28.0
 		 */
 		override public function get dataProvider():DataProvider {
-			return super.dataProvider;	
+			return super.dataProvider;
 		}
 		/**
 		 * @private (setter)
@@ -243,11 +243,11 @@ package fl.controls {
 		override public function set dataProvider(value:DataProvider):void {
 			super.dataProvider = value;
 		}
-		
+
 		/**
          * Gets or sets a field in each item that contains a label for each tile.
-         * 
-         * <p><strong>Note:</strong> The <code>labelField</code> is not used if 
+         *
+         * <p><strong>Note:</strong> The <code>labelField</code> is not used if
 		 * the <code>labelFunction</code> property is set to a callback function.</p>
 		 *
          * @default "label"
@@ -277,7 +277,7 @@ package fl.controls {
 		/**
 		 * Gets a function that indicates the fields of an item that provide the label text for a tile.
          *
-         * <p><strong>Note:</strong> The <code>labelField</code> is not used if 
+         * <p><strong>Note:</strong> The <code>labelField</code> is not used if
 		 * the <code>labelFunction</code> property is set to a callback function.</p>
          *
          * @default null
@@ -306,9 +306,9 @@ package fl.controls {
 		}
 
 		/**
-         * Gets or sets the item field that provides the icon for the item. 
+         * Gets or sets the item field that provides the icon for the item.
          *
-         * <p><strong>Note:</strong> The <code>iconField</code> is not used 
+         * <p><strong>Note:</strong> The <code>iconField</code> is not used
 		 * if the <code>iconFunction</code> property is set to a callback function.</p>
          *
          * <p>Icons can be classes or they can be symbols from the library that have a class name.</p>
@@ -338,9 +338,9 @@ package fl.controls {
 		}
 
 		/**
-         * Gets or sets the function to be used to obtain the icon for the item. 
+         * Gets or sets the function to be used to obtain the icon for the item.
          *
-         * <p><strong>Note:</strong> The <code>iconField</code> is not used if the 
+         * <p><strong>Note:</strong> The <code>iconField</code> is not used if the
 		 * <code>iconFunction</code> property is set to a callback function.</p>
          *
          * <p>Icons can be classes, or they can be library items that have class names.</p>
@@ -372,7 +372,7 @@ package fl.controls {
 		/**
 		 * Gets or sets the item field that provides the source path for a tile.
          *
-         * <p><strong>Note:</strong> The <code>sourceField</code> is not used if the 
+         * <p><strong>Note:</strong> The <code>sourceField</code> is not used if the
 		 * <code>sourceFunction</code> property is set to a callback function.</p>
 		 *
          * @default "source"
@@ -383,9 +383,9 @@ package fl.controls {
          *
          * @langversion 3.0
          * @playerversion Flash 9.0.28.0
-		 * 
+		 *
 		 */
-		public function get sourceField():String { 
+		public function get sourceField():String {
 			return _sourceField;
 		}
 		/**
@@ -398,11 +398,11 @@ package fl.controls {
 			_sourceField = value;
 			invalidate(InvalidationType.DATA);
 		}
-		
+
 		/**
          * Gets or sets the function to be used to obtain the source path for a tile.
          *
-         * <p><strong>Note:</strong> The <code>sourceField</code> is not used if the 
+         * <p><strong>Note:</strong> The <code>sourceField</code> is not used if the
 		 * <code>sourceFunction</code> property is set to a callback function.</p>
          *
          * @default null
@@ -417,7 +417,7 @@ package fl.controls {
          * @playerversion Flash 9.0.28.0
 		 */
 		public function get sourceFunction():Function {
-			return _sourceFunction;	
+			return _sourceFunction;
 		}
 		/**
 		 * @private (setter)
@@ -427,20 +427,20 @@ package fl.controls {
 		 */
 		public function set sourceFunction(value:Function):void {
 			_sourceFunction = value;
-			invalidate(InvalidationType.DATA);	
+			invalidate(InvalidationType.DATA);
 		}
-		
-		
+
+
 		[Inspectable(defaultValue=0, type="Number")]
 		/**
-		 * Gets or sets the number of rows that are at least partially visible 
+		 * Gets or sets the number of rows that are at least partially visible
 		 * in the list.
 		 *
-         * <p>Setting the <code>rowCount</code> property changes the height of the 
-         * list, but the TileList component does not maintain this value. It 
-         * is important to set the <code>rowCount</code> value <em>after</em> setting the  
-         * <code>dataProvider</code> and <code>rowHeight</code> values. The only 
-         * exception is if the <code>rowCount</code> is set with the Property 
+         * <p>Setting the <code>rowCount</code> property changes the height of the
+         * list, but the TileList component does not maintain this value. It
+         * is important to set the <code>rowCount</code> value <em>after</em> setting the
+         * <code>dataProvider</code> and <code>rowHeight</code> values. The only
+         * exception is if the <code>rowCount</code> is set with the Property
          * inspector; in this case, the property is maintained until the component
 		 * is first drawn.</p>
          *
@@ -477,17 +477,17 @@ package fl.controls {
 		 */
 		public function set rowCount(value:uint):void {
 			if (value == 0) { return; }
-			if (componentInspectorSetting) { 
-				__rowCount = value; 
+			if (componentInspectorSetting) {
+				__rowCount = value;
 				return;
 			}
 			__rowCount = 0;
-			
+
 			var pad:Number = Number(getStyleValue("contentPadding"));
-			var showScroll = (Math.ceil(length/value) > (width/columnWidth)>>0 && _scrollPolicy == ScrollPolicy.AUTO) || _scrollPolicy == ScrollPolicy.ON;
+			var showScroll:Boolean = (Math.ceil(length/value) > (width/columnWidth)>>0 && _scrollPolicy == ScrollPolicy.AUTO) || _scrollPolicy == ScrollPolicy.ON;
 			height = rowHeight * value + 2*pad + ((_scrollDirection == ScrollBarDirection.HORIZONTAL && showScroll) ? ScrollBar.WIDTH : 0);
 		}
-		
+
 		[Inspectable(defaultValue=50)]
 		/**
 		 * Gets or sets the height that is applied to each row in the list, in pixels.
@@ -495,12 +495,12 @@ package fl.controls {
 		 * @default 50
          *
          * @includeExample examples/TileList.rowHeight.1.as -noswf
-         * 
+         *
          * @see #columnWidth
          *
          * @langversion 3.0
          * @playerversion Flash 9.0.28.0
-		 */		
+		 */
 		public function get rowHeight():Number {
 			return _rowHeight;
 		}
@@ -518,12 +518,12 @@ package fl.controls {
 
 		[Inspectable(defaultValue=0, type="Number")]
 		/**
-		 * Gets or sets the number of columns that are at least partially visible in the 
+		 * Gets or sets the number of columns that are at least partially visible in the
 		 * list. Setting the <code>columnCount</code> property changes the width of the list,
-		 * but the TileList component does not maintain this value. It is important to set the 
+		 * but the TileList component does not maintain this value. It is important to set the
 		 * <code>columnCount</code> value <em>after</em> setting the <code>dataProvider</code>
 		 * and <code>rowHeight</code> values. The only exception is if the <code>rowCount</code>
-		 * is set with the Property inspector; in this case, the property is maintained until the 
+		 * is set with the Property inspector; in this case, the property is maintained until the
 		 * component is first drawn.
          *
 		 * @default 0
@@ -559,17 +559,17 @@ package fl.controls {
 		 */
 		public function set columnCount(value:uint):void {
 			if (value == 0) { return; }
-			if (componentInspectorSetting) { 
-				__columnCount = value; 
+			if (componentInspectorSetting) {
+				__columnCount = value;
 				return;
 			}
 			__columnCount = 0;
-			
+
 			var pad:Number = Number(getStyleValue("contentPadding"));
 			var showScroll:Boolean = (Math.ceil(length/value) > (height/rowHeight)>>0 && _scrollPolicy == ScrollPolicy.AUTO) || _scrollPolicy == ScrollPolicy.ON;
 			width = columnWidth*value+2*pad+(_scrollDirection == ScrollBarDirection.VERTICAL && showScroll ? 15 : 0);
 		}
-		
+
 		[Inspectable(defaultValue=50)]
 		/**
 		 * Gets or sets the width that is applied to a column in the list, in pixels.
@@ -582,7 +582,7 @@ package fl.controls {
          *
          * @langversion 3.0
          * @playerversion Flash 9.0.28.0
-		 */		
+		 */
 		public function get columnWidth():Number {
 			return _columnWidth;
 		}
@@ -597,10 +597,10 @@ package fl.controls {
 			_columnWidth = value;
 			invalidate(InvalidationType.SIZE);
 		}
-		
+
 		/**
          * Gets the width of the content area, in pixels. This value is the component width
-         * minus the combined width of the <code>contentPadding</code> value and vertical scroll bar, 
+         * minus the combined width of the <code>contentPadding</code> value and vertical scroll bar,
 		 * if the vertical scroll bar is visible.
          *
          * @includeExample examples/TileList.innerWidth.1.as -noswf
@@ -615,11 +615,11 @@ package fl.controls {
 			var contentPadding:Number = getStyleValue("contentPadding") as Number;
 			return width - contentPadding*2 - (_verticalScrollBar.visible ? _verticalScrollBar.width : 0);
 		}
-		
+
 		/**
          * Gets the height of the content area, in pixels. This value is the component height
 		 * minus the combined height of the <code>contentPadding</code> value and horizontal
-		 * scroll bar height, if the horizontal scroll bar is visible. 
+		 * scroll bar height, if the horizontal scroll bar is visible.
          *
          * @see #innerWidth
          *
@@ -631,12 +631,12 @@ package fl.controls {
 			var contentPadding:Number = getStyleValue("contentPadding") as Number;
 			return height - contentPadding*2 - (_horizontalScrollBar.visible ? _horizontalScrollBar.height : 0);
 		}
-		
+
 		[Inspectable(enumeration="horizontal,vertical", defaultValue="horizontal")]
 		/**
-         * Gets or sets a value that indicates whether the TileList component scrolls 
+         * Gets or sets a value that indicates whether the TileList component scrolls
 		 * horizontally or vertically. A value of <code>ScrollBarDirection.HORIZONTAL</code>
-		 * indicates that the TileList component scrolls horizontally; a value of 
+		 * indicates that the TileList component scrolls horizontally; a value of
 		 * <code>ScrollBarDirection.VERTICAL</code> indicates that the TileList component scrolls vertically.
          *
 		 * @default ScrollBarDirection.VERTICAL
@@ -647,7 +647,7 @@ package fl.controls {
          *
          * @langversion 3.0
          * @playerversion Flash 9.0.28.0
-		 */		
+		 */
 		public function get direction():String {
 			return _scrollDirection;
 		}
@@ -662,29 +662,29 @@ package fl.controls {
 			_scrollDirection = value;
 			invalidate(InvalidationType.SIZE);
 		}
-		
+
 		[Inspectable(enumeration="auto,on,off", defaultValue="auto")]
 		/**
 		 * Gets or sets the scroll policy for the TileList component. This
 		 * value is used to specify the scroll policy for the scroll bar that
 		 * is set by the <code>direction</code> property.
          *
-		 * <p><strong>Note:</strong> The TileList component supports scrolling only in 
+		 * <p><strong>Note:</strong> The TileList component supports scrolling only in
 		 * one direction. Tiles are adjusted to fit into the viewable area of
 		 * the component, so that tiles are hidden in only one direction.</p>
          *
-         * <p>The TileList component resizes to fit tiles only when the user 
-		 * manually sets the size or when the user sets the <code>rowCount</code> 
+         * <p>The TileList component resizes to fit tiles only when the user
+		 * manually sets the size or when the user sets the <code>rowCount</code>
 		 * or <code>columnCount</code> properties.</p>
 		 *
-         * <p>When this value is set to <code>ScrollPolicy.AUTO</code>, the 
-		 * scroll bar is visible only when the TileList component must scroll 
+         * <p>When this value is set to <code>ScrollPolicy.AUTO</code>, the
+		 * scroll bar is visible only when the TileList component must scroll
 		 * to show all the items.</p>
          *
 		 * @default ScrollPolicy.AUTO
          *
          * @includeExample examples/TileList.scrollPolicy.1.as -noswf
-         * 
+         *
          * @see #columnCount
          * @see #rowCount
          * @see ScrollPolicy
@@ -724,7 +724,7 @@ package fl.controls {
 		 */
 		override public function scrollToIndex(newCaretIndex:int):void {
 			drawNow(); // Force validation.
-			
+
 			var totalCols:uint = Math.max(1, (contentWidth/_columnWidth<<0));
 			if (_scrollDirection == ScrollBarDirection.VERTICAL) {
 				if (rowHeight > availableHeight) {
@@ -742,13 +742,13 @@ package fl.controls {
 				}
 				var itemX:Number = newCaretIndex % totalCols * columnWidth;
 				if (itemX < horizontalScrollPosition) {
-					horizontalScrollPosition = itemX;	
+					horizontalScrollPosition = itemX;
 				} else if (itemX > horizontalScrollPosition + availableWidth - columnWidth) {
 					horizontalScrollPosition = itemX + columnWidth - availableWidth;
 				}
 			}
 		}
-		
+
 
 		/**
 		 * Retrieves the string that the renderer displays for a given data object
@@ -802,7 +802,7 @@ package fl.controls {
 		 */
 		override public function get horizontalScrollPolicy():String {
 			return null;
-		}		
+		}
 		/**
          * @private (setter)
          *
@@ -824,7 +824,7 @@ package fl.controls {
 			drawNow();
 			return _maxHorizontalScrollPosition;
 		}
-		
+
 		/**
 		 * @private (setter)
 		 *
@@ -832,7 +832,7 @@ package fl.controls {
          * @playerversion Flash 9.0.28.0
 		 */
 		override public function set maxHorizontalScrollPosition(value:Number):void {}
-		
+
 		/**
          * @private (protected)
          *
@@ -844,7 +844,7 @@ package fl.controls {
 			_horizontalScrollPolicy = scrollPolicy;
 			_verticalScrollPolicy = ScrollPolicy.OFF;
 		}
-		
+
 		/**
          * @private (protected)
          *
@@ -873,7 +873,7 @@ package fl.controls {
          * @langversion 3.0
          * @playerversion Flash 9.0.28.0
 		 */
-		override protected function draw():void {			
+		override protected function draw():void {
 			// We need to draw the row and column count that are set by component parameters on the first draw.
 			if (direction == ScrollBarDirection.VERTICAL) {
 				if (__rowCount > 0) { rowCount = __rowCount; }
@@ -882,7 +882,7 @@ package fl.controls {
 				if (__columnCount > 0) { columnCount = __columnCount; }
 				if (__rowCount > 0) { rowCount = __rowCount; }
 			}
-			
+
 			var lengthChanged:Boolean = (oldLength != length);
 			oldLength = length;
 
@@ -908,12 +908,12 @@ package fl.controls {
 			if (isInvalid(InvalidationType.RENDERER_STYLES)) {
 				updateRendererStyles();
 			}
-			
+
 			if (isInvalid(InvalidationType.STYLES,InvalidationType.SIZE,InvalidationType.DATA,InvalidationType.SCROLL,InvalidationType.SELECTED)) {
 				drawList();
 				_maxHorizontalScrollPosition = Math.max(0, contentWidth - availableWidth);
 			}
-			
+
 
 			// Call drawNow on nested components to get around problems with nested render events:
 			updateChildren();
@@ -944,7 +944,7 @@ package fl.controls {
 			// hand off drawing the layout to BaseScrollPane:
 			super.drawLayout();
 		}
-		
+
 		/**
          * @private (protected)
          *
@@ -975,9 +975,9 @@ package fl.controls {
 			// set pixel scroll:
 			contentScrollRect.y = Math.floor(_verticalScrollPosition)%rowH;
 			listHolder.scrollRect = contentScrollRect;
-			
+
 			listHolder.cacheAsBitmap = useBitmapScrolling;
-			
+
 			// figure out what we have to render, and where:
 			var items:Array = [];
 			if (_scrollDirection == ScrollBarDirection.HORIZONTAL) {
@@ -1054,7 +1054,7 @@ package fl.controls {
 						rendererSprite.addEventListener(Event.CHANGE,handleCellRendererChange,false,0,true);
 						rendererSprite.doubleClickEnabled = true;
 						rendererSprite.addEventListener(MouseEvent.DOUBLE_CLICK,handleCellRendererDoubleClick,false,0,true);
-						
+
 						if (rendererSprite["setStyle"] != null) {
 							for (var n:String in rendererStyles) {
 								rendererSprite["setStyle"](n, rendererStyles[n])
@@ -1070,17 +1070,17 @@ package fl.controls {
 				renderer.setSize(columnWidth,rowHeight);
 
 				var label:String = itemToLabel(item);
-				
+
 				var icon:Object = null;
 				if (_iconFunction != null) {
 					icon = _iconFunction(item);
 				} else if (_iconField != null) {
 					icon = item[_iconField];
 				}
-				
+
 				var source:Object = null;
 				if (_sourceFunction != null) {
-					source = _sourceFunction(item);	
+					source = _sourceFunction(item);
 				} else if (_sourceField != null) {
 					source = item[_sourceField];
 				}
@@ -1088,7 +1088,7 @@ package fl.controls {
 				if (!reused) {
 					renderer.data = item;
 				}
-				
+
 				renderer.listData = new TileListData(label,icon,source,this,itemIndex,baseRow+row,baseCol+col) as ListData;
 
 				renderer.selected = (_selectedIndices.indexOf(itemIndex) != -1);
@@ -1102,7 +1102,7 @@ package fl.controls {
 			}
 		}
 
-		
+
 		/**
          * @private (protected)
          *
@@ -1174,7 +1174,7 @@ package fl.controls {
 			var totalRows:uint = Math.max(1, (Math.max(contentHeight,availableHeight)/_rowHeight<<0));
 			var perRow:uint = Math.ceil(Math.max(columnCount*rowCount,length) / totalRows); // This is wrong.
 			var totalContentRows:uint = Math.ceil(length / perRow);
-			
+
 			var index:int;
 			var newIndex:int;
 			switch (code) {
@@ -1185,20 +1185,20 @@ package fl.controls {
 				case Keyboard.HOME:
 					index = 0; break;
 				case Keyboard.END:
-					index = length-1; break;					
+					index = length-1; break;
 				case Keyboard.PAGE_DOWN:
 					newIndex = selectedIndex + perRow * (totalContentRows-1);
 					if (newIndex >= length) { newIndex -= perRow; }
-					index = Math.min(length-1, newIndex); 
+					index = Math.min(length-1, newIndex);
 					break;
 				case Keyboard.PAGE_UP:
 					newIndex = selectedIndex - perRow * (totalContentRows-1);
 					if (newIndex < 0) { newIndex += perRow; }
-					index = Math.max(0, newIndex); 
+					index = Math.max(0, newIndex);
 					break;
 			}
-			
-			doKeySelection(index, shiftKey, ctrlKey);			
+
+			doKeySelection(index, shiftKey, ctrlKey);
 			scrollToSelected();
 		}
 
@@ -1224,7 +1224,7 @@ package fl.controls {
 		 */
 		override protected function moveSelectionHorizontally(code:uint, shiftKey:Boolean, ctrlKey:Boolean):void {
 			var totalCols:uint = Math.ceil(Math.max(rowCount*columnCount,length) / rowCount);
-			
+
 			var index:int;
 			switch(code) {
 				case Keyboard.LEFT:
@@ -1234,16 +1234,16 @@ package fl.controls {
 				case Keyboard.HOME:
 					index = 0; break;
 				case Keyboard.END:
-					index = length-1; break;					
+					index = length-1; break;
 				case Keyboard.PAGE_UP:
 					var firstIndex:int = selectedIndex - selectedIndex%totalCols;
 					index = Math.max(0, Math.max(firstIndex, selectedIndex - columnCount));
 					break;
 				case Keyboard.PAGE_DOWN:
-					var lastIndex = selectedIndex - selectedIndex%totalCols + totalCols-1;
+					var lastIndex:int = selectedIndex - selectedIndex%totalCols + totalCols-1;
 					index = Math.min(length-1, Math.min(lastIndex, selectedIndex + totalCols)); break;
 			}
-	
+
 			doKeySelection(index, shiftKey, ctrlKey);
 			scrollToSelected();
 		}
@@ -1256,10 +1256,10 @@ package fl.controls {
          * @langversion 3.0
          * @playerversion Flash 9.0.28.0
 		 */
-		protected function doKeySelection(newCaretIndex:uint, shiftKey:Boolean, ctrlKey:Boolean):void {	
+		protected function doKeySelection(newCaretIndex:uint, shiftKey:Boolean, ctrlKey:Boolean):void {
 			var indices:Array = selectedIndices;
 			var selChanged:Boolean = false;
-			
+
 			if (newCaretIndex < 0 || newCaretIndex > length-1) {
 				// The index is out of range, do nothing.
 			} else if (shiftKey && indices.length > 0 && newCaretIndex != indices[0]) {
@@ -1268,11 +1268,11 @@ package fl.controls {
 				var i:int;
 				if (newCaretIndex < firstIndex) {
 					for (i=firstIndex; i>=newCaretIndex; i--) {
-						indices.push(i);	
+						indices.push(i);
 					}
 				} else {
 					for (i=firstIndex; i<=newCaretIndex; i++) {
-						indices.push(i);	
+						indices.push(i);
 					}
 				}
 				selChanged = true;
@@ -1280,17 +1280,17 @@ package fl.controls {
 				indices = [newCaretIndex];
 				caretIndex = newCaretIndex;
 				selChanged = true;
-			}			
+			}
 			selectedIndices = indices;
-			
-			
+
+
 			if(selChanged) {
 				dispatchEvent(new Event(Event.CHANGE));
 			}
 			invalidate(InvalidationType.DATA);
 		}
-		
-		
+
+
         /**
          * @private (protected)
          *

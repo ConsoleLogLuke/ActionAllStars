@@ -8,12 +8,18 @@ package com.sdg.components.controls
 	import flash.events.TimerEvent;
 	import flash.text.TextLineMetrics;
 	import flash.utils.Timer;
+	import mx.controls.ProgressBarDirection;
+	import mx.controls.ProgressBarLabelPlacement;
+	import mx.controls.ProgressBarMode;
 	import mx.core.FlexVersion;
 	import mx.core.IFlexDisplayObject;
 	import mx.core.IFlexModuleFactory;
+	import mx.core.IUITextField;
 	import mx.core.mx_internal;
 	import mx.core.UIComponent;
+	import mx.core.UITextField;
 	import mx.events.FlexEvent;
+	import mx.styles.ISimpleStyleClient;
 
 	use namespace mx_internal;
 
@@ -100,7 +106,7 @@ package com.sdg.components.controls
 	     *  @private
 	     */
 	    private var indeterminateSkinChanged:Boolean = false;
-    
+
 	    /**
 	     *  @private
 	     */
@@ -168,7 +174,7 @@ package com.sdg.components.controls
 	    [Inspectable(enumeration="left,right", defaultValue="right")]
 
 	    /**
-	     *  Direction in which the fill of the ProgressBar expands toward completion. 
+	     *  Direction in which the fill of the ProgressBar expands toward completion.
 	     *  Valid values in MXML are
 	     *  <code>"right"</code> and <code>"left"</code>.
 	     *
@@ -257,14 +263,14 @@ package com.sdg.components.controls
 	     *  @private
 	     */
 	    private var labelOverride:String;
-    
+
 	    [Bindable("labelChanged")]
 	    [Inspectable(category="General", defaultValue="null")]
 
 	    /**
 	     *  Text that accompanies the progress bar. You can include
 	     *  the following special characters in the text string:
-	     * 
+	     *
 	     *  <ul>
 	     *    <li>%1 = current loaded bytes</li>
 	     *    <li>%2 = total bytes</li>
@@ -439,14 +445,14 @@ package com.sdg.components.controls
 	    [Inspectable(category="General", enumeration="event,polled,manual", defaultValue="event")]
 
 	    /**
-	     *  Specifies the method used to update the bar. 
+	     *  Specifies the method used to update the bar.
 	     *  Use one of the following values in MXML:
 	     *
 	     *  <ul>
 	     *    <li><code>event</code> The control specified by the <code>source</code>
 	     *    property must dispatch progress and completed events.
 	     *    The ProgressBar control uses these events to update its status.
-	     *    The ProgressBar control only updates if the value of 
+	     *    The ProgressBar control only updates if the value of
 	     *    the <code>source</code> property extends the EventDispatcher class.</li>
 	     *
 	     *    <li><code>polled</code> The <code>source</code> property must specify
@@ -624,16 +630,16 @@ package com.sdg.components.controls
 	    //  Overridden properties
 	    //
 	    //--------------------------------------------------------------------------
-    
+
 	    /**
 	     *  @private
 	     */
 	    override public function set visible(value:Boolean):void
 	    {
 	        super.visible = value;
-                
+
 	        visibleChanged = true;
-	        invalidateDisplayList();    
+	        invalidateDisplayList();
 	    }
 
 
@@ -672,13 +678,13 @@ package com.sdg.components.controls
 	            else
 	            {
 	                _barMask = new UIComponent();
-	            }    
+	            }
 
 	            _barMask.visible = true;
 	            _bar.addChild(DisplayObject(_barMask));
 	            UIComponent(_bar).mask = DisplayObject(_barMask);
-	        }        
-        
+	        }
+
 
 	        if (!_labelField)
 	        {
@@ -746,8 +752,8 @@ package com.sdg.components.controls
 	    override protected function commitProperties():void
 	    {
 	        super.commitProperties();
-        
-	        // if the font changed and we already created the label, we will need to 
+
+	        // if the font changed and we already created the label, we will need to
 	        // destory it so it can be re-created, possibly in a different swf context.
 	        if (hasFontContextChanged() && _labelField != null)
 	        {
@@ -757,8 +763,8 @@ package com.sdg.components.controls
 	            _labelField.styleName = this;
 	            addChildAt(DisplayObject(_labelField), index);
 	        }
-        
- 
+
+
 	        if (trackSkinChanged)
 	        {
 	            trackSkinChanged = false;
@@ -1014,7 +1020,7 @@ package com.sdg.components.controls
 	        if (_barMask)
 	        {
 	            _barMask.move(0,0);
-            
+
 	            if (FlexVersion.compatibilityVersion >= FlexVersion.VERSION_3_0)
 	            {
 	                _barMask.setActualSize(_track.width, _track.height);
@@ -1252,9 +1258,9 @@ package com.sdg.components.controls
 	        // The label will be null if there are no resources.
 	        if (label == null)
 	            return "";
-        
+
 	        var labelText:String = label;
-    
+
 	        var largestValue:Number;
 	        if (_maximum != 0)
 	            largestValue = _maximum;

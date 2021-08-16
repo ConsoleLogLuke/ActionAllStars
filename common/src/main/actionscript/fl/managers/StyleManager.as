@@ -1,6 +1,6 @@
 ﻿// Copyright 2007. Adobe Systems Incorporated. All Rights Reserved.
 package fl.managers {
-	
+
 	import fl.core.UIComponent;
 	import flash.display.Sprite;
 	import flash.text.TextFormat;
@@ -8,11 +8,11 @@ package fl.managers {
 	import flash.utils.getDefinitionByName;
 	import flash.utils.getQualifiedClassName;
 	import flash.utils.getQualifiedSuperclassName;
-	
+
 	/**
-	 * The StyleManager class provides static methods that can be used to get and 
-	 * set styles for a component instance, an entire component type, or all user 
-	 * interface components in a Flash document. Styles are defined as values that 
+	 * The StyleManager class provides static methods that can be used to get and
+	 * set styles for a component instance, an entire component type, or all user
+	 * interface components in a Flash document. Styles are defined as values that
      * affect the display of a component, including padding, text formats, and skins.
 	 *
 	 * @includeExample examples/StyleManagerExample.as
@@ -73,7 +73,7 @@ package fl.managers {
          * @playerversion Flash 9.0.28.0
          */
 		private var globalStyles:Object;
-		
+
 		/**
          * Creates a new StyleManager object.
          *
@@ -87,21 +87,21 @@ package fl.managers {
 			classToDefaultStylesDict = new Dictionary(true)
 			globalStyles = UIComponent.getStyleDefinition();
 		}
-		
+
 		/**
          * @private
          *
          * @langversion 3.0
          * @playerversion Flash 9.0.28.0
 		 */
-		private static function getInstance() {
+		private static function getInstance():StyleManager {
 			if (_instance == null) { _instance = new StyleManager(); }
 			return _instance;
 		}
-		
+
 		/**
 		 * Registers a component instance with the style manager. After a component instance is
-		 * instantiated, it can register with the style manager to be notified of changes 
+		 * instantiated, it can register with the style manager to be notified of changes
 		 * in style. Component instances can register to receive notice of style changes that are
 		 * component-based or global in nature.
          *
@@ -118,15 +118,15 @@ package fl.managers {
 		public static function registerInstance(instance:UIComponent):void {
 			var inst:StyleManager = getInstance();
 			var classDef:Class = getClassDef(instance);
-			
+
 			if (classDef == null) {	return;	}
-			
+
 			// check if an instance of this class has been registered before:
 			if (inst.classToInstancesDict[classDef] == null) {
-				
+
 				inst.classToInstancesDict[classDef] = new Dictionary(true);
 				// set up the style to class hash. This lets us look up which classes use which styles quickly.
-				var target:Class = classDef;				
+				var target:Class = classDef;
 				var defaultStyles:Object;
 				// Walk the inheritance chain looking for a default styles object.
 				while (defaultStyles == null) {
@@ -146,10 +146,10 @@ package fl.managers {
 						}
 					}
 				}
-				
+
 				var styleToClasses:Object = inst.styleToClassesHash;
 				for (var n:String in defaultStyles) {
-					
+
 					if (styleToClasses[n] == null) {
 						styleToClasses[n] = new Dictionary(true);
 					}
@@ -166,10 +166,10 @@ package fl.managers {
 			inst.classToInstancesDict[classDef][instance] = true;
 			setSharedStyles(instance);
 		}
-		
+
 		/**
 		 * @private
-		 * 
+		 *
 		 * Sets an inherited style on a component.
 		 *
          * @param instance The component object on which to set the inherited style.
@@ -185,7 +185,7 @@ package fl.managers {
 				instance.setSharedStyle(n,getSharedStyle(instance,n));
 			}
 		}
-		
+
         /**
          * @private
          *
@@ -200,12 +200,12 @@ package fl.managers {
 			if (style != null) { return style; }
 			// then check global styles:
 			style = inst.globalStyles[name];
-			
+
 			if (style != null) { return style; }
 			// finally return the default component style:
 			return inst.classToDefaultStylesDict[classDef][name];
 		}
-		
+
 		/**
 		 * Gets a style that exists on a specific component.
 		 *
@@ -214,7 +214,7 @@ package fl.managers {
 		 *
 		 * @param name The name of the style to be retrieved.
 		 *
-		 * @return The requested style from the specified component. This function returns <code>null</code> 
+		 * @return The requested style from the specified component. This function returns <code>null</code>
          * if the specified style is not found.
          *
          * @see #clearComponentStyle()
@@ -229,7 +229,7 @@ package fl.managers {
 			var styleHash:Object = getInstance().classToStylesDict[classDef];
 			return (styleHash == null) ? null : styleHash[name];
 		}
-		
+
 		/**
 		 * Removes a style from the specified component.
 		 *
@@ -240,7 +240,7 @@ package fl.managers {
          * @see #clearStyle()
          * @see #getComponentStyle()
          * @see #setComponentStyle()
-         * 
+         *
          * @langversion 3.0
          * @playerversion Flash 9.0.28.0
 		 */
@@ -252,10 +252,10 @@ package fl.managers {
 				invalidateComponentStyle(classDef,name);
 			}
 		}
-		
+
 		/**
-		 * Sets a style on all instances of a component type, for example, on all instances of a 
-		 * Button component, or on all instances of a ComboBox component. 
+		 * Sets a style on all instances of a component type, for example, on all instances of a
+		 * Button component, or on all instances of a ComboBox component.
 		 *
 		 * @param component The type of component, for example, Button or ComboBox.  This parameter also accepts
 		 * a component instance or class that can be used to identify all instances of a component type.
@@ -281,7 +281,7 @@ package fl.managers {
 			styleHash[name] = style;
 			invalidateComponentStyle(classDef,name);
 		}
-		
+
         /**
          * @private (protected)
          *
@@ -289,7 +289,7 @@ package fl.managers {
          * @playerversion Flash 9.0.28.0
 		 */
 		private static function getClassDef(component:Object):Class {
-			if (component is Class) { 
+			if (component is Class) {
 				return (component as Class);
 			}
 			try {
@@ -303,7 +303,7 @@ package fl.managers {
 			}
 			return null;
 		}
-		
+
         /**
          * @private (protected)
          *
@@ -317,7 +317,7 @@ package fl.managers {
 				invalidateComponentStyle(Class(classRef),name);
 			}
 		}
-		
+
         /**
          * @private (protected)
          *
@@ -327,21 +327,21 @@ package fl.managers {
 		private static function invalidateComponentStyle(componentClass:Class,name:String):void {
 			var instances:Dictionary = getInstance().classToInstancesDict[componentClass];
 			if (instances == null) { return; }
-			
+
 			for (var obj:Object in instances) {
 				var instance:UIComponent = obj as UIComponent;
 				if (instance == null) { continue; }
 				instance.setSharedStyle(name,getSharedStyle(instance,name));
 			}
 		}
-		
+
 		/**
 		 * Sets a global style for all user interface components in a document.
 		 *
 		 * @param name A String value that names the style to be set.
 		 *
-		 * @param style The style object to be set. The value of this property depends on the 
-		 * style that the user sets. For example, if the style is set to "textFormat", the style 
+		 * @param style The style object to be set. The value of this property depends on the
+		 * style that the user sets. For example, if the style is set to "textFormat", the style
 		 * property should be set to a TextFormat object. A mismatch between the style name and
 		 * the value of the style property may cause the component to behave incorrectly.
          *
@@ -358,7 +358,7 @@ package fl.managers {
 			styles[name] = style;
 			invalidateStyle(name);
 		}
-		
+
 		/**
 		 * Removes a global style from all user interface components in a document.
 		 *
@@ -374,7 +374,7 @@ package fl.managers {
 		public static function clearStyle(name:String):void {
 			setStyle(name,null);
 		}
-		
+
 		/**
 		 * Gets a global style by name.
 		 *
@@ -382,7 +382,7 @@ package fl.managers {
 		 *
 		 * @return The value of the global style that was retrieved.
          *
-		 * @internal "that was removed" - doesn't sound right. Do you guys have a code snippet/test 
+		 * @internal "that was removed" - doesn't sound right. Do you guys have a code snippet/test
 		 *         case/sample you could give us for this? (rberry(at)adobe.com)
          * Adobe: [LM] Correct - description was wrong.  Code sample would be simple: {var textFormat:TextFormat = StyleManager.getStyle("textFormat") as TextFormat;}
          *
@@ -396,7 +396,7 @@ package fl.managers {
 		public static function getStyle(name:String):Object {
 			return getInstance().globalStyles[name];
 		}
-		
+
 	}
-	
+
 }

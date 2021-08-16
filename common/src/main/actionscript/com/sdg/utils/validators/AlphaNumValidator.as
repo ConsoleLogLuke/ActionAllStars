@@ -4,20 +4,20 @@ package com.sdg.utils.validators
     import mx.validators.ValidationResult;
 
 
-    public class AlpahaNumValidator extends Validator {
+    public class AlphaNumValidator extends Validator {
 
         // Define Array for the return value of doValidation().
         private var results:Array;
 
         // Constructor.
-        public function AlpahaNumValidator() {
-            // Call base class constructor. 
+        public function AlphaNumValidator() {
+            // Call base class constructor.
             super();
         }
-    
+
         // Define the doValidation() method.
         override protected function doValidation(value:Object):Array {
-        
+
             // Convert value to a Number.
             var inputValue:Number = Number(value);
 
@@ -25,30 +25,30 @@ package com.sdg.utils.validators
             results = [];
 
             // Call base class doValidation().
-            results = super.doValidation(value);        
+            results = super.doValidation(value);
             // Return if there are errors.
             if (results.length > 0)
                 return results;
-        
+
             // Create a variable and initialize it to the current date.
             var currentYear:Date = new Date();
-    
-            // If input value is not a number, or contains no value, 
+
+            // If input value is not a number, or contains no value,
             // issue a validation error.
             if (isNaN(inputValue) || !value )
             {
-                results.push(new ValidationResult(true, null, "NaN", 
+                results.push(new ValidationResult(true, null, "NaN",
                     "You must enter a year."));
                 return results;
-            }       
+            }
 
             // If calculated age is less than 18, issue a validation error.
             if ((currentYear.getFullYear() - inputValue) < 18) {
-                results.push(new ValidationResult(true, null, "tooYoung", 
+                results.push(new ValidationResult(true, null, "tooYoung",
                     "You must be 18."));
                 return results;
             }
-            
+
             return results;
         }
     }

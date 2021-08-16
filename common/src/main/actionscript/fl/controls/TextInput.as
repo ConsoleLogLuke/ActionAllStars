@@ -1,6 +1,6 @@
 // Copyright 2007. Adobe Systems Incorporated. All Rights Reserved.
 package fl.controls {
-	
+
 	import fl.controls.TextInput;
 	import fl.controls.TextArea;
 	import fl.core.InvalidationType;
@@ -20,7 +20,7 @@ package fl.controls {
 	import flash.text.TextFormat;
 	import flash.text.TextLineMetrics;
 	import flash.ui.Keyboard;
-	
+
 
     //--------------------------------------
     //  Events
@@ -28,7 +28,7 @@ package fl.controls {
 	/**
 	 *  Dispatched when user input changes text in the TextInput component.
      *
-	 *  <p><strong>Note:</strong> This event does not occur if ActionScript 
+	 *  <p><strong>Note:</strong> This event does not occur if ActionScript
      *  is used to change the text.</p>
 	 *
      *  @eventType flash.events.Event.CHANGE
@@ -92,7 +92,7 @@ package fl.controls {
      * @playerversion Flash 9.0.28.0
 	 */
 	[Style(name="disabledSkin", type="Class")]
-	
+
 	/**
      * @copy fl.controls.LabelButton#style:embedFonts
      *
@@ -108,11 +108,11 @@ package fl.controls {
     //--------------------------------------
 	/**
 	 * The TextInput component is a single-line text component that
-	 * contains a native ActionScript TextField object. 
+	 * contains a native ActionScript TextField object.
 	 *
 	 * <p>A TextInput component can be enabled or disabled in an application.
-	 * When the TextInput component is disabled, it cannot receive input 
-	 * from mouse or keyboard. An enabled TextInput component implements focus, 
+	 * When the TextInput component is disabled, it cannot receive input
+	 * from mouse or keyboard. An enabled TextInput component implements focus,
 	 * selection, and navigation like an ActionScript TextField object.</p>
 	 *
 	 * <p>You can use styles to customize the TextInput component by
@@ -138,8 +138,8 @@ package fl.controls {
          * @playerversion Flash 9.0.28.0
 		 */
 		public var textField:TextField;
-		
-		
+
+
 		/**
          * @private (protected)
          *
@@ -164,7 +164,7 @@ package fl.controls {
 		 */
 		protected var _savedHTML:String;
 
-		
+
         /**
          * @private
          *
@@ -204,7 +204,7 @@ package fl.controls {
          * @langversion 3.0
          * @playerversion Flash 9.0.28.0
 		 */
-		public static var createAccessibilityImplementation:Function;		
+		public static var createAccessibilityImplementation:Function;
 
 		/**
          * Creates a new TextInput component instance.
@@ -213,21 +213,21 @@ package fl.controls {
          * @playerversion Flash 9.0.28.0
 		 */
 		public function TextInput() { super(); }
-		
+
 		[Inspectable(defaultValue="")]
 		/**
-         * Gets or sets a string which contains the text that is currently in 
-		 * the TextInput component. This property contains text that is unformatted 
-		 * and does not have HTML tags. To retrieve this text formatted as HTML, use 
+         * Gets or sets a string which contains the text that is currently in
+		 * the TextInput component. This property contains text that is unformatted
+		 * and does not have HTML tags. To retrieve this text formatted as HTML, use
 		 * the <code>htmlText</code> property.
-		 * 
+		 *
          * @default ""
          *
          * @see #htmlText
          *
          * @langversion 3.0
          * @playerversion Flash 9.0.28.0
-		 */		
+		 */
 		public function get text():String {
 			return textField.text;
 		}
@@ -263,8 +263,8 @@ package fl.controls {
 		override public function set enabled(value:Boolean):void {
 			super.enabled = value;
 			updateTextFieldType();
-		}		
-		
+		}
+
 		/**
          * @copy fl.controls.TextArea#imeMode
          *
@@ -273,7 +273,7 @@ package fl.controls {
 		 */
 		 public function get imeMode():String {
 			return _imeMode;
-		}		
+		}
 		/**
 		 * @private (protected)
 		 */
@@ -282,12 +282,12 @@ package fl.controls {
 		}
 		/**
          * Gets or sets a Boolean value that indicates how a selection is
-		 * displayed when the text field does not have focus. 
+		 * displayed when the text field does not have focus.
 		 *
-		 * <p>When this value is set to <code>true</code> and the text field does 
-		 * not have focus, Flash Player highlights the selection in the text field 
-		 * in gray. When this value is set to <code>false</code> and the text field 
-		 * does not have focus, Flash Player does not highlight the selection in the 
+		 * <p>When this value is set to <code>true</code> and the text field does
+		 * not have focus, Flash Player highlights the selection in the text field
+		 * in gray. When this value is set to <code>false</code> and the text field
+		 * does not have focus, Flash Player does not highlight the selection in the
 		 * text field.</p>
 		 *
          * @default false
@@ -304,7 +304,7 @@ package fl.controls {
 		 * @private (setter)
 		 */
 		public function set alwaysShowSelection(value:Boolean):void {
-			textField.alwaysShowSelection = value;	
+			textField.alwaysShowSelection = value;
 		}
 
 		/**
@@ -320,19 +320,19 @@ package fl.controls {
 			}
 			super.drawFocus(draw);
    	 	}
-		
+
 		[Inspectable(defaultValue=true)]
 		/**
-		 * Gets or sets a Boolean value that indicates whether the text field 
+		 * Gets or sets a Boolean value that indicates whether the text field
 		 * can be edited by the user. A value of <code>true</code> indicates
 		 * that the user can edit the text field; a value of <code>false</code>
-		 * indicates that the user cannot edit the text field. 
+		 * indicates that the user cannot edit the text field.
          *
          * @default true
          *
          * @langversion 3.0
          * @playerversion Flash 9.0.28.0
-		 */		
+		 */
 		public function get editable():Boolean {
 			return _editable;
 		}
@@ -371,9 +371,9 @@ package fl.controls {
 		public function set horizontalScrollPosition(value:int):void {
 			textField.scrollH = value;
 		}
-		
+
 		/**
-		 * Gets a value that describes the furthest position to which the text 
+		 * Gets a value that describes the furthest position to which the text
 		 * field can be scrolled to the right.
          *
          * @default 0
@@ -407,7 +407,7 @@ package fl.controls {
 		/**
 		 * Gets or sets the maximum number of characters that a user can enter
 		 * in the text field.
-		 * 
+		 *
          * @default 0
          *
          * @includeExample examples/TextInput.maxChars.1.as -noswf
@@ -429,18 +429,18 @@ package fl.controls {
 		public function set maxChars(value:int):void {
 			textField.maxChars = value;
 		}
-		
+
 		[Inspectable(defaultValue=false)]
 		/**
-         * Gets or sets a Boolean value that indicates whether the current TextInput 
-		 * component instance was created to contain a password or to contain text. A value of 
+         * Gets or sets a Boolean value that indicates whether the current TextInput
+		 * component instance was created to contain a password or to contain text. A value of
 		 * <code>true</code> indicates that the component instance is a password text
 		 * field; a value of <code>false</code> indicates that the component instance
-		 * is a normal text field. 
+		 * is a normal text field.
 		 *
          * <p>When this property is set to <code>true</code>, for each character that the
 		 * user enters into the text field, the TextInput component instance displays an asterisk.
-		 * Additionally, the Cut and Copy commands and their keyboard shortcuts are 
+		 * Additionally, the Cut and Copy commands and their keyboard shortcuts are
 		 * disabled. These measures prevent the recovery of a password from an
 		 * unattended computer.</p>
          *
@@ -452,7 +452,7 @@ package fl.controls {
          *
          * @langversion 3.0
          * @playerversion Flash 9.0.28.0
-		 */		
+		 */
 		public function get displayAsPassword():Boolean {
 			return textField.displayAsPassword;
 		}
@@ -465,32 +465,32 @@ package fl.controls {
 		public function set displayAsPassword(value:Boolean):void {
 			textField.displayAsPassword = value;
 		}
-		
+
 		[Inspectable(defaultValue="")]
 		/**
-		 * Gets or sets the string of characters that the text field accepts from a user. 
-		 * Note that characters that are not included in this string are accepted in the 
+		 * Gets or sets the string of characters that the text field accepts from a user.
+		 * Note that characters that are not included in this string are accepted in the
 		 * text field if they are entered programmatically.
 		 *
-		 * <p>The characters in the string are read from left to right. You can specify a 
+		 * <p>The characters in the string are read from left to right. You can specify a
 		 * character range by using the hyphen (-) character. </p>
 		 *
-		 * <p>If the value of this property is null, the text field accepts all characters. 
+		 * <p>If the value of this property is null, the text field accepts all characters.
 		 * If this property is set to an empty string (""), the text field accepts no characters.</p>
 		 *
-		 * <p>If the string begins with a caret (^) character, all characters are initially 
-		 * accepted and succeeding characters in the string are excluded from the set of 
-		 * accepted characters. If the string does not begin with a caret (^) character, 
-		 * no characters are initially accepted and succeeding characters in the string 
+		 * <p>If the string begins with a caret (^) character, all characters are initially
+		 * accepted and succeeding characters in the string are excluded from the set of
+		 * accepted characters. If the string does not begin with a caret (^) character,
+		 * no characters are initially accepted and succeeding characters in the string
 		 * are included in the set of accepted characters.</p>
-		 * 
+		 *
 		 * @default null
          *
          * @see flash.text.TextField#restrict TextField.restrict
          *
          * @langversion 3.0
          * @playerversion Flash 9.0.28.0
-		 */		
+		 */
 		public function get restrict():String {
 			return textField.restrict;
 		}
@@ -506,11 +506,11 @@ package fl.controls {
 		}
 
 		/**
-		 * Gets the index value of the first selected character in a selection 
-		 * of one or more characters. 
+		 * Gets the index value of the first selected character in a selection
+		 * of one or more characters.
 		 *
-		 * <p>The index position of a selected character is zero-based and calculated 
-		 * from the first character that appears in the text area. If there is no 
+		 * <p>The index position of a selected character is zero-based and calculated
+		 * from the first character that appears in the text area. If there is no
 		 * selection, this value is set to the position of the caret.</p>
 		 *
          * @default 0
@@ -528,11 +528,11 @@ package fl.controls {
 		}
 
 		/**
-		 * Gets the index position of the last selected character in a selection 
-		 * of one or more characters. 
+		 * Gets the index position of the last selected character in a selection
+		 * of one or more characters.
 		 *
-		 * <p>The index position of a selected character is zero-based and calculated 
-		 * from the first character that appears in the text area. If there is no 
+		 * <p>The index position of a selected character is zero-based and calculated
+		 * from the first character that appears in the text area. If there is no
 		 * selection, this value is set to the position of the caret.</p>
          *
          * @default 0
@@ -549,19 +549,19 @@ package fl.controls {
 
 		/**
          * Gets or sets a Boolean value that indicates whether extra white space is
-		 * removed from a TextInput component that contains HTML text. Examples 
+		 * removed from a TextInput component that contains HTML text. Examples
 		 * of extra white space in the component include spaces and line breaks.
-		 * A value of <code>true</code> indicates that extra 
-		 * white space is removed; a value of <code>false</code> indicates that extra 
+		 * A value of <code>true</code> indicates that extra
+		 * white space is removed; a value of <code>false</code> indicates that extra
 		 * white space is not removed.
 		 *
-         * <p>This property affects only text that is set by using the <code>htmlText</code> 
-		 * property; it does not affect text that is set by using the <code>text</code> property. 
-         * If you use the <code>text</code> property to set text, the <code>condenseWhite</code> 
+         * <p>This property affects only text that is set by using the <code>htmlText</code>
+		 * property; it does not affect text that is set by using the <code>text</code> property.
+         * If you use the <code>text</code> property to set text, the <code>condenseWhite</code>
          * property is ignored.</p>
 		 *
-         * <p>If the <code>condenseWhite</code> property is set to <code>true</code>, you 
-		 * must use standard HTML commands, such as &lt;br&gt; and &lt;p&gt;, to place line 
+         * <p>If the <code>condenseWhite</code> property is set to <code>true</code>, you
+		 * must use standard HTML commands, such as &lt;br&gt; and &lt;p&gt;, to place line
          * breaks in the text field.</p>
 		 *
          * @default false
@@ -605,7 +605,7 @@ package fl.controls {
 		  * @private (setter)
 		  */
 		 public function set htmlText(value:String):void {
-			if (value == "") { 
+			if (value == "") {
 				text = "";
 				return;
 			}
@@ -651,14 +651,14 @@ package fl.controls {
 
 		/**
 		 * Sets the range of a selection made in a text area that has focus.
-		 * The selection range begins at the index that is specified by the start 
+		 * The selection range begins at the index that is specified by the start
 		 * parameter, and ends at the index that is specified by the end parameter.
 		 * If the parameter values that specify the selection range are the same,
-		 * this method sets the text insertion point in the same way that the 
+		 * this method sets the text insertion point in the same way that the
 		 * <code>caretIndex</code> property does.
 		 *
 		 * <p>The selected text is treated as a zero-based string of characters in which
-		 * the first selected character is located at index 0, the second 
+		 * the first selected character is located at index 0, the second
 		 * character at index 1, and so on.</p>
 		 *
 		 * <p>This method has no effect if the text field does not have focus.</p>
@@ -682,7 +682,7 @@ package fl.controls {
 
 		/**
 		 * Retrieves information about a specified line of text.
-		 * 
+		 *
 		 * @param lineIndex The line number for which information is to be retrieved.
          *
 		 * @includeExample examples/TextInput.getLineMetrics.1.as -noswf
@@ -693,14 +693,14 @@ package fl.controls {
 		public function getLineMetrics(index:int):TextLineMetrics {
 			return textField.getLineMetrics(index);
 		}
-		
+
 		/**
-         * Appends the specified string after the last character that the TextArea 
-		 * contains. This method is more efficient than concatenating two strings 
-		 * by using an addition assignment on a text property; for example, 
+         * Appends the specified string after the last character that the TextArea
+		 * contains. This method is more efficient than concatenating two strings
+		 * by using an addition assignment on a text property; for example,
 		 * <code>myTextArea.text += moreText</code>. This method is particularly
 		 * useful when the TextArea component contains a significant amount of
-		 * content. 
+		 * content.
          *
          * @param text The string to be appended to the existing text.
          *
@@ -710,7 +710,7 @@ package fl.controls {
 		public function appendText(text:String):void {
 			textField.appendText(text);
 		}
-		
+
 		/**
          * @private (protected)
          *
@@ -762,13 +762,13 @@ package fl.controls {
          * @langversion 3.0
          * @playerversion Flash 9.0.28.0
          */
-		protected function setEmbedFont() {
+		protected function setEmbedFont():void {
 			var embed:Object = getStyleValue("embedFonts");
 			if (embed != null) {
 				textField.embedFonts = embed;
-			}	
+			}
 		}
-		
+
 		/**
 		 * @private (protected)
 		 */
@@ -776,12 +776,12 @@ package fl.controls {
 			if (isInvalid(InvalidationType.STYLES,InvalidationType.STATE)) {
 				drawTextFormat();
 				drawBackground();
-				
+
 				var embed:Object = getStyleValue('embedFonts');
 				if (embed != null) {
 					textField.embedFonts = embed;
 				}
-				
+
 				invalidate(InvalidationType.SIZE,false);
 			}
 			if (isInvalid(InvalidationType.SIZE)) {
@@ -799,15 +799,15 @@ package fl.controls {
 		 */
 		protected function drawBackground():void {
 			var bg:DisplayObject = background;
-			
+
 			var styleName:String = (enabled) ? "upSkin" : "disabledSkin";
 			background = getDisplayObjectInstance(getStyleValue(styleName));
 			if (background == null) { return; }
 			addChildAt(background,0);
-			
-			if (bg != null && bg != background && contains(bg)) { 
-				removeChild(bg); 
-			}			
+
+			if (bg != null && bg != background && contains(bg)) {
+				removeChild(bg);
+			}
 		}
 
 		/**
@@ -821,7 +821,7 @@ package fl.controls {
 			var uiStyles:Object = UIComponent.getStyleDefinition();
 			var defaultTF:TextFormat = enabled ? uiStyles.defaultTextFormat as TextFormat : uiStyles.defaultDisabledTextFormat as TextFormat;
 			textField.setTextFormat(defaultTF);
-			
+
 			var tf:TextFormat = getStyleValue(enabled?"textFormat":"disabledTextFormat") as TextFormat;
 			if (tf != null) {
 				textField.setTextFormat(tf);
@@ -829,7 +829,7 @@ package fl.controls {
 				tf = defaultTF;
 			}
 			textField.defaultTextFormat = tf;
-			
+
 			setEmbedFont();
 			if (_html) { textField.htmlText = _savedHTML; }
 		}
@@ -887,7 +887,7 @@ package fl.controls {
 		override protected function isOurFocus(target:DisplayObject):Boolean {
 			return target == textField || super.isOurFocus(target);
 		}
-		
+
 		/**
          * @private (protected)
          *
@@ -906,12 +906,12 @@ package fl.controls {
 				}
 			}
 			super.focusInHandler(event);
-			
+
 			if(editable) {
 				setIMEMode(true);
 			}
 		}
-		
+
 		/**
          * @private (protected)
          *
@@ -920,7 +920,7 @@ package fl.controls {
 		 */
 		override protected function focusOutHandler(event:FocusEvent):void {
 			super.focusOutHandler(event);
-			
+
 			if(editable) {
 				setIMEMode(false);
 			}

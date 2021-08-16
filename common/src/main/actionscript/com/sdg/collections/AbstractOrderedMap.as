@@ -2,11 +2,11 @@ package com.sdg.collections
 {
 	import com.sdg.collections.iterators.MapIterator;
 	import mx.events.CollectionEventKind;
-	
+
 	public class AbstractOrderedMap extends AbstractMapCollection implements IOrderedMapCollection
 	{
 		protected var _keys:Array = [];
-		
+
 		/**
 		 * Returns whether the map contains any items.
 		 */
@@ -14,7 +14,7 @@ package com.sdg.collections
 		{
 			return _keys.length < 1;
 		}
-		
+
 		/**
 		 * Returns the number of items in the map.
 		 */
@@ -22,7 +22,7 @@ package com.sdg.collections
 		{
 			return _keys.length;
 		}
-		
+
 		/**
 		 * Returns the item at the specified index.
 		 */
@@ -30,7 +30,7 @@ package com.sdg.collections
 		{
 			return this.get(_keys[index]);
 		}
-		
+
 		/**
 		 * Returns an array of keys.
 		 */
@@ -46,7 +46,7 @@ package com.sdg.collections
 		{
 			return _keys[index];
 		}
-		
+
 		/**
 		 * Returns the index of the specified item.
 		 */
@@ -55,7 +55,7 @@ package com.sdg.collections
 			var key:Object = keyOf(value);
 			return _keys.indexOf(key);
 		}
-	
+
 		/**
 		 * Returns the index of the specified key.
 		 */
@@ -63,51 +63,61 @@ package com.sdg.collections
 		{
 			return _keys.indexOf(key);
 		}
-		
+
+		/**
+		 * Adds the item to the map at the specified key
+		 */
+		public function add(key:Object, value:*):void;
+
 		/**
 		 * Removes and returns the item at the specified key.
 		 */
 		public function remove(key:Object):*
 		{
 			var index:int = _keys.indexOf(key);
-			
+
 			if (index == -1) throw new ArgumentError("Cannot remove item at 'key' [" + key + "]. The item does not exist.");
-			
+
 			var item:* = data[key];
-			
+
 			delete data[key];
 			_keys.splice(index, 1);
-			
+
 			collectionChanged(CollectionEventKind.REMOVE, key, null, [item]);
-			
+
 			return item;
 		}
-	
+
 		/**
 		 * Removes and returns the item at the specified index.
 		 */
 		public function removeByIndex(index:int):*
 		{
 			var key:Object = _keys[index];
-			
+
 			if (key == null) throw new ArgumentError("Cannot remove item at 'index' [" + index + "]. The item does not exist.");
-			
+
 			var item:* = data[key];
-			
+
 			delete data[key];
 			_keys.splice(index, 1);
-			
+
 			collectionChanged(CollectionEventKind.REMOVE, key, null, [item]);
-			
+
 			return item;
 		}
-		
+
+		/**
+		 * Removes all of the items in the map.
+		 */
+		public function removeAll():void;
+
 		/**
 		 * Returns an iterator for the map.
 		 */
 		public function getIterator():IIterator
 		{
-			return new MapIterator(IMapCollection(this, _keys));
+			return new MapIterator(IMapCollection(this), _keys);
 		}
 	}
 }

@@ -1,5 +1,5 @@
 // Copyright 2007. Adobe Systems Incorporated. All Rights Reserved.
-package fl.controls {	
+package fl.controls {
 
 	import fl.containers.BaseScrollPane;
 	import fl.controls.listClasses.CellRenderer;
@@ -38,7 +38,7 @@ package fl.controls {
      * @playerversion Flash 9.0.28.0
 	 */
 	[Event(name="itemRollOut", type="fl.events.ListEvent")]
-	
+
 	/**
 	 * Dispatched when the user rolls the pointer over an item in the component.
      *
@@ -50,10 +50,10 @@ package fl.controls {
      * @playerversion Flash 9.0.28.0
 	 */
 	[Event(name="itemRollOver", type="fl.events.ListEvent")]
-	
+
 	/**
 	 * Dispatched when the user rolls the pointer over the component.
-	 * 
+	 *
 	 * @eventType flash.events.MouseEvent.ROLL_OVER
      *
      * @see #event:rollOut
@@ -62,7 +62,7 @@ package fl.controls {
      * @playerversion Flash 9.0.28.0
 	 */
 	[Event(name="rollOver", type="flash.events.MouseEvent")]
-	
+
 	/**
 	 * Dispatched when the user rolls the pointer off of the component.
      *
@@ -74,13 +74,13 @@ package fl.controls {
      * @playerversion Flash 9.0.28.0
 	 */
 	[Event(name="rollOut", type="flash.events.MouseEvent")]
-	
+
 	/**
-     * Dispatched when the user clicks an item in the component. 
+     * Dispatched when the user clicks an item in the component.
 	 *
 	 * <p>The <code>click</code> event is dispatched before the value
 	 * of the component is changed. To identify the row and column that were clicked,
-	 * use the properties of the event object; do not use the <code>selectedIndex</code> 
+	 * use the properties of the event object; do not use the <code>selectedIndex</code>
      * and <code>selectedItem</code> properties.</p>
      *
      * @eventType fl.events.ListEvent.ITEM_CLICK
@@ -89,11 +89,11 @@ package fl.controls {
      * @playerversion Flash 9.0.28.0
 	 */
 	[Event(name="itemClick", type="fl.events.ListEvent")]
-	
+
 	/**
      * Dispatched when the user clicks an item in the component twice in
-     * rapid succession. Unlike the <code>click</code> event, the doubleClick event is 
-	 * dispatched after the <code>selectedIndex</code> of the component is 
+     * rapid succession. Unlike the <code>click</code> event, the doubleClick event is
+	 * dispatched after the <code>selectedIndex</code> of the component is
 	 * changed.
      *
      * @eventType fl.events.ListEvent.ITEM_DOUBLE_CLICK
@@ -102,7 +102,7 @@ package fl.controls {
      * @playerversion Flash 9.0.28.0
 	 */
 	[Event(name="itemDoubleClick", type="fl.events.ListEvent")]
-	
+
 	/**
 	 * Dispatched when a different item is selected in the list.
      *
@@ -112,7 +112,7 @@ package fl.controls {
      * @playerversion Flash 9.0.28.0
 	 */
 	[Event(name="change", type="flash.events.Event")]
-	
+
 	/**
 	 * Dispatched when the user scrolls horizontally or vertically.
      *
@@ -147,7 +147,7 @@ package fl.controls {
      * @playerversion Flash 9.0.28.0
      */
     [Style(name="cellRenderer", type="Class")]
-	
+
 	/**
      * The alpha value to set the list to when the <code>enabled</code> property is <code>false</code>.
      *
@@ -157,7 +157,7 @@ package fl.controls {
      * @playerversion Flash 9.0.28.0
      */
     [Style(name="disabledAlpha", type="Number")]
-	
+
 	/**
      * The padding that separates the border of the list from its contents, in pixels.
      *
@@ -173,17 +173,17 @@ package fl.controls {
     //  Class description
     //--------------------------------------
 	/**
-	 * The SelectableList is the base class for all list-based components--for  
-	 * example, the List, TileList, DataGrid, and ComboBox components. 
-	 * This class provides methods and properties that are used for the 
+	 * The SelectableList is the base class for all list-based components--for
+	 * example, the List, TileList, DataGrid, and ComboBox components.
+	 * This class provides methods and properties that are used for the
 	 * rendering and layout of rows, and to set scroll bar styles and data
-	 * providers. 
+	 * providers.
      *
-     * <p><strong>Note:</strong> This class does not create a component; 
+     * <p><strong>Note:</strong> This class does not create a component;
 	 * it is exposed only so that it can be extended.</p>
-	 * 
+	 *
 	 * @see fl.controls.DataGrid
-	 * @see fl.controls.List 
+	 * @see fl.controls.List
 	 * @see fl.controls.TileList
      * @see fl.data.DataProvider
      *
@@ -289,20 +289,20 @@ package fl.controls {
          * @playerversion Flash 9.0.28.0
 		 */
 		protected var lastCaretIndex:int = -1;
-		
+
 		/**
          * @private (protected)
          *
          * @langversion 3.0
          * @playerversion Flash 9.0.28.0
 		 */
-		protected var preChangeItems:Array;	
-		
+		protected var preChangeItems:Array;
+
 		/**
 		 * @private
 		 */
 		private var collectionItemImport:SimpleCollectionItem;
-		
+
         /**
          * @private (protected)
          *
@@ -310,7 +310,7 @@ package fl.controls {
          * @playerversion Flash 9.0.28.0
          */
 		protected var rendererStyles:Object;
-        
+
         /**
          * @private (protected)
          *
@@ -318,8 +318,8 @@ package fl.controls {
          * @playerversion Flash 9.0.28.0
          */
 		protected var updatedRendererStyles:Object;
-		
-		
+
+
         /**
          * @private
          *
@@ -344,10 +344,10 @@ package fl.controls {
          * @langversion 3.0
          * @playerversion Flash 9.0.28.0
          */
-		public static function getStyleDefinition():Object { 
+		public static function getStyleDefinition():Object {
 			return mergeStyles(defaultStyles, BaseScrollPane.getStyleDefinition());
 		}
-		
+
 		/**
 		 *  @private
 		 *  Creates the Accessibility class.
@@ -357,7 +357,7 @@ package fl.controls {
          * @playerversion Flash 9.0.28.0
 		 */
 		public static var createAccessibilityImplementation:Function;
-		
+
 
 		/**
          * Creates a new SelectableList instance.
@@ -377,7 +377,7 @@ package fl.controls {
 			rendererStyles = {};
 			updatedRendererStyles = {};
 		}
-		
+
 		[Inspectable(defaultValue=true, verbose=1)]
 		/**
          * @private
@@ -389,12 +389,12 @@ package fl.controls {
 			super.enabled = value;
 			list.mouseChildren = _enabled;
 		}
-				
+
 		/**
-		 * Gets or sets the data model of the list of items to be viewed. A data provider 
-		 * can be shared by multiple list-based components. Changes to the data provider 
-		 * are immediately available to all components that use it as a data source. 
-		 *  
+		 * Gets or sets the data model of the list of items to be viewed. A data provider
+		 * can be shared by multiple list-based components. Changes to the data provider
+		 * are immediately available to all components that use it as a data source.
+		 *
 		 * @default null
          *
          * @langversion 3.0
@@ -404,7 +404,7 @@ package fl.controls {
 			// return the original data source:
 			return _dataProvider;
 		}
-		
+
 		[Collection(collectionClass="fl.data.DataProvider", collectionItem="fl.data.SimpleCollectionItem", identifier="item")]
 		/**
          * @private (setter)
@@ -423,7 +423,7 @@ package fl.controls {
 			clearSelection();
 			invalidateList();
 		}
-				
+
 		/**
 		 * Gets or sets the number of pixels that the list scrolls to the right when the
          * <code>horizontalScrollPolicy</code> property is set to <code>ScrollPolicy.ON</code>.
@@ -437,7 +437,7 @@ package fl.controls {
 		override public function get maxHorizontalScrollPosition():Number {
 			return _maxHorizontalScrollPosition;
 		}
-			
+
 		/**
          * @private
          *
@@ -448,9 +448,9 @@ package fl.controls {
 			_maxHorizontalScrollPosition = value;
 			invalidate(InvalidationType.SIZE);
 		}
-		
-		
-		
+
+
+
 		/**
          * Gets the number of items in the data provider.
          *
@@ -462,13 +462,13 @@ package fl.controls {
 		public function get length():uint {
 			return _dataProvider.length;
 		}
-		
+
 		[Inspectable(defaultValue=false)]
 		/**
-		 * Gets a Boolean value that indicates whether more than one list item 
-		 * can be selected at a time. A value of <code>true</code> indicates that 
-		 * multiple selections can be made at one time; a value of <code>false</code> 
-		 * indicates that only one item can be selected at one time. 
+		 * Gets a Boolean value that indicates whether more than one list item
+		 * can be selected at a time. A value of <code>true</code> indicates that
+		 * multiple selections can be made at one time; a value of <code>false</code>
+		 * indicates that only one item can be selected at one time.
          *
          * @default false
          *
@@ -478,10 +478,10 @@ package fl.controls {
          *
          * @langversion 3.0
          * @playerversion Flash 9.0.28.0
-		 */		
+		 */
 		public function get allowMultipleSelection():Boolean {
 			return _allowMultipleSelection;
-		}		
+		}
 		/**
          * @private
          *
@@ -497,10 +497,10 @@ package fl.controls {
 			}
 		}
 		/**
-         * Gets or sets a Boolean value that indicates whether the items in the list 
+         * Gets or sets a Boolean value that indicates whether the items in the list
 		 * can be selected. A value of <code>true</code> indicates that the list items
-		 * can be selected; a value of <code>false</code> indicates that they cannot be. 
- 		 * 
+		 * can be selected; a value of <code>false</code> indicates that they cannot be.
+ 		 *
          * @default true
          *
          * @see #allowMultipleSelection
@@ -511,7 +511,7 @@ package fl.controls {
 		public function get selectable():Boolean {
 			return _selectable;
 		}
-		
+
 		/**
          * @private
          *
@@ -525,15 +525,15 @@ package fl.controls {
 		}
 		/**
 		 * Gets or sets the index of the item that is selected in a single-selection
-		 * list. A single-selection list is a list in which only one item can be selected 
-		 * at a time. 
+		 * list. A single-selection list is a list in which only one item can be selected
+		 * at a time.
 		 *
 		 * <p>A value of -1 indicates that no item is selected; if multiple selections
 		 * are made, this value is equal to the index of the item that was selected last in
 		 * the group of selected items.</p>
 		 *
 		 * <p>When ActionScript is used to set this property, the item at the specified index
-		 * replaces the current selection. When the selection is changed programmatically, 
+		 * replaces the current selection. When the selection is changed programmatically,
 		 * a <code>change</code> event object is not dispatched. </p>
          *
          * @see #selectedIndices
@@ -547,8 +547,8 @@ package fl.controls {
 		public function get selectedIndex():int {
 			return (_selectedIndices.length == 0) ? -1 : _selectedIndices[_selectedIndices.length-1];
 		}
-		
-		
+
+
 		/**
          * @private
          *
@@ -558,20 +558,20 @@ package fl.controls {
 		public function set selectedIndex(value:int):void {
 			selectedIndices = (value == -1) ? null : [value];
 		}
-		
+
 		/**
 		 * Gets or sets an array that contains the items that were selected from
-		 * a multiple-selection list. 
+		 * a multiple-selection list.
 		 *
-		 * <p>To replace the current selection programmatically, you can make an 
-		 * explicit assignment to this property. You can clear the current selection 
-		 * by setting this property to an empty array or to a value of <code>undefined</code>. 
-		 * If no items are selected from the list of items, this property is 
+		 * <p>To replace the current selection programmatically, you can make an
+		 * explicit assignment to this property. You can clear the current selection
+		 * by setting this property to an empty array or to a value of <code>undefined</code>.
+		 * If no items are selected from the list of items, this property is
 		 * <code>undefined</code>. </p>
 		 *
 		 * <p>The sequence of values in the array reflects the order in which the items
-		 * were selected from the multiple-selection list. For example, if you click the second 
-		 * item from the list, then the third item, and finally the first item, this property 
+		 * were selected from the multiple-selection list. For example, if you click the second
+		 * item from the list, then the third item, and finally the first item, this property
 		 * contains an array of values in the following sequence: <code>[1,2,0]</code>.</p>
          *
          * @see #allowMultipleSelection
@@ -584,7 +584,7 @@ package fl.controls {
 		public function get selectedIndices():Array {
 			return _selectedIndices.concat();
 		}
-		
+
 		/**
          * @private
          *
@@ -596,11 +596,11 @@ package fl.controls {
 			_selectedIndices = (value == null) ? [] : value.concat();
 			invalidate(InvalidationType.SELECTED);
 		}
-		 
+
 		/**
-		 * Gets or sets the item that was selected from a single-selection list. For a 
+		 * Gets or sets the item that was selected from a single-selection list. For a
 		 * multiple-selection list in which multiple items are selected, this property
-		 * contains the item that was selected last. 
+		 * contains the item that was selected last.
 		 *
 		 * <p>If no selection is made, the value of this property is <code>null</code>.</p>
          *
@@ -615,7 +615,7 @@ package fl.controls {
 		public function get selectedItem():Object {
 			return (_selectedIndices.length == 0) ? null : _dataProvider.getItemAt(selectedIndex);
 		}
-		
+
 		/**
          * @private (setter)
          *
@@ -627,12 +627,12 @@ package fl.controls {
 			selectedIndex = index;
 		}
 		/**
-		 * Gets or sets an array that contains the objects for the  
-		 * items that were selected from the multiple-selection list. 
+		 * Gets or sets an array that contains the objects for the
+		 * items that were selected from the multiple-selection list.
 		 *
-		 * <p>For a single-selection list, the value of this property is an 
-		 * array containing the one selected item. In a single-selection 
-		 * list, the <code>allowMultipleSelection</code> property is set to 
+		 * <p>For a single-selection list, the value of this property is an
+		 * array containing the one selected item. In a single-selection
+		 * list, the <code>allowMultipleSelection</code> property is set to
 		 * <code>false</code>.</p>
          *
          * @includeExample examples/SelectableList.selectedItems.1.as -noswf
@@ -651,7 +651,7 @@ package fl.controls {
 			}
 			return items;
 		}
-		
+
 
 		/**
          * @private (setter)
@@ -676,7 +676,7 @@ package fl.controls {
 
 		/**
 		 * Gets the number of rows that are at least partially visible in the list.
-		 * 
+		 *
          * <p><strong>Note:</strong> This property must be overridden in any class that extends SelectableList.</p>
          *
 		 * @includeExample examples/SelectableList.rowCount.1.as -noswf
@@ -701,9 +701,9 @@ package fl.controls {
 		public function clearSelection():void {
 			selectedIndex = -1;
 		}
-		
-		/** 
-		 * Retrieves the ICellRenderer for a given item object, if there is one. 
+
+		/**
+		 * Retrieves the ICellRenderer for a given item object, if there is one.
 		 * This method always returns <code>null</code>.
          *
          * @param item The item in the data provider.
@@ -717,7 +717,7 @@ package fl.controls {
 		 */
 		public function itemToCellRenderer(item:Object):ICellRenderer {
 			if(item != null) {
-				for(var index in activeCellRenderers) {
+				for(var index:String in activeCellRenderers) {
 					var renderer:ICellRenderer = activeCellRenderers[index] as ICellRenderer;
 					if(renderer.data == item) {
 						return renderer;
@@ -726,16 +726,16 @@ package fl.controls {
 			}
 			return null;
 		}
-		
+
 		/**
-		 * Appends an item to the end of the list of items. 
+		 * Appends an item to the end of the list of items.
 		 *
-		 * <p>An item should contain <code>label</code> and <code>data</code> 
-		 * properties; however, items that contain other properties can also 
-		 * be added to the list. By default, the <code>label</code> property of 
-		 * an item is used to display the label of the row; the <code>data</code> 
+		 * <p>An item should contain <code>label</code> and <code>data</code>
+		 * properties; however, items that contain other properties can also
+		 * be added to the list. By default, the <code>label</code> property of
+		 * an item is used to display the label of the row; the <code>data</code>
 		 * property is used to store the data of the row. </p>
-		 * 
+		 *
          * @param item The item to be added to the data provider.
          *
          * @see #addItemAt()
@@ -747,9 +747,9 @@ package fl.controls {
 			_dataProvider.addItem(item);
 			invalidateList();
 		}
-		
+
 		/**
-		 * Inserts an item into the list at the specified index location. The indices of 
+		 * Inserts an item into the list at the specified index location. The indices of
 		 * items at or after the specified index location are incremented by 1.
          *
          * @param item The item to be added to the list.
@@ -768,9 +768,9 @@ package fl.controls {
 			_dataProvider.addItemAt(item,index);
 			invalidateList();
 		}
-		
+
 		/**
-         * Removes all items from the list. 
+         * Removes all items from the list.
          *
          * @langversion 3.0
          * @playerversion Flash 9.0.28.0
@@ -780,7 +780,7 @@ package fl.controls {
 		}
 		/**
 		 * Retrieves the item at the specified index.
-         * 
+         *
          * @param index The index of the item to be retrieved.
          *
          * @return The object at the specified index location.
@@ -795,7 +795,7 @@ package fl.controls {
 		}
 
 		/**
-		 * Removes the specified item from the list. 
+		 * Removes the specified item from the list.
          *
          * @param item The item to be removed.
          *
@@ -808,13 +808,13 @@ package fl.controls {
          *
          * @langversion 3.0
          * @playerversion Flash 9.0.28.0
-		 */		 
+		 */
 		public function removeItem(item:Object):Object {
 			return _dataProvider.removeItem(item);
 		}
-		
+
 		/**
-		 * Removes the item at the specified index position. The indices of 
+		 * Removes the item at the specified index position. The indices of
 		 * items after the specified index location are decremented by 1.
          *
          * @param index The index of the item in the data provider to be removed.
@@ -834,8 +834,8 @@ package fl.controls {
 
         // V2 has order of arguments backwards.
 		/**
-		 * Replaces the item at the specified index location with another item. 
-		 * This method modifies the data provider of the List component. If 
+		 * Replaces the item at the specified index location with another item.
+		 * This method modifies the data provider of the List component. If
 		 * the data provider is shared with other components, the data that is
 		 * provided to those components is also updated.
          *
@@ -855,7 +855,7 @@ package fl.controls {
 		public function replaceItemAt(item:Object, index:uint):Object {
 			return _dataProvider.replaceItemAt(item, index);
 		}
-		
+
 		/**
 		 * Invalidates the whole list, forcing the list items to be redrawn.
          *
@@ -869,7 +869,7 @@ package fl.controls {
 			_invalidateList();
 			invalidate(InvalidationType.DATA);
 		}
-		
+
 		/**
 		 * Invalidates a specific item renderer.
 		 *
@@ -890,7 +890,7 @@ package fl.controls {
 			invalidItems[item] = true;
 			invalidate(InvalidationType.DATA);
 		}
-		
+
 		/**
 		 * Invalidates the renderer for the item at the specified index.
 		 *
@@ -911,17 +911,17 @@ package fl.controls {
 				invalidateItem(item);
 			}
 		}
-		
+
 		/**
-		 * Sorts the elements of the current data provider. This method 
-		 * performs a sort based on the Unicode values of the elements. ASCII is a 
+		 * Sorts the elements of the current data provider. This method
+		 * performs a sort based on the Unicode values of the elements. ASCII is a
 		 * subset of Unicode.
-		 * 
+		 *
 		 * @param sortArgs The arguments against which to sort.
 		 *
-         * @return The return value depends on whether any parameters are passed to 
-		 *         this method. For more information, see the <code>Array.sort()</code> method. 
-		 *         Note that this method returns 0 when the <code>sortArgs</code> parameter 
+         * @return The return value depends on whether any parameters are passed to
+		 *         this method. For more information, see the <code>Array.sort()</code> method.
+		 *         Note that this method returns 0 when the <code>sortArgs</code> parameter
          *         is set to <code>Array.UNIQUESORT</code>.
          *
 		 * @see #sortItemsOn()
@@ -933,18 +933,18 @@ package fl.controls {
 		 public function sortItems(...sortArgs:Array):* {
 			return _dataProvider.sort.apply(_dataProvider,sortArgs);
 		}
-		
+
 		/**
-		 * Sorts the elements of the current data provider by one or more  
+		 * Sorts the elements of the current data provider by one or more
 		 * of its fields.
-		 * 
+		 *
 		 * @param field The field on which to sort.
-		 * @param options Sort arguments that are used to override the default sort behavior. 
+		 * @param options Sort arguments that are used to override the default sort behavior.
 		 *                Separate two or more arguments with the bitwise OR (|) operator.
 		 *
          * @return The return value depends on whether any parameters are passed to this
-		 *         method. For more information, see the <code>Array.sortOn()</code> method. 
-		 *         Note that this method returns 0 when the <code>sortOption</code> parameter  
+		 *         method. For more information, see the <code>Array.sortOn()</code> method.
+		 *         Note that this method returns 0 when the <code>sortOption</code> parameter
          *         is set to <code>Array.UNIQUESORT</code>.
          *
          * @includeExample examples/SelectableList.sortItemsOn.1.as -noswf
@@ -958,13 +958,13 @@ package fl.controls {
 		public function sortItemsOn(field:String,options:Object=null):* {
 			return _dataProvider.sortOn(field,options);
 		}
-		
+
 		/**
-		 * Checks whether the specified item is selected in the list. 
+		 * Checks whether the specified item is selected in the list.
 		 *
 		 * @param item The item to check.
 		 *
-         * @return This method returns <code>true</code> if the specified item is selected; 
+         * @return This method returns <code>true</code> if the specified item is selected;
 		 *         otherwise, if the specified item has a value of <code>null</code> or is not
 		 *         included in the list, this method returns <code>false</code>.
          *
@@ -974,9 +974,9 @@ package fl.controls {
 		public function isItemSelected(item:Object):Boolean {
 			return selectedItems.indexOf(item) > -1;
 		}
-		
+
 		/**
-         * Scrolls the list to the item at the location indicated by    
+         * Scrolls the list to the item at the location indicated by
 		 * the current value of the <code>selectedIndex</code> property.
          *
          * @see #selectedIndex
@@ -988,9 +988,9 @@ package fl.controls {
 		public function scrollToSelected():void {
 			scrollToIndex(selectedIndex);
 		}
-		
+
 		/**
-		 * Scrolls the list to the item at the specified index. If the index 
+		 * Scrolls the list to the item at the specified index. If the index
 		 * is out of range, the scroll position does not change.
 		 *
 		 * @param newCaretIndex The index location to scroll to.
@@ -999,16 +999,16 @@ package fl.controls {
          * @playerversion Flash 9.0.28.0
 		 */
 		public function scrollToIndex(newCaretIndex:int):void {
-			// Handle in subclasses.	
-		}		
-				
+			// Handle in subclasses.
+		}
+
 		/**
 		 * Returns the index of the next item in the dataProvider in which
 		 * the label's first character matches a specified string character.
 		 * If the search reaches the end of the dataProvider without searching
 		 * all the items, it will loop back to the start.  The search does not
 		 * include the startIndex.
-		 * 
+		 *
 		 * @param firstLetter The string character to search for
 		 * @param startIndex The index in the dataProvider to start at.
 		 *
@@ -1037,12 +1037,12 @@ package fl.controls {
 			}
 			return -1;
 		}
-		
+
         /**
          * @private
          */
 		/**
-		 * Retrieves the string that the renderer displays for the given data object 
+		 * Retrieves the string that the renderer displays for the given data object
          * based on the <code>label</code> properties of the object.  This method
 		 * is intended to be overwritten in sub-components.  For example, List has
 		 * a <code>labelField</code> and a <code>labelFunction</code> to derive the
@@ -1053,8 +1053,8 @@ package fl.controls {
 		 */
 		public function itemToLabel(item:Object):String {
 			return item["label"]; // Use bracket access in case object has no property.
-		}		
-		
+		}
+
 		/**
 		 * Sets a style on the renderers in the list.
 		 *
@@ -1068,7 +1068,7 @@ package fl.controls {
 		 *
          * @see #clearRendererStyle()
          * @see #getRendererStyle()
-         * 
+         *
          * @langversion 3.0
          * @playerversion Flash 9.0.28.0
 		 */
@@ -1078,7 +1078,7 @@ package fl.controls {
 			rendererStyles[name] = style;
 			invalidate(InvalidationType.RENDERER_STYLES);
 		}
-		
+
 		/**
 		 * Retrieves a style that is set on the renderers in the list.
 		 *
@@ -1092,9 +1092,9 @@ package fl.controls {
          * @playerversion Flash 9.0.28.0
 		 */
 		public function getRendererStyle(name:String, column:int=-1):Object {
-			return rendererStyles[name];	
+			return rendererStyles[name];
 		}
-		
+
 		/**
 		 * Clears a style that is set on the renderers in the list.
 		 *
@@ -1111,7 +1111,7 @@ package fl.controls {
 			updatedRendererStyles[name] = null; // Do not delete, so it can clear the style from current renderers.
 			invalidate(InvalidationType.RENDERER_STYLES);
 		}
-		
+
 		/**
          * @private (protected)
          *
@@ -1120,15 +1120,15 @@ package fl.controls {
 		 */
 		override protected function configUI():void {
 			super.configUI();
-			
+
 			listHolder = new Sprite();
 			addChild(listHolder);
 			listHolder.scrollRect = contentScrollRect;
-			
+
 			list = new Sprite();
 			listHolder.addChild(list);
 		}
-			
+
 		/**
          * @private (protected)
          *
@@ -1141,7 +1141,7 @@ package fl.controls {
 				list.removeChild(activeCellRenderers.pop() as DisplayObject);
 			}
 		}
-		
+
 		/**
          * @private (protected)
          *
@@ -1252,7 +1252,7 @@ package fl.controls {
 			dispatchEvent(new Event(Event.CHANGE));
 			invalidate(InvalidationType.DATA);
 		}
-		
+
         /**
          * @private (protected)
          *
@@ -1264,7 +1264,7 @@ package fl.controls {
 			var itemIndex:uint = renderer.listData.index;
 			_dataProvider.invalidateItemAt(itemIndex);
 		}
-		
+
 		/**
          * @private (protected)
 		 */
@@ -1272,9 +1272,9 @@ package fl.controls {
 			if (!_enabled) { return; }
 			var renderer:ICellRenderer = event.currentTarget as ICellRenderer;
 			var itemIndex:uint = renderer.listData.index;
-			dispatchEvent(new ListEvent(ListEvent.ITEM_DOUBLE_CLICK,false,true,renderer.listData.column,renderer.listData.row,itemIndex,renderer.data));		
+			dispatchEvent(new ListEvent(ListEvent.ITEM_DOUBLE_CLICK,false,true,renderer.listData.column,renderer.listData.row,itemIndex,renderer.data));
 		}
-		
+
         /**
          * @private (protected)
          *
@@ -1303,7 +1303,7 @@ package fl.controls {
 				dispatchEvent(new ScrollEvent(ScrollBarDirection.VERTICAL,delta,scroll));
 			}
 		}
-		
+
         /**
          * @private (protected)
          *
@@ -1314,19 +1314,19 @@ package fl.controls {
 			// this method is overridden in List implementations.
 			super.draw();
 		}
-		
+
 		/**
 		 * @private (protected)
 		 */
 		override protected function drawLayout():void {
 			super.drawLayout();
-			
+
 			contentScrollRect = listHolder.scrollRect;
 			contentScrollRect.width = availableWidth;
 			contentScrollRect.height = availableHeight;
 			listHolder.scrollRect = contentScrollRect;
 		}
-		
+
 		/**
          * @private (protected)
          *
@@ -1345,7 +1345,7 @@ package fl.controls {
 			}
 			updatedRendererStyles = {};
 		}
-		
+
         /**
          * @private (protected)
          *
@@ -1355,7 +1355,7 @@ package fl.controls {
 		protected function drawList():void {
 			// this method is overridden in List implementations.
 		}
-		
+
         /**
          * @private (protected)
          *
@@ -1364,7 +1364,7 @@ package fl.controls {
 		 */
 		override protected function keyDownHandler(event:KeyboardEvent):void {
 			if (!selectable) { return; }
-			
+
 			switch (event.keyCode) {
 				case Keyboard.UP:
 				case Keyboard.DOWN:
@@ -1381,7 +1381,7 @@ package fl.controls {
 					event.stopPropagation();
 					break;
 			}
-			
+
 		}
 
 		/**
@@ -1403,7 +1403,7 @@ package fl.controls {
          *
 		 */
 		protected function moveSelectionHorizontally(code:uint, shiftKey:Boolean, ctrlKey:Boolean):void {}
-		
+
 		/**
          * @private (protected)
 		 *  Moves the selection in a vertical direction in response
@@ -1434,7 +1434,7 @@ package fl.controls {
 				SelectableList.createAccessibilityImplementation(this);
 			}
 		}
-		
+
 		/**
          * @private (protected)
          *
@@ -1451,10 +1451,10 @@ package fl.controls {
 				case DataChangeType.INVALIDATE_ALL:
 					break;
 				default:
-					preChangeItems = selectedItems;	
+					preChangeItems = selectedItems;
 					break;
 			}
 		}
-		
+
 	}
 }

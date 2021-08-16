@@ -28,7 +28,7 @@ package fl.core {
 	import fl.managers.IFocusManager;
 	import fl.managers.IFocusManagerComponent;
 	import fl.managers.StyleManager;
-	
+
     //--------------------------------------
     //  Events
     //--------------------------------------
@@ -135,7 +135,7 @@ package fl.core {
 
     //--------------------------------------
     //  Class description
-    //--------------------------------------	
+    //--------------------------------------
     /**
      *  The UIComponent class is the base class for all visual components,
      *  both interactive and noninteractive. Interactive components are defined
@@ -386,13 +386,13 @@ package fl.core {
         /**
          * Retrieves the default style map for the current component. The style map contains
          * the type that is appropriate for the component, depending on the style that
-         * the component uses. For example, the <code>disabledTextFormat</code> style 
-         * contains a value of <code>null</code> or a TextFormat object. 
-         * You can use these styles and call <code>setStyle()</code> on the current 
-         * component. The following code overrides the default <code>disabledTextFormat</code> 
-         * style on the specified component: 
+         * the component uses. For example, the <code>disabledTextFormat</code> style
+         * contains a value of <code>null</code> or a TextFormat object.
+         * You can use these styles and call <code>setStyle()</code> on the current
+         * component. The following code overrides the default <code>disabledTextFormat</code>
+         * style on the specified component:
          * <listing>componentInstance.setStyle("disabledTextFormat", new TextFormat());</listing>
-         * 
+         *
          * @return Default styles object.
          *
          * @includeExample examples/UIComponent.getStyleDefinition.1.as -noswf
@@ -406,14 +406,14 @@ package fl.core {
          * @langversion 3.0
          * @playerversion Flash 9.0.28.0
          */
-		public static function getStyleDefinition():Object {			
+		public static function getStyleDefinition():Object {
 			return defaultStyles;
 		}
 
         /**
-         * Merges the styles from multiple classes into one object. 
+         * Merges the styles from multiple classes into one object.
          * If a style is defined in multiple objects, the first occurrence
-         * that is found is used. 
+         * that is found is used.
          *
          * @param list A comma-delimited list of objects that contain the default styles to be merged.
          *
@@ -456,7 +456,7 @@ package fl.core {
          */
 		public function UIComponent() {
 			super();
-			
+
 			instanceStyles = {};
 			sharedStyles = {};
 			invalidHash = {};
@@ -505,7 +505,7 @@ package fl.core {
 			if (_inspector) {
 				beforeComponentParameters();
 			} else {
-				afterComponentParameters();	
+				afterComponentParameters();
 			}
 		}
 
@@ -524,15 +524,15 @@ package fl.core {
          * @playerversion Flash 9.0.28.0
          */
 		protected function afterComponentParameters():void {}
-		
-	
+
+
         [Inspectable(defaultValue=true, verbose=1)]
         /**
          * Gets or sets a value that indicates whether the component can accept user interaction.
          * A value of <code>true</code> indicates that the component can accept user interaction; a
-         * value of <code>false</code> indicates that it cannot. 
+         * value of <code>false</code> indicates that it cannot.
          *
-         * <p>If you set the <code>enabled</code> property to <code>false</code>, the color of the 
+         * <p>If you set the <code>enabled</code> property to <code>false</code>, the color of the
          * container is dimmed and user input is blocked (with the exception of the Label and ProgressBar components).</p>
          *
          * @default true
@@ -581,11 +581,11 @@ package fl.core {
          * dispatched. See the <code>resize</code> event for detailed information
          * about when it is dispatched.</p>
          *
-         * <p>If the <code>scaleX</code> property of the component is not 1.0, 
+         * <p>If the <code>scaleX</code> property of the component is not 1.0,
          * the width of the component that is obtained from its internal coordinates
-         * will not match the width value from the parent coordinates. For example, 
-         * a component that is 100 pixels in width and has a <code>scaleX</code> of 2 
-         * has a value of 100 pixels in the parent, but internally stores a value 
+         * will not match the width value from the parent coordinates. For example,
+         * a component that is 100 pixels in width and has a <code>scaleX</code> of 2
+         * has a value of 100 pixels in the parent, but internally stores a value
          * indicating that it is 50 pixels wide.</p>
          *
          * @see #height
@@ -613,13 +613,13 @@ package fl.core {
          * dispatched. See the <code>resize</code> event for detailed information
          * about when it is dispatched.</p>
          *
-         * <p>If the <code>scaleY</code> property of the component is not 1.0, 
+         * <p>If the <code>scaleY</code> property of the component is not 1.0,
          * the height of the component that is obtained from its internal coordinates
-         * will not match the height value from the parent coordinates. For example, 
-         * a component that is 100 pixels in height and has a <code>scaleY</code> of 2 
-         * has a value of 100 pixels in the parent, but internally stores a value 
+         * will not match the height value from the parent coordinates. For example,
+         * a component that is 100 pixels in height and has a <code>scaleY</code> of 2
+         * has a value of 100 pixels in the parent, but internally stores a value
          * indicating that it is 50 pixels in height.</p>
-         * 
+         *
          * @langversion 3.0
          * @playerversion Flash 9.0.28.0
          */
@@ -635,12 +635,12 @@ package fl.core {
 			setSize(width, value);
 		}
 
-		
+
         /**
-         * Sets a style property on this component instance. This style may 
+         * Sets a style property on this component instance. This style may
          * override a style that was set globally.
          *
-         * <p>Calling this method can result in decreased performance. 
+         * <p>Calling this method can result in decreased performance.
          * Use it only when necessary.</p>
          *
          * @param style The name of the style property.
@@ -677,31 +677,31 @@ package fl.core {
          * @langversion 3.0
          * @playerversion Flash 9.0.28.0
          */
-		public function clearStyle(style:String):void {			
+		public function clearStyle(style:String):void {
 			setStyle(style,null);
 		}
 
         /**
-         * Retrieves a style property that is set in the style lookup 
+         * Retrieves a style property that is set in the style lookup
          * chain of the component.
          *
          * <p>The type that this method returns varies depending on the style
          * property that the method retrieves. The range of possible types includes
-         * Boolean; String; Number; int; a uint for an RGB color; a Class for a skin; 
+         * Boolean; String; Number; int; a uint for an RGB color; a Class for a skin;
          * or any kind of object.</p>
          *
-         * <p>If you call this method to retrieve a particular style property, 
+         * <p>If you call this method to retrieve a particular style property,
          * it will be of a known type that you can store in a variable of the
-         * same type. Type casting is not necessary. Instead, a simple assignment 
+         * same type. Type casting is not necessary. Instead, a simple assignment
          * statement like the following will work:</p>
          *
          * <listing>var backgroundColor:uint = getStyle("backgroundColor");</listing>
          *
          * <p>If the style property is not set in the style lookup chain, this method
-         * returns a value of <code>undefined</code>. Note that <code>undefined</code> 
-         * is a special value that is not the same as <code>false</code>, "", <code>NaN</code>, 
-         * 0, or <code>null</code>. No valid style value is ever <code>undefined</code>. 
-         * You can use the static method <code>StyleManager.isValidStyleValue()</code> to 
+         * returns a value of <code>undefined</code>. Note that <code>undefined</code>
+         * is a special value that is not the same as <code>false</code>, "", <code>NaN</code>,
+         * 0, or <code>null</code>. No valid style value is ever <code>undefined</code>.
+         * You can use the static method <code>StyleManager.isValidStyleValue()</code> to
          * test whether a value was set.</p>
          *
          * @param style The name of the style property.
@@ -722,23 +722,23 @@ package fl.core {
 
         /**
          * Moves the component to the specified position within its parent. This has
-         * the same effect as changing the component location by setting its  
-         * <code>x</code> and <code>y</code> properties. Calling this method triggers 
-         * the <code>ComponentEvent.MOVE</code> event to be dispatched.      
+         * the same effect as changing the component location by setting its
+         * <code>x</code> and <code>y</code> properties. Calling this method triggers
+         * the <code>ComponentEvent.MOVE</code> event to be dispatched.
          *
          * <p>To override the <code>updateDisplayList()</code> method in a
-         * custom component, use the <code>move()</code> method instead 
-         * of setting the <code>x</code> and <code>y</code> properties. This is because 
+         * custom component, use the <code>move()</code> method instead
+         * of setting the <code>x</code> and <code>y</code> properties. This is because
          * a call to the <code>move()</code> method causes a <code>move</code> event object
-         * to be dispatched immediately after the move operation is complete. In contrast, 
-         * when you change the component location by setting the <code>x</code> and <code>y</code> 
+         * to be dispatched immediately after the move operation is complete. In contrast,
+         * when you change the component location by setting the <code>x</code> and <code>y</code>
          * properties, the event object is dispatched on the next screen refresh.</p>
          *
-         * @param x The x coordinate value that specifies the position of the component within its 
+         * @param x The x coordinate value that specifies the position of the component within its
          *          parent, in pixels. This value is calculated from the left.
          *
-         * @param y The y coordinate value that specifies the position of the component within its 
-         *          parent, in pixels. This value is calculated from the top. 
+         * @param y The y coordinate value that specifies the position of the component within its
+         *          parent, in pixels. This value is calculated from the top.
          *
          * @see #x
          * @see #y
@@ -756,9 +756,9 @@ package fl.core {
 
         /**
          * Gets or sets the x coordinate that represents the position of the component along
-         * the x axis within its parent container. This value is described in pixels and is 
+         * the x axis within its parent container. This value is described in pixels and is
          * calculated from the left.
-         * 
+         *
          * <p>Setting this property causes the <code>ComponentEvent.MOVE</code> event to be dispatched.</p>
          *
          * @default 0
@@ -781,10 +781,10 @@ package fl.core {
             move(value,_y);
         }
         /**
-         * Gets or sets the y coordinate that represents the position of the component along 
-         * the y axis within its parent container. This value is described in pixels and is 
+         * Gets or sets the y coordinate that represents the position of the component along
+         * the y axis within its parent container. This value is described in pixels and is
          * calculated from the top.
-         * 
+         *
          * <p>Setting this property causes the <code>move</code> event to be dispatched.</p>
          *
          * @see #move()
@@ -805,7 +805,7 @@ package fl.core {
          * @playerversion Flash 9.0.28.0
          */
 		override public function set y(value:Number):void {
-			move(_x, value);	
+			move(_x, value);
 		}
 
         /**
@@ -894,15 +894,15 @@ package fl.core {
 
         [Inspectable(defaultValue=true, verbose=1)]
         /**
-         * Gets or sets a value that indicates whether the current component instance is visible. 
-         * A value of <code>true</code> indicates that the current component is visible; a value of 
+         * Gets or sets a value that indicates whether the current component instance is visible.
+         * A value of <code>true</code> indicates that the current component is visible; a value of
          * <code>false</code> indicates that it is not.
          *
          * <p>When this property is set to <code>true</code>, the object dispatches a
-         * <code>show</code> event. When this property is set to <code>false</code>, 
-         * the object dispatches a <code>hide</code> event. In either case, 
-         * the children of the object do not generate a <code>show</code> or 
-         * <code>hide</code> event unless the object specifically writes an 
+         * <code>show</code> event. When this property is set to <code>false</code>,
+         * the object dispatches a <code>hide</code> event. In either case,
+         * the children of the object do not generate a <code>show</code> or
+         * <code>hide</code> event unless the object specifically writes an
          * implementation to do so.</p>
          *
          * @default true
@@ -914,7 +914,7 @@ package fl.core {
          * @playerversion Flash 9.0.28.0
          */
 		override public function get visible():Boolean {
-			return super.visible;	
+			return super.visible;
 		}
 
         /**
@@ -932,13 +932,13 @@ package fl.core {
 
         /**
          * Validates and updates the properties and layout of this object, redrawing it
-         * if necessary. 
+         * if necessary.
          *
          * <p>Properties that require substantial computation are normally not processed
          * until the script finishes executing. This is because setting one property could
-         * require the processing of other properties. For example, setting the <code>width</code> 
-         * property may require that the widths of the children or parent of the object also 
-         * be recalculated. And if the script recalculates the width of the object more than 
+         * require the processing of other properties. For example, setting the <code>width</code>
+         * property may require that the widths of the children or parent of the object also
+         * be recalculated. And if the script recalculates the width of the object more than
          * once, these interdependent properties may also require recalculating. Use this
          * method to manually override this behavior.</p>
          *
@@ -970,7 +970,7 @@ package fl.core {
 
 		/**
 		 * @private (internal)
-		 * 
+		 *
 		 * Sets the inherited style value to the specified style name and
 		 * invalidates the styles of the component.
 		 *
@@ -991,8 +991,8 @@ package fl.core {
 
 
         /**
-         * Gets or sets a Boolean value that indicates whether the component can receive focus 
-         * after the user clicks it. A value of <code>true</code> indicates that it can 
+         * Gets or sets a Boolean value that indicates whether the component can receive focus
+         * after the user clicks it. A value of <code>true</code> indicates that it can
          * receive focus; a value of <code>false</code> indicates that it cannot.
          *
          * <p>If this property is <code>false</code>, focus is transferred to the first
@@ -1021,11 +1021,11 @@ package fl.core {
 		}
 
         /**
-         * Gets or sets a value that indicates whether the component can receive focus after 
-         * the user clicks it. A value of <code>true</code> indicates that it can receive 
+         * Gets or sets a value that indicates whether the component can receive focus after
+         * the user clicks it. A value of <code>true</code> indicates that it can receive
          * focus; a value of <code>false</code> indicates that it cannot.
          *
-         * <p>If this property is <code>false</code>, focus is transferred to the first 
+         * <p>If this property is <code>false</code>, focus is transferred to the first
          * parent whose <code>mouseFocusEnabled</code> property is set to <code>true</code>.</p>
          *
          * @default true
@@ -1086,7 +1086,7 @@ package fl.core {
          * <p>The UIComponent class implements this method by creating and positioning
          * an instance of the class that is specified by the <code>focusSkin</code> style.</p>
          *
-         * @param focused Indicates whether to show or hide the focus indicator. 
+         * @param focused Indicates whether to show or hide the focus indicator.
          *                If this value is <code>true</code>, the focus indicator is shown; if this value
          *                is <code>false</code>, the focus indicator is hidden.
          *
@@ -1134,7 +1134,7 @@ package fl.core {
 		}
 
         /**
-         * Retrieves the object that currently has focus. 
+         * Retrieves the object that currently has focus.
          *
          * <p>Note that this method does not necessarily return the component that
          * has focus. It may return the internal subcomponent of the component
@@ -1159,7 +1159,7 @@ package fl.core {
          * @langversion 3.0
          * @playerversion Flash 9.0.28.0
          */
-		protected function setIMEMode(enabled:Boolean) {
+		protected function setIMEMode(enabled:Boolean):void {
 			if(_imeMode != null) {
 				if(enabled) {
 					IME.enabled = true;
@@ -1170,7 +1170,7 @@ package fl.core {
 						}
 						errorCaught = false;
 					} catch(e:Error) {
-						errorCaught = true;				
+						errorCaught = true;
 						throw new Error("IME mode not supported: " + _imeMode);
 					}
 				} else {
@@ -1181,7 +1181,7 @@ package fl.core {
 				}
 			}
 		}
-		
+
         /**
          * Initiates an immediate draw operation, without invalidating everything as <code>invalidateNow</code> does.
          *
@@ -1204,7 +1204,7 @@ package fl.core {
          * @langversion 3.0
          * @playerversion Flash 9.0.28.0
          */
-		protected function configUI():void {			
+		protected function configUI():void {
 			isLivePreview = checkLivePreview();
 			var r:Number = rotation;
 			rotation = 0;
@@ -1231,12 +1231,12 @@ package fl.core {
 			if (parent == null) { return false; }
 			var className:String;
 			try {
-				className = getQualifiedClassName(parent);	
+				className = getQualifiedClassName(parent);
 			} catch (e:Error) {}
-			return (className == "fl.livepreview::LivePreviewParent");	
+			return (className == "fl.livepreview::LivePreviewParent");
 		}
 
-        // Included the first property as a proper param to enable *some* type checking, and also because it is a required param.		
+        // Included the first property as a proper param to enable *some* type checking, and also because it is a required param.
         /**
          * @private (protected)
          *
@@ -1283,14 +1283,14 @@ package fl.core {
 		 */
 		protected function getDisplayObjectInstance(skin:Object):DisplayObject {
 			var classDef:Object = null;
-			if (skin is Class) { 
-				return (new skin()) as DisplayObject; 
+			if (skin is Class) {
+				return (new skin()) as DisplayObject;
 			} else if (skin is DisplayObject) {
 				(skin as DisplayObject).x = 0;
 				(skin as DisplayObject).y = 0;
 				return skin as DisplayObject;
 			}
-			
+
 			try {
 				classDef = getDefinitionByName(skin.toString());
 			} catch(e:Error) {
@@ -1300,17 +1300,17 @@ package fl.core {
 					// Nothing
 				}
 			}
-			
+
 			if (classDef == null) {
 				return null;
 			}
 			return (new classDef()) as DisplayObject;
 		}
 		/**
-         * Returns the specified style for a component, considering all styles set on the global level, component level and instance level. 
+         * Returns the specified style for a component, considering all styles set on the global level, component level and instance level.
          *
-         * <p>For example, if a component has a style set at the global level to <code>myStyle</code> and you call 
-         * <code>getStyle("myStyle")</code> on an instance that does not have an instance setting, it returns null.  If you call 
+         * <p>For example, if a component has a style set at the global level to <code>myStyle</code> and you call
+         * <code>getStyle("myStyle")</code> on an instance that does not have an instance setting, it returns null.  If you call
          * <code>getStyleValue("myStyle")</code>, it returns "myStyle", because it is active at the global level.</p>
          *
          * @langversion 3.0
@@ -1327,12 +1327,12 @@ package fl.core {
 		 */
 		protected function copyStylesToChild(child:UIComponent,styleMap:Object):void {
 			for (var n:String in styleMap) {
-				
+
 				child.setStyle(n,getStyleValue(styleMap[n]));
 			}
 		}
 
-		
+
 		/**
          * @private (protected)
          *
@@ -1341,11 +1341,11 @@ package fl.core {
 		 */
 		protected function callLater(fn:Function):void {
 			if (inCallLaterPhase) { return; }
-			
+
 			callLaterMethods[fn] = true;
 			if (stage != null) {
 				stage.addEventListener(Event.RENDER,callLaterDispatcher,false,0,true);
-				stage.invalidate();				
+				stage.invalidate();
 			} else {
 				addEventListener(Event.ADDED_TO_STAGE,callLaterDispatcher,false,0,true);
 			}
@@ -1363,7 +1363,7 @@ package fl.core {
 				// now we can listen for render event:
 				stage.addEventListener(Event.RENDER,callLaterDispatcher,false,0,true);
 				stage.invalidate();
-				
+
 				return;
 			} else {
 				event.target.removeEventListener(Event.RENDER,callLaterDispatcher);
@@ -1375,7 +1375,7 @@ package fl.core {
 			}
 
 			inCallLaterPhase = true;
-			
+
 			var methods:Dictionary = callLaterMethods;
 			for (var method:Object in methods) {
 				method();
@@ -1478,7 +1478,7 @@ package fl.core {
 			// You must override this function if your component accepts focus
 		}
 
-		
+
 
 		/**
          *  @private (protected)
@@ -1488,13 +1488,13 @@ package fl.core {
 		 *  to initialize accessibility support for this component</p>
 		 *
          * @langversion 3.0
-         * @playerversion Flash 9.0.28.0		 
+         * @playerversion Flash 9.0.28.0
 		 */
 		protected function hookAccessibility(event:Event):void {
 			removeEventListener(Event.ENTER_FRAME, hookAccessibility);
 			initializeAccessibility();
 		}
-		
+
 		/**
          *  @private (protected)
 		 *  Initializes this component's accessibility code.

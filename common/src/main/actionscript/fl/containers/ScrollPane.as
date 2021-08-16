@@ -62,7 +62,7 @@ package fl.containers {
      * @includeExample examples/ScrollPane.complete.1.as -noswf
      *
      * @eventType flash.events.Event.COMPLETE
-     * 
+     *
      * @see #event:progress
      *
      * @langversion 3.0
@@ -71,8 +71,8 @@ package fl.containers {
 	[Event(name="complete", type="flash.events.Event")]
 
 	/**
-     * Dispatched when the properties and methods of a loaded SWF file are accessible. 
-     * The following conditions must exist for this event to be dispatched: 
+     * Dispatched when the properties and methods of a loaded SWF file are accessible.
+     * The following conditions must exist for this event to be dispatched:
      * <ul>
      *     <li>All the properties and methods that are associated with the loaded object,
 	 *         as well as those that are associated with the component, must be accessible.</li>
@@ -120,11 +120,11 @@ package fl.containers {
 
 	/**
      * Dispatched when content is loading. This event is dispatched regardless of
-     * whether the load operation was triggered by an auto-load process or an explicit call to the 
+     * whether the load operation was triggered by an auto-load process or an explicit call to the
      * <code>load()</code> method.
      *
      * @includeExample examples/UILoader.progress.1.as -noswf
-     * 
+     *
 	 * @eventType flash.events.ProgressEvent.PROGRESS
      *
      * @see #event:complete
@@ -134,7 +134,7 @@ package fl.containers {
 	 */
 	[Event("progress", type="flash.events.ProgressEvent")]
 
-	
+
 	//--------------------------------------
 	//  Styles
 	//--------------------------------------
@@ -176,7 +176,7 @@ package fl.containers {
 
     /**
      * The ScrollPane component displays display objects and JPEG, GIF, and PNG files,
-     * as well as SWF files, in a scrollable area. You can use a scroll pane to 
+     * as well as SWF files, in a scrollable area. You can use a scroll pane to
      * limit the screen area that is occupied by these media types.
      * The scroll pane can display content that is loaded from a local
      * disk or from the Internet. You can set this content while
@@ -186,9 +186,9 @@ package fl.containers {
      * focus moves to the next component. The vertical and horizontal
      * scroll bars in the scroll pane do not receive focus.
 	 *
-	 * <p><strong>Note:</strong> When content is being loaded from a different 
-	 * domain or <em>sandbox</em>, the properties of the content may be inaccessible 
-	 * for security reasons. For more information about how domain security 
+	 * <p><strong>Note:</strong> When content is being loaded from a different
+	 * domain or <em>sandbox</em>, the properties of the content may be inaccessible
+	 * for security reasons. For more information about how domain security
 	 * affects the load process, see the Loader class.</p>
 	 *
 	 * <p><strong>Note:</strong> When loading very large image files into a ScrollPane object,
@@ -342,7 +342,7 @@ package fl.containers {
 
         /**
          * Gets a number between 0 and 100 indicating what percentage of the content is loaded.
-         * If you are loading assets from your library, and not externally loaded content, 
+         * If you are loading assets from your library, and not externally loaded content,
          * the <code>percentLoaded</code> property is set to 0.
          *
          * @default 0
@@ -366,7 +366,7 @@ package fl.containers {
         /**
          * Gets the count of bytes of content that have been loaded.
          * When this property equals the value of <code>bytesTotal</code>,
-         * all the bytes are loaded.  
+         * all the bytes are loaded.
          *
          * @default 0
          *
@@ -400,9 +400,9 @@ package fl.containers {
 		}
 
         /**
-         * Reloads the contents of the scroll pane. 
+         * Reloads the contents of the scroll pane.
          *
-         * <p> This method does not redraw the scroll bar. To reset the 
+         * <p> This method does not redraw the scroll bar. To reset the
          * scroll bar, use the <code>update()</code> method.</p>
          *
          * @includeExample examples/ScrollPane.refreshPane.1.as -noswf
@@ -459,13 +459,13 @@ package fl.containers {
 
         [Inspectable(type="String", defaultValue="")]
         /**
-         * Gets or sets an absolute or relative URL that identifies the 
-		 * location of the SWF or image file to load, the class name 
+         * Gets or sets an absolute or relative URL that identifies the
+		 * location of the SWF or image file to load, the class name
 		 * of a movie clip in the library, a reference to a display object,
 		 * or a instance name of a movie clip on the same level as the component.
-		 * 
-		 * <p>Valid image file formats include GIF, PNG, and JPEG. To load an 
-		 * asset by using a URLRequest object, use the <code>load()</code> 
+		 *
+		 * <p>Valid image file formats include GIF, PNG, and JPEG. To load an
+		 * asset by using a URLRequest object, use the <code>load()</code>
 		 * method.</p>
          *
          * @default null
@@ -495,10 +495,10 @@ package fl.containers {
 			if (_source == "" || _source == null) {
 				return;
 			}
-			
+
 			currentContent = getDisplayObjectInstance(value);
 			if (currentContent != null) {
-				var child = contentClip.addChild(currentContent as DisplayObject);
+				var child:DisplayObject = contentClip.addChild(currentContent as DisplayObject);
 				dispatchEvent(new Event(Event.INIT));
 				update();
 			} else {
@@ -507,13 +507,13 @@ package fl.containers {
 		}
 
 		/**
-		 * The request parameter of this method accepts only a URLRequest object 
-		 * whose <code>source</code> property contains a string, a class, or a 
+		 * The request parameter of this method accepts only a URLRequest object
+		 * whose <code>source</code> property contains a string, a class, or a
 		 * URLRequest object.
-		 * 
-		 * By default, the LoaderContext object uses the current domain as the 
-		 * application domain. To specify a different application domain value, 
-		 * to check a policy file, or to change the security domain, initialize 
+		 *
+		 * By default, the LoaderContext object uses the current domain as the
+		 * application domain. To specify a different application domain value,
+		 * to check a policy file, or to change the security domain, initialize
 		 * a new LoaderContext object and pass it to this method.
 		 *
 		 * @param request The URLRequest object to use to load an image into the scroll pane.
@@ -546,8 +546,8 @@ package fl.containers {
          * @langversion 3.0
          * @playerversion Flash 9.0.28.0
          */
-		override protected function setVerticalScrollPosition(scrollPos:Number, fireEvent:Boolean=false):void {	
-			var contentScrollRect = contentClip.scrollRect;
+		override protected function setVerticalScrollPosition(scrollPos:Number, fireEvent:Boolean=false):void {
+			var contentScrollRect:Rectangle = contentClip.scrollRect;
 			contentScrollRect.y = scrollPos;
 			contentClip.scrollRect = contentScrollRect;
 		}
@@ -559,7 +559,7 @@ package fl.containers {
          * @playerversion Flash 9.0.28.0
          */
 		override protected function setHorizontalScrollPosition(scrollPos:Number, fireEvent:Boolean=false):void {
-			var contentScrollRect = contentClip.scrollRect;
+			var contentScrollRect:Rectangle = contentClip.scrollRect;
 			contentScrollRect.x = scrollPos;
 			contentClip.scrollRect = contentScrollRect;
 		}
@@ -572,7 +572,7 @@ package fl.containers {
 			contentScrollRect = contentClip.scrollRect;
 			contentScrollRect.width = availableWidth;
 			contentScrollRect.height = availableHeight;
-			
+
 			contentClip.cacheAsBitmap = useBitmapScrolling;
 			contentClip.scrollRect = contentScrollRect;
 			contentClip.x = contentClip.y = contentPadding;
@@ -586,14 +586,14 @@ package fl.containers {
          */
 		protected function onContentLoad(event:Event):void {
 			update();
-			
+
 			//Need to reset the sizes, for scrolling purposes.
 			//Just reset the scrollbars, don't redraw the entire pane.
-			var availableHeight = calculateAvailableHeight();
+			var availableHeight:Number = calculateAvailableHeight();
 			calculateAvailableSize();
 			horizontalScrollBar.setScrollProperties(availableWidth, 0, (useFixedHorizontalScrolling) ? _maxHorizontalScrollPosition : contentWidth - availableWidth, availableWidth);
 			verticalScrollBar.setScrollProperties(availableHeight, 0, contentHeight - availableHeight, availableHeight);
-			
+
 			passEvent(event);
 		}
 
@@ -637,7 +637,7 @@ package fl.containers {
 			passEvent(event);
 			super.handleScroll(event);
 		}
-		
+
 		/**
          * @private (protected)
          *
@@ -649,7 +649,7 @@ package fl.containers {
 			clearLoadEvents();
 			loader.contentLoaderInfo.removeEventListener(Event.INIT,handleInit);
 		}
-		
+
 		/**
          * @private (protected)
          *
@@ -684,11 +684,11 @@ package fl.containers {
          * @playerversion Flash 9.0.28.0
          */
 		protected function doDrag(event:MouseEvent):void {
-			var yPos = scrollDragVPos-(mouseY-yOffset);
+			var yPos:Number = scrollDragVPos-(mouseY-yOffset);
 			_verticalScrollBar.setScrollPosition(yPos);
 			setVerticalScrollPosition(_verticalScrollBar.scrollPosition,true);
-			
-			var xPos = scrollDragHPos-(mouseX-xOffset);
+
+			var xPos:Number = scrollDragHPos-(mouseX-xOffset);
 			_horizontalScrollBar.setScrollPosition(xPos);
 			setHorizontalScrollPosition(_horizontalScrollBar.scrollPosition,true);
 		}
@@ -742,13 +742,13 @@ package fl.containers {
          * @langversion 3.0
          * @playerversion Flash 9.0.28.0
          */
-		override protected function draw():void {			
+		override protected function draw():void {
 			if (isInvalid(InvalidationType.STYLES)) {
 				drawBackground();
 			}
-			
+
 			if (isInvalid(InvalidationType.STATE)) {
-				setScrollDrag();	
+				setScrollDrag();
 			}
 			super.draw();
 		}
@@ -761,12 +761,12 @@ package fl.containers {
          */
 		override protected function drawBackground():void {
 			var bg:DisplayObject = background;
-			
+
 			background = getDisplayObjectInstance(getStyleValue(enabled ? "upSkin" : "disabledSkin"));
 			background.width = width;
 			background.height = height;
 			addChildAt(background,0);
-			
+
 			if (bg != null && bg != background) { removeChild(bg); }
 		}
 
@@ -847,7 +847,7 @@ package fl.containers {
 			super.configUI();
 			contentClip = new Sprite();
 			addChild(contentClip);
-			contentClip.scrollRect = contentScrollRect; 
+			contentClip.scrollRect = contentScrollRect;
 			_horizontalScrollPolicy = ScrollPolicy.AUTO;
 			_verticalScrollPolicy = ScrollPolicy.AUTO;
 		}

@@ -2,28 +2,28 @@
  * --== SmartFoxServer ==--
  * ObjectSerializer class
  * Actionscript 3.0 / Flex 2 / Flash 9 version
- * 
+ *
  * @version 	1.0.0
  * @status 		alpha
  * @author 		Marco Lapi
- * 
+ *
  * (c) 2006 gotoAndPlay()
  * www.gotoandplay.it
  * www.smartfoxserver.com
- * 
+ *
  */
 package it.gotoandplay.smartfoxserver.util
 {
 	import mx.utils.StringUtil;
-	
+
 	public class ObjectSerializer
 	{
 		private static var instance:ObjectSerializer
-		
+
 		private var debug:Boolean
 		private var eof:String
 		private var tabs:String
-		
+
 		/**
 		 * Singleton: private constructor
 		 */
@@ -32,22 +32,22 @@ package it.gotoandplay.smartfoxserver.util
 			this.tabs 	= "\t\t\t\t\t\t\t\t\t\t\t\t\t"
 			setDebug(debug)
 		}
-		
-		
+
+
 		/**
 		 * Set debug
 		 */
 		private function setDebug(b:Boolean):void
 		{
 			this.debug = b
-			
+
 			if (this.debug)
 				this.eof = "\n"
 			else
 				this.eof = ""
 		}
-		
-		
+
+
 		/**
 		 * Return the one and only instance of this class
 		 */
@@ -55,28 +55,28 @@ package it.gotoandplay.smartfoxserver.util
 		{
 			if (instance == null)
 				instance = new ObjectSerializer(debug)
-				
+
 			return instance
 		}
-		
+
 		public function serialize(o:Object):String
 		{
 			var result:Object = {}
 			obj2xml(o, result)
-			
-			return result.xmlStr	
+
+			return result.xmlStr
 		}
-		
+
 		public function deserialize(xmlString:String):Object
 		{
 			var xmlData:XML = new XML(xmlString)
 			var resObj:Object = {}
-			
+
 			xml2obj(xmlData, resObj)
-			
+
 			return resObj
 		}
-		
+
 		private function obj2xml(srcObj:Object, trgObj:Object, depth:int = 0, objName:String = ""):void
 		{
 			// First run
@@ -84,24 +84,24 @@ package it.gotoandplay.smartfoxserver.util
 			{
 				trgObj.xmlStr = "<dataObj>" + this.eof
 			}
-			
+
 			// Inside a recursive call
 			else
 			{
 				if (this.debug)
 					trgObj.xmlStr += this.tabs.substr(0, depth)
-					
+
 				// Object type
-				var ot:String = (srcObj is Array) ? "a" : "o"	
+				var ot:String = (srcObj is Array) ? "a" : "o"
 				trgObj.xmlStr += "<obj t='" + ot + "' o='" + objName + "'>" + this.eof
 			}
-			
+
 			// Scan the object recursively
 			for (var i:String in srcObj)
 			{
 				var t:String = typeof srcObj[i]
-				var o:*		 = srcObj[i]		
-				
+				var o:*		 = srcObj[i]
+
 				//
 				// if a primitive type is found
 				// generate an xml <var n="name" t="type">value</var> TAG
@@ -116,7 +116,7 @@ package it.gotoandplay.smartfoxserver.util
 				// v = value of var
 				//
 				if ((t == "boolean") || (t == "number") || (t == "string") || (t == "null"))
-				{	
+				{
 					if (t == "boolean")
 					{
 						o = Number(o)
@@ -130,13 +130,13 @@ package it.gotoandplay.smartfoxserver.util
 					{
 						o = Entities.encodeEntities(o) // ??? Needed?
 					}
-					
+
 					if (this.debug)
 						trgObj.xmlStr += this.tabs.substr(0, depth + 1)
-					
+
 					trgObj.xmlStr += "<var n='" + i + "' t='" + t.substr(0,1) + "'>" + o + "</var>" + this.eof
 				}
-				
+
 				//
 				// if an object / array is found
 				// recursively scans the new Object
@@ -147,70 +147,70 @@ package it.gotoandplay.smartfoxserver.util
 				else if (t == "object")
 				{
 					obj2xml(o, trgObj, depth + 1, i)
-					
+
 					if (this.debug)
 						trgObj.xmlStr += this.tabs.substr(0, depth + 1)
-		
+
 					trgObj.xmlStr += "</obj>" + this.eof
 				}
 			}
-			
+
 			// Close root TAG
 			if (depth == 0)
 				trgObj.xmlStr += "</dataObj>" + this.eof
 		}
 
-		
-		private function xml2obj(x:XML, o:Object)
+
+		private function xml2obj(x:XML, o:Object):void
 		{
 			var i:int = 0
 			var nodes:XMLList = x.children()
 			var nodeName:String
-			
+
 			for each(var node:XML in nodes)
-			{ 
+			{
 				nodeName = node.name().toString()
-				
+
 				// Handle Object
 				if (nodeName == "obj")
 				{
 					var objName:String = node.@o
 					var objType:String = node.@t
-					
+
 					// Create nested array
 					if (objType == "a")
 						o[objName] = []
-					
+
 					// Create nested object
 					else if (objType == "o")
 						o[objName] = {}
-						
+
 					xml2obj(node, o[objName])
 				}
-				
+
 				// Handle Array
 				else if (nodeName == "var")
 				{
 					var varName:String = node.@n
 					var varType:String = node.@t
 					var varVal:String = node.toString()
-					
+
 					// Cast variable to its original type
 					if (varType == "b")
 						o[varName] = (varVal == "0" ? false : true)
-							
+
 					else if (varType == "n")
 						o[varName] = Number(varVal)
-						
+
 					else if (varType == "s")
 						o[varName] = varVal // No need of Entities.decodeEntities()
-						
+
 					else if (varType == "x")
 						o[varName] = null
 				}
-			}	
+			}
 		}
-		
+
 		private function encodeEntities(s:String):String
 		{
 			return s

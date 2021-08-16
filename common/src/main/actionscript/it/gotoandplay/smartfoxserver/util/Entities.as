@@ -1,12 +1,12 @@
 package it.gotoandplay.smartfoxserver.util
 {
-	
+
 	public class Entities
 	{
 		private static var ascTab:Array
 		private static var ascTabRev:Array
 		private static var hexTable:Array
-		
+
 		//--- XML Entities Conversion table ----------------------
 		ascTab				= []
 		ascTab[">"] 		= "&gt;"
@@ -14,14 +14,14 @@ package it.gotoandplay.smartfoxserver.util
 		ascTab["&"] 		= "&amp;"
 		ascTab["'"] 		= "&apos;"
 		ascTab["\""] 		= "&quot;"
-		
+
 		ascTabRev			= []
 		ascTabRev["&gt;"]	= ">"
 		ascTabRev["&lt;"] 	= "<"
 		ascTabRev["&amp;"] 	= "&"
 		ascTabRev["&apos;"] = "'"
 		ascTabRev["&quot;"] = "\""
-		
+
 		hexTable = new Array()
 		hexTable["0"] = 0
 		hexTable["1"] = 1
@@ -39,17 +39,17 @@ package it.gotoandplay.smartfoxserver.util
 		hexTable["D"] = 13
 		hexTable["E"] = 14
 		hexTable["F"] = 15
-		
+
 		public static function encodeEntities(st:String):String
 		{
 			var strbuff:String = ""
-		
+
 			// char codes < 32 are ignored except for tab,lf,cr
 			for (var i:int = 0; i < st.length; i++)
 			{
 				var ch:String = st.charAt(i)
 				var cod:int = st.charCodeAt(i)
-				
+
 				if (cod == 9 || cod == 10 || cod == 13)
 				{
 					strbuff += ch
@@ -67,12 +67,12 @@ package it.gotoandplay.smartfoxserver.util
 				else
 					strbuff += ch
 			}
-		
+
 			return strbuff
 		}
-	
-	
-	
+
+
+
 		public static function decodeEntities(st:String):String
 		{
 			var strbuff:String
@@ -80,19 +80,19 @@ package it.gotoandplay.smartfoxserver.util
 			var ent:String
 			var chi:String
 			var item:String
-			
+
 			var i:int = 0
-	
+
 			strbuff = ""
-	
+
 			while(i < st.length)
 			{
 				ch = st.charAt(i)
-	
+
 				if (ch == "&")
 				{
 					ent = ch
-					
+
 					// read the complete entity
 					do
 					{
@@ -100,35 +100,31 @@ package it.gotoandplay.smartfoxserver.util
 						chi = st.charAt(i)
 						ent += chi
 						//trace(ent)
-					} 
+					}
 					while (chi != ";")
-					
+
 					item = ascTabRev[ent]
-	
-					if (item != undefined)
-						strbuff += item
-					else
-						strbuff += String.fromCharCode(getCharCode(ent))
+					strbuff += item
 				}
 				else
 					strbuff += ch
-					
+
 				i++
 			}
 			trace("DECODE: " + st + ", " + strbuff)
 			return strbuff
 		}
-		
-	
+
+
 		//-----------------------------------------------
 		// Transform xml code entity into hex code
 		// and return it as a number
 		//-----------------------------------------------
 		public static function getCharCode(ent:String):Number
 		{
-			var hex:String = ent.substr(3, ent.length)	
+			var hex:String = ent.substr(3, ent.length)
 			hex = hex.substr(0, hex.length - 1)
-			
+
 			return Number("0x" + hex)
 		}
 	}

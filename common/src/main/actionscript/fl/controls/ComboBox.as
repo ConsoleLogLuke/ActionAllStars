@@ -35,8 +35,8 @@ package fl.controls {
     //  Events
     //--------------------------------------
     /**
-     * Dispatched when the user changes the selection in the ComboBox component or, if 
-     * the ComboBox component is editable, each time the user enters a keystroke in the 
+     * Dispatched when the user changes the selection in the ComboBox component or, if
+     * the ComboBox component is editable, each time the user enters a keystroke in the
      * text field.
      *
      * @eventType flash.events.Event.CHANGE
@@ -88,7 +88,7 @@ package fl.controls {
 	[Event(name="close", type="flash.events.Event")]
 
     /**
-     * Dispatched if the <code>editable</code> property is set to <code>true</code> and the user 
+     * Dispatched if the <code>editable</code> property is set to <code>true</code> and the user
      * presses the Enter key while typing in the editable text field.
      *
      * @eventType fl.events.ComponentEvent.ENTER
@@ -99,7 +99,7 @@ package fl.controls {
 	[Event(name="enter", type="fl.events.ComponentEvent")]
 
     /**
-     * Dispatched when the user clicks the drop-down button to display 
+     * Dispatched when the user clicks the drop-down button to display
      * the drop-down list. Also dispatched when the user clicks the text
      * field, if the ComboBox component is not editable.
      *
@@ -131,7 +131,7 @@ package fl.controls {
     //--------------------------------------
     /**
      * The space that separates the right edge of the component from the
-     * text representing the selected item, in pixels. The button is 
+     * text representing the selected item, in pixels. The button is
      * part of the background skin.
      *
      * @default 24
@@ -185,8 +185,8 @@ package fl.controls {
 	[Style(name="downSkin", type="Class")]
 
     /**
-     * The name of the class that provides the background that appears  
-     * in the ComboBox component when the <code>enabled</code> property of the 
+     * The name of the class that provides the background that appears
+     * in the ComboBox component when the <code>enabled</code> property of the
      * component is set to <code>false</code>.
      *
      * @default ComboBox_disabledSkin
@@ -235,7 +235,7 @@ package fl.controls {
      * @playerversion Flash 9.0.28.0
      */
     [Style(name="downArrowDisabledSkin", type="Class")]
-     
+
     /**
      * @copy fl.controls.ScrollBar#style:downArrowDownSkin
      *
@@ -298,7 +298,7 @@ package fl.controls {
 
     /**
      * @copy fl.controls.ScrollBar#style:thumbUpSkin
-     * 
+     *
      * @default ScrollThumb_upSkin
      *
      * @langversion 3.0
@@ -419,7 +419,7 @@ package fl.controls {
 
     /**
      * @copy fl.controls.LabelButton#style:embedFonts
-     * 
+     *
      * @default false
      *
      * @langversion 3.0
@@ -432,9 +432,9 @@ package fl.controls {
     //--------------------------------------
     /**
      * The ComboBox component contains a drop-down list from which the
-     * user can select one value. Its functionality is similar to that 
-     * of the SELECT form element in HTML. The ComboBox component can be editable, 
-     * in which case the user can type entries that are not in the list 
+     * user can select one value. Its functionality is similar to that
+     * of the SELECT form element in HTML. The ComboBox component can be editable,
+     * in which case the user can type entries that are not in the list
      * into the TextInput portion of the ComboBox component.
      *
      * @includeExample examples/ComboBoxExample.as
@@ -509,7 +509,7 @@ package fl.controls {
          * @playerversion Flash 9.0.28.0
 		 */
 		protected var _prompt:String;
-		
+
 		/**
          * @private (protected)
          *
@@ -524,7 +524,7 @@ package fl.controls {
          * @playerversion Flash 9.0.28.0
 		 */
 		protected var currentIndex:int;
-		
+
 		/**
          * @private (protected)
          *
@@ -532,7 +532,7 @@ package fl.controls {
          * @playerversion Flash 9.0.28.0
 		 */
 		protected var listOverIndex:uint;
-		
+
 		/**
          * @private (protected)
          *
@@ -540,7 +540,7 @@ package fl.controls {
          * @playerversion Flash 9.0.28.0
 		 */
 		protected var _dropdownWidth:Number;
-		
+
 		/**
          * @private (protected)
          *
@@ -548,15 +548,15 @@ package fl.controls {
          * @playerversion Flash 9.0.28.0
 		 */
 		protected var _labels:Array;
-		
+
 		/**
 		 * @private
          *
          * @langversion 3.0
          * @playerversion Flash 9.0.28.0
 		 */
-		private var collectionItemImport:SimpleCollectionItem;		
-		
+		private var collectionItemImport:SimpleCollectionItem;
+
 		/**
          * @private
          *
@@ -573,7 +573,7 @@ package fl.controls {
 				buttonWidth:24,
 				disabledAlpha:null, listSkin:null
 				};
-		
+
 		/**
          * @private (protected)
          *
@@ -636,7 +636,7 @@ package fl.controls {
 		public static function getStyleDefinition():Object {
 			return mergeStyles(defaultStyles, List.getStyleDefinition());
 		}
-		
+
 		/**
          * @private (internal)
          *
@@ -655,17 +655,17 @@ package fl.controls {
 			super();
 		}
 
-		
+
 		[Inspectable(defaultValue=false)]
         /**
-         * Gets or sets a Boolean value that indicates whether the ComboBox 
-         * component is editable or read-only. A value of <code>true</code> indicates 
-         * that the ComboBox component is editable; a value of <code>false</code> 
+         * Gets or sets a Boolean value that indicates whether the ComboBox
+         * component is editable or read-only. A value of <code>true</code> indicates
+         * that the ComboBox component is editable; a value of <code>false</code>
          * indicates that it is not.
          *
-         * <p>In an editable ComboBox component, a user can enter values into the text 
+         * <p>In an editable ComboBox component, a user can enter values into the text
          * box that do not appear in the drop-down list. The text box displays the text
-		 * of the item in the list. If a ComboBox component is not editable, text cannot 
+		 * of the item in the list. If a ComboBox component is not editable, text cannot
 		 * be entered into the text box. </p>
          *
          * @default false
@@ -692,9 +692,9 @@ package fl.controls {
 
 		[Inspectable(defaultValue=5)]
         /**
-         * Gets or sets the maximum number of rows that can appear in a drop-down  
-         * list that does not have a scroll bar. If the number of items in the 
-         * drop-down list exceeds this value, the list is resized and a scroll bar is displayed, 
+         * Gets or sets the maximum number of rows that can appear in a drop-down
+         * list that does not have a scroll bar. If the number of items in the
+         * drop-down list exceeds this value, the list is resized and a scroll bar is displayed,
          * if necessary. If the number of items in the drop-down list is less than this value,
          * the drop-down list is resized to accommodate the number of items that it contains.
          *
@@ -728,14 +728,14 @@ package fl.controls {
 		[Inspectable(verbose=1)]
         /**
          * Gets or sets the characters that a user can enter in the text field.
-         * If the value of the <code>restrict</code> property is 
-         * a string of characters, you can enter only characters in the string 
-         * into the text field. The string is read from left to right. If 
-         * the value of the <code>restrict</code> property is <code>null</code>, you 
-         * can enter any character. If the value of the <code>restrict</code> 
-         * property is an empty string (""), you cannot enter any character. 
-         * You can specify a range by using the hyphen (-) character. This restricts 
-         * only user interaction; a script can put any character into the text 
+         * If the value of the <code>restrict</code> property is
+         * a string of characters, you can enter only characters in the string
+         * into the text field. The string is read from left to right. If
+         * the value of the <code>restrict</code> property is <code>null</code>, you
+         * can enter any character. If the value of the <code>restrict</code>
+         * property is an empty string (""), you cannot enter any character.
+         * You can specify a range by using the hyphen (-) character. This restricts
+         * only user interaction; a script can put any character into the text
          * field.
          *
          * @default null
@@ -793,8 +793,8 @@ package fl.controls {
 		}
 
         /**
-         * Gets or sets the text that the text box contains in an editable ComboBox component. 
-         * For ComboBox components that are not editable, this value is read-only. 
+         * Gets or sets the text that the text box contains in an editable ComboBox component.
+         * For ComboBox components that are not editable, this value is read-only.
          *
          * @default ""
          *
@@ -820,7 +820,7 @@ package fl.controls {
 
 		/**
 		 * @copy fl.controls.List#labelField
-         * 
+         *
          * @default "label"
          *
          * @includeExample examples/ComboBox.labelField.1.as -noswf
@@ -870,7 +870,7 @@ package fl.controls {
 			list.labelFunction = value;
 			invalidate(InvalidationType.DATA);
 		}
-		
+
 		/**
 		 * @copy fl.controls.List#itemToLabel()
          *
@@ -882,17 +882,17 @@ package fl.controls {
 		 */
 		public function itemToLabel(item:Object):String {
 			if (item == null) { return ""; }
-			return list.itemToLabel(item);	
+			return list.itemToLabel(item);
 		}
-		
+
 		/**
 		 * Gets or sets the value of the item that is selected in the drop-down list.
-         * If the user enters text into the text box of an editable ComboBox component, the 
-		 * <code>selectedItem</code> property is <code>undefined</code>. This  
-		 * property has a value only if the user selects an item 
-		 * or if ActionScript is used to select an item from the drop-down list. 
-		 * If the ComboBox component is not editable, the value of the <code>selectedItem</code> 
-		 * property is always valid. If there are no items in the drop-down list of 
+         * If the user enters text into the text box of an editable ComboBox component, the
+		 * <code>selectedItem</code> property is <code>undefined</code>. This
+		 * property has a value only if the user selects an item
+		 * or if ActionScript is used to select an item from the drop-down list.
+		 * If the ComboBox component is not editable, the value of the <code>selectedItem</code>
+		 * property is always valid. If there are no items in the drop-down list of
 		 * an editable ComboBox component, the value of this property is <code>null</code>.
 		 *
          * @default null
@@ -921,8 +921,8 @@ package fl.controls {
 		}
 
 		/**
-		 * Gets a reference to the List component that the ComboBox component contains. 
-		 * The List subcomponent is not instantiated within the ComboBox until it 
+		 * Gets a reference to the List component that the ComboBox component contains.
+		 * The List subcomponent is not instantiated within the ComboBox until it
 		 * must be displayed. However, the list is created when the <code>dropdown</code>
 		 * property is accessed.
          *
@@ -952,10 +952,10 @@ package fl.controls {
 		}
 
 		/**
-		 * Gets a reference to the TextInput component that the ComboBox 
+		 * Gets a reference to the TextInput component that the ComboBox
 		 * component contains. Use this property to access and manipulate
 		 * the underlying TextInput component. For example, you can use
-		 * this property to change the selection of the text box or to 
+		 * this property to change the selection of the text box or to
 		 * restrict the set of characters that can be entered into it.
          *
          * @internal includeExample examples/ComboBox.textField.1.as -noswf
@@ -972,7 +972,7 @@ package fl.controls {
 		}
 
 		/**
-         * Gets the label of an item in an editable ComboBox component. For a ComboBox 
+         * Gets the label of an item in an editable ComboBox component. For a ComboBox
          * component that is not editable, this property gets the data that the item contains.
          *
          * @includeExample examples/ComboBox.value.1.as -noswf
@@ -988,11 +988,11 @@ package fl.controls {
 				if (!_editable && item.data != null) {
 					return item.data;
 				} else {
-					return itemToLabel(item);	
+					return itemToLabel(item);
 				}
 			}
-		}	
-				
+		}
+
 		[Collection(collectionClass="fl.data.DataProvider", identifier="item", collectionItem="fl.data.SimpleCollectionItem")]
 		/**
 		 * @copy fl.controls.SelectableList#dataProvider
@@ -1007,7 +1007,7 @@ package fl.controls {
 		public function get dataProvider():DataProvider {
 			return list.dataProvider;
 		}
-		
+
 		/**
          * @private (setter)
          *
@@ -1021,8 +1021,8 @@ package fl.controls {
 		}
 
 		/**
-		 * Gets or sets the maximum width of the drop-down list, in pixels. 
-		 * The default value of this property is the width of the ComboBox 
+		 * Gets or sets the maximum width of the drop-down list, in pixels.
+		 * The default value of this property is the width of the ComboBox
 		 * component (the width of the TextInput instance plus the width of the BaseButton instance).
          *
          * @default 100
@@ -1059,10 +1059,10 @@ package fl.controls {
 			list.addItem(item);
 			invalidate(InvalidationType.DATA);
 		}
-		
+
 		[Inspectable(defaultValue="")]
 		/**
-		 * Gets or sets the prompt for the ComboBox component. This prompt is a string 
+		 * Gets or sets the prompt for the ComboBox component. This prompt is a string
 		 * that is displayed in the TextInput portion of the ComboBox when
          * the <code>selectedIndex</code> is -1. It is usually a string like "Select one...".
          * If a prompt is not set, the ComboBox component sets the <code>selectedIndex</code> property
@@ -1093,7 +1093,7 @@ package fl.controls {
 			}
 			invalidate(InvalidationType.STATE);
 		}
-		
+
 		/**
          * @private (protected)
          *
@@ -1102,7 +1102,7 @@ package fl.controls {
          */
 		 public function get imeMode():String {
 			return inputField.imeMode;
-		}		
+		}
 		/**
 		 * @private (protected)
 		 */
@@ -1138,7 +1138,7 @@ package fl.controls {
 			inputField.text = "";
 			invalidate(InvalidationType.DATA);
 		}
-		
+
 		/**
 		 * @copy fl.controls.SelectableList#removeItem()
          *
@@ -1149,13 +1149,13 @@ package fl.controls {
 		 *
          * @langversion 3.0
          * @playerversion Flash 9.0.28.0
-		 */		 
+		 */
 		public function removeItem(item:Object):Object {
 			return list.removeItem(item);
 		}
-		
+
 		/**
-		 * Removes the item at the specified index position. The index 
+		 * Removes the item at the specified index position. The index
          * locations of items whose indices are greater than the specified
 		 * index advance in the array by 1.
          *
@@ -1164,8 +1164,8 @@ package fl.controls {
 		 *
 		 * @param index Index of the item to be removed.
          *
-         * @throws RangeError The specified index is less than 0 or greater than or 
-		 *                    equal to the length of the data provider. 
+         * @throws RangeError The specified index is less than 0 or greater than or
+		 *                    equal to the length of the data provider.
          *
          * @see #removeAll()
          * @see #removeItem()
@@ -1236,7 +1236,7 @@ package fl.controls {
 		/**
          * Opens the drop-down list.
          *
-         * <p><strong>Note:</strong> Calling this method causes the <code>open</code> 
+         * <p><strong>Note:</strong> Calling this method causes the <code>open</code>
 		 * event to be dispatched. If the ComboBox component is already open, calling this method has no effect.</p>
          *
          * @see #close()
@@ -1255,7 +1255,7 @@ package fl.controls {
 			// Add a listener to the stage to close the combobox when something
 			// else is clicked.  We need to wait a frame, otherwise the same click
 			// that opens the comboBox will also close it.
-			addEventListener(Event.ENTER_FRAME, addCloseListener, false, 0, true);			
+			addEventListener(Event.ENTER_FRAME, addCloseListener, false, 0, true);
 
 			positionList();
 			list.scrollToSelected();
@@ -1265,7 +1265,7 @@ package fl.controls {
 		/**
          * Closes the drop-down list.
          *
-         * <p><strong>Note:</strong> Calling this method causes the <code>close</code> 
+         * <p><strong>Note:</strong> Calling this method causes the <code>close</code>
          * event to be dispatched. If the ComboBox is already closed, calling this method has no effect.</p>
          *
          * @includeExample examples/ComboBox.close.1.as -noswf
@@ -1280,16 +1280,16 @@ package fl.controls {
 			highlightCell();
 			highlightedCell = -1;
 			if (! isOpen) { return; }
-			
+
 			dispatchEvent(new Event(Event.CLOSE));
 			stage.removeEventListener(MouseEvent.MOUSE_DOWN, onStageClick);
 			isOpen = false;
 			stage.removeChild(list);
 		}
-		
+
 		/**
-		 * Gets the string that is displayed in the TextInput portion 
-		 * of the ComboBox component. This value is calculated from the data by using 
+		 * Gets the string that is displayed in the TextInput portion
+		 * of the ComboBox component. This value is calculated from the data by using
          * the <code>labelField</code> or <code>labelFunction</code> property.
          *
          * @includeExample examples/ComboBox.selectedLabel.1.as -noswf
@@ -1306,10 +1306,10 @@ package fl.controls {
 			} else if (selectedIndex == -1) {
 				return null;
 			}
-			return itemToLabel(selectedItem);	
+			return itemToLabel(selectedItem);
 		}
-		
-		
+
+
 		/**
          * @private (protected)
          *
@@ -1324,7 +1324,7 @@ package fl.controls {
 			copyStylesToChild(background, BACKGROUND_STYLES);
 			background.addEventListener(MouseEvent.MOUSE_DOWN, onToggleListVisibility, false, 0, true);
 			addChild(background);
-			
+
 			inputField = new TextInput();
 			inputField.focusTarget = this as IFocusManagerComponent;
 			inputField.focusEnabled = false;
@@ -1333,15 +1333,15 @@ package fl.controls {
 
 			list = new List();
 			list.focusEnabled = false;
-			copyStylesToChild(list, LIST_STYLES);			
+			copyStylesToChild(list, LIST_STYLES);
 			list.addEventListener(Event.CHANGE, onListChange, false, 0, true);
 			list.addEventListener(ListEvent.ITEM_CLICK, onListChange, false, 0, true);
 			list.addEventListener(ListEvent.ITEM_ROLL_OUT, passEvent, false, 0, true);
 			list.addEventListener(ListEvent.ITEM_ROLL_OVER, passEvent, false, 0, true);
 			list.verticalScrollBar.addEventListener(Event.SCROLL, passEvent, false, 0, true);
-			
+
 		}
-		
+
 		/**
          * @private (protected)
          *
@@ -1354,8 +1354,8 @@ package fl.controls {
 				stage.focus = inputField.textField;
 			}
 		}
-		
-		
+
+
 		/**
          * @private (protected)
          *
@@ -1365,7 +1365,7 @@ package fl.controls {
 		override protected function focusOutHandler(event:FocusEvent):void {
 			isKeyDown = false;
 			// If the dropdown is open...
-			if (isOpen) {				
+			if (isOpen) {
 				// If focus is moving outside the dropdown...
 				if (!event.relatedObject || !list.contains(event.relatedObject)) {
 					// Close the dropdown.
@@ -1378,7 +1378,7 @@ package fl.controls {
 			}
 			super.focusOutHandler(event);
 		}
-		
+
 		/**
 		 * @private (protected)
          *
@@ -1388,7 +1388,7 @@ package fl.controls {
 		protected function handleDataChange(event:DataChangeEvent):void {
 			invalidate(InvalidationType.DATA);
 		}
-		
+
 		/**
          * @private (protected)
          *
@@ -1397,23 +1397,23 @@ package fl.controls {
 		 */
 		override protected function draw():void {
 			// Fix the selectedIndex before redraw.
-			var _selectedIndex = selectedIndex;
-			
+			var _selectedIndex:int = selectedIndex;
+
 			// Check if index is -1, and it is allowed.
 			if (_selectedIndex == -1 && (prompt != null || editable || length == 0)) {
 				_selectedIndex = Math.max(-1, Math.min(_selectedIndex, length-1));
 			} else {
 				editableValue = null;
-				_selectedIndex = Math.max(0, Math.min(_selectedIndex, length-1));	
+				_selectedIndex = Math.max(0, Math.min(_selectedIndex, length-1));
 			}
 			if (list.selectedIndex != _selectedIndex) {
 				list.selectedIndex = _selectedIndex;
 				invalidate(InvalidationType.SELECTED, false);
 			}
-			
+
 			if (isInvalid(InvalidationType.STYLES)) {
-				setStyles();				
-				setEmbedFonts();				
+				setStyles();
+				setEmbedFonts();
 				invalidate(InvalidationType.SIZE, false);
 			}
 			if (isInvalid(InvalidationType.SIZE, InvalidationType.DATA, InvalidationType.STATE)) {
@@ -1436,19 +1436,19 @@ package fl.controls {
 				} else if(_selectedIndex == -1 && _prompt != null) {
 					showPrompt();
 				} else {
-					inputField.text = "";	
+					inputField.text = "";
 				}
-				
+
 				if (editable && selectedIndex > -1 && stage.focus == inputField.textField) {
 					inputField.setSelection(0,inputField.length);
 				}
-			}			
+			}
 			drawTextField();
-			
-			
+
+
 			super.draw();
 		}
-		
+
 		/**
          * @private (protected)
          *
@@ -1459,9 +1459,9 @@ package fl.controls {
 			var embed:Object = getStyleValue("embedFonts");
 			if (embed != null) {
 				inputField.textField.embedFonts = embed;
-			}	
+			}
 		}
-		
+
 		/**
          * @private (protected)
          *
@@ -1493,9 +1493,9 @@ package fl.controls {
 			background.setSize(width, height);
 			inputField.x = inputField.y = textPadding;
 			inputField.setSize(width - buttonWidth - textPadding, height - textPadding); // textPadding*2 cuts off the descenders.
-			
+
 			list.width = (isNaN(_dropdownWidth)) ? width : _dropdownWidth;
-			
+
 			background.enabled = enabled;
 			background.drawNow();
 		}
@@ -1552,7 +1552,7 @@ package fl.controls {
 			inputField.textField.selectable = enabled && _editable;
 			inputField.mouseEnabled = inputField.mouseChildren = enabled && _editable;
 			inputField.focusEnabled = false;
-			
+
 			if (_editable) {
 				inputField.addEventListener(FocusEvent.FOCUS_IN, onInputFieldFocus, false,0,true);
 				inputField.addEventListener(FocusEvent.FOCUS_OUT, onInputFieldFocusOut, false,0,true);
@@ -1572,7 +1572,7 @@ package fl.controls {
 			inputField.addEventListener(ComponentEvent.ENTER, onEnter, false, 0, true);
 			close();
 		}
-		
+
 		/**
          * @private (protected)
          *
@@ -1583,7 +1583,7 @@ package fl.controls {
 			inputField.removeEventListener(ComponentEvent.ENTER, onEnter);
 			selectedIndex = selectedIndex;
 		}
-		
+
         /**
          * @private (protected)
          *
@@ -1611,8 +1611,8 @@ package fl.controls {
 				stage.addEventListener(MouseEvent.MOUSE_UP, onListItemUp, false, 0, true);
 			}
 		}
-		
-		
+
+
 		/**
          * @private (protected)
          *
@@ -1624,18 +1624,18 @@ package fl.controls {
 			if (!(event.target is ICellRenderer ) || !list.contains(event.target as DisplayObject)) {
 				return;
 			}
-			
+
 			editableValue = null;
-			var startIndex = selectedIndex;
+			var startIndex:int = selectedIndex;
 			selectedIndex = event.target.listData.index;
-			
+
 			if (startIndex != selectedIndex) {
 				dispatchEvent(new Event(Event.CHANGE));
 			}
-			
-			close();			
+
+			close();
 		}
-		
+
 		/**
          * @private (protected)
          *
@@ -1672,14 +1672,14 @@ package fl.controls {
 		protected function passEvent(event:Event):void {
 			dispatchEvent(event);
 		}
-		
+
 		/**
          * @private (protected)
          *
          * @langversion 3.0
          * @playerversion Flash 9.0.28.0
 		 */
-		private function addCloseListener(event:Event) {
+		private function addCloseListener(event:Event):void {
 			removeEventListener(Event.ENTER_FRAME, addCloseListener);
 			if (!isOpen) { return; }
 			stage.addEventListener(MouseEvent.MOUSE_DOWN, onStageClick, false, 0, true);
@@ -1699,7 +1699,7 @@ package fl.controls {
 			selectedIndex = -1;
 			dispatchEvent(new Event(Event.CHANGE));
 		}
-		
+
 		/**
          * @private (protected)
          *
@@ -1710,7 +1710,7 @@ package fl.controls {
 			var pad:Number = Number(getStyleValue("contentPadding"));
 			return list.height-pad*2;
 		}
-		
+
 		/**
          * @private (protected)
          *
@@ -1735,9 +1735,9 @@ package fl.controls {
 				}
 				return;
 			}
-			
+
 			event.stopPropagation();
-			
+
 			var pageSize:int = Math.max((calculateAvailableHeight() / list.rowHeight)<<0, 1);
 			var sel:uint = selectedIndex;
 			var lastSel:Number = (highlightedCell == -1) ? selectedIndex : highlightedCell;
@@ -1747,14 +1747,14 @@ package fl.controls {
 					isOpen ? close() : open();
 					return;
 				case Keyboard.ESCAPE:
-					if (isOpen) { 
+					if (isOpen) {
 						if (highlightedCell > -1) {
 							selectedIndex = selectedIndex;
 						}
 						close();
 					}
 					return;
-					
+
 				case Keyboard.UP:
 					newSel = Math.max(0, lastSel-1);
 					break;
@@ -1773,7 +1773,7 @@ package fl.controls {
 				case Keyboard.END:
 					newSel = length-1;
 					break;
-					
+
 				case Keyboard.ENTER:
 					if (_editable && highlightedCell == -1) {
 						editableValue = inputField.text;
@@ -1786,13 +1786,13 @@ package fl.controls {
 					dispatchEvent(new ComponentEvent(ComponentEvent.ENTER));
 					close();
 					return;
-					
+
 				default:
 					if (editable) { break; } // Don't allow letter keys to change focus when editable.
 					newSel = list.getNextIndexAtLetter(String.fromCharCode(event.keyCode), lastSel);
 					break;
 			}
-						
+
 			if (newSel > -1) {
 				if (isOpen) {
 					highlightCell(newSel);
@@ -1800,11 +1800,11 @@ package fl.controls {
 				} else {
 					highlightCell();
 					selectedIndex = newSel;
-					dispatchEvent(new Event(Event.CHANGE));					
+					dispatchEvent(new Event(Event.CHANGE));
 				}
 			}
 		}
-		
+
 		/**
          * @private (protected)
          *
@@ -1813,7 +1813,7 @@ package fl.controls {
 		*/
 		protected function highlightCell(index:int=-1):void {
 			var renderer:ICellRenderer;
-			
+
 			// Turn off the currently highlighted cell
 			if (highlightedCell > -1) {
 				renderer = list.itemToCellRenderer(getItemAt(highlightedCell));
@@ -1821,13 +1821,13 @@ package fl.controls {
 					renderer.setMouseState("up");
 				}
 			}
-			
+
 			if (index == -1) { return; }
-						
+
 			// Scroll to the new index, so that the renderer is created
 			list.scrollToIndex(index);
 			list.drawNow();
-			
+
 			// Highlight the cellRenderer at the new index
 			renderer = list.itemToCellRenderer(getItemAt(index));
 			if (renderer != null) {
@@ -1835,7 +1835,7 @@ package fl.controls {
 				highlightedCell = index;
 			}
 		}
-		
+
 		/**
          * @private (protected)
          *
@@ -1845,7 +1845,7 @@ package fl.controls {
 		override protected function keyUpHandler(event:KeyboardEvent):void {
 			isKeyDown = false;
 		}
-				
+
 		/**
          * @private (protected)
          *
