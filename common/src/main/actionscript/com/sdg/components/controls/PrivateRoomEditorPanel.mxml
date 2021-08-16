@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="utf-8"?>
+<controls:TitlePanel xmlns:mx="http://www.adobe.com/2006/mxml" xmlns:controls="com.sdg.components.controls.*"
+	title="Room Editor" styleName="small" height="200"
+ 	showEffect="{slideShow}" hideEffect="{slideHide}" rollOver="slideShow.play()" rollOut="rollOutHandler()"
+	creationComplete="init()" show="selectCategory(0)"
+	>
+
+	<mx:Metadata>
+		[Event(name="save", type="flash.events.Event")]
+		[Event(name="revert", type="flash.events.Event")]
+	</mx:Metadata>
+
+	<mx:Script>
+		<![CDATA[
+			import com.sdg.utils.MainUtil;
+			import mx.events.CloseEvent;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			import com.sdg.model.SdgItem;
+			import com.sdg.model.InventoryItem;
+			import com.sdg.model.InventoryItemType;
+			import com.sdg.model.Avatar;
+			import com.sdg.model.ModelLocator;
+			import com.sdg.model.SdgItem;
+			import com.sdg.events.InventoryListEvent;
+
+			import flash.events.KeyboardEvent;
+			import flash.events.MouseEvent;
+
+			import mx.binding.utils.*;
+			import mx.collections.ArrayCollection;
+			import mx.effects.Effect;
+			import mx.effects.easing.*;
+
+			private var modelLocator:ModelLocator = ModelLocator.getInstance();
+			private var _isScrolling:Boolean = false;
+
+			[Bindable]
+			private var itemTypeList:ArrayCollection;
+
+			[Bindable]
+			private var startY:Number;
+
+			private var _selectedItem:Object;
+
+			[Bindable]
+			public function get selectedItem():Object
+			{
+				return _selectedItem;
+			}
+
+			public function set selectedItem(value:Object):void
+			{
+				_selectedItem = value;
+			}
+
+			private function init():void
+			{
+				startY = y;
+				itemTypeList = modelLocator.inventoryItemTypes[2];
+				BindingUtils.bindSetter(selectCategory, itemTypeMenu, "selectedIndex");
+			}
+
+			private function rollOutHandler():void
+			{
+				if (mouseY < 0 || mouseX < 0 || mouseX > width)
+					slideMinimize.play();
+			}
+
+			private function selectCategory(index:int):void
+			{
+				if (index < 0 || !itemTypeList) return;
+				var itemInfo:InventoryItemType = InventoryItemType(itemTypeList.getItemAt(index));
+				getInventoryType(itemInfo.itemTypeId);
+			}
+
+			private function getInventoryType(itemTypeId:uint):void
+	     	{
+	     		CairngormEventDispatcher.getInstance().addEventListener(InventoryListEvent.LIST_COMPLETED, onInventoryListCompleted);
+	     		dispatchEvent(new InventoryListEvent(modelLocator.avatar.avatarId, itemTypeId));
+	     	}
+
+	     	private function onInventoryListCompleted(ev:InventoryListEvent):void
+        	{
+//        		if (modelLocator.avatar.membershipStatus == 0)
+//        		{
+//	        		for each (var item:InventoryItem in modelLocator.avatar.getInventoryListById(ev.itemTypeId))
+//	        		{
+//	        			if (item.itemValueType == InventoryItem.PREMIUM)
+//	        			{
+//	        				item.isGreyedOut = true;
+//	        			}
+//	        		}
+//	        	}
+	        	CairngormEventDispatcher.getInstance().removeEventListener(InventoryListEvent.LIST_COMPLETED, onInventoryListCompleted);
+	        	itemMenu.dataProvider = modelLocator.avatar.getInventoryListById(ev.itemTypeId);
+	        }
+
+	        private function scrollItemMenu(keyCode:int):void
+			{
+				_isScrolling = true;
+				itemMenu.dispatchEvent(new KeyboardEvent(KeyboardEvent.KEY_DOWN, true, false, keyCode, keyCode));
+				_isScrolling = false;
+			}
+
+			private function onSelection():void
+			{
+				var item:InventoryItem = itemMenu.selectedItem as InventoryItem;
+
+				if (!item.isGreyedOut)
+					selectedItem = itemMenu.selectedItem
+				else
+				{
+					if (!_isScrolling)
+					{
+						var alert:SdgAlert = SdgAlert.show("Sorry, you need to upgrade to Premium Membership level to use this item.",
+							"Upgrade To Premium Now!", SdgAlert.NO | SdgAlert.YES, SdgAlert.NO, onUpgrade);
+						alert.setButtonLabel(SdgAlert.NO, "Upgrade Now");
+						alert.setButtonLabel(SdgAlert.YES, "Back");
+					}
+					itemMenu.selectedItem = null;
+				}
+			}
+
+			private function onUpgrade(event:CloseEvent):void
+			{
+				if (event.detail == SdgAlert.NO)
+					MainUtil.postAvatarIdToURL("membership.jsp");
+			}
+		]]>
+	</mx:Script>
+
+	<!-- effects -->
+	<mx:Move id="slideShow" target="{this}" yTo="{startY - 194}" duration="300"  easingFunction="Sine.easeIn" effectStart="slideMinimize.stop()"/>
+	<mx:Move id="slideHide" target="{this}" yTo="{startY}" duration="300" easingFunction="Sine.easeOut" effectStart="slideShow.stop()"/>
+    <mx:Move id="slideMinimize" target="{this}" yTo="{startY - 78}" duration="300" startDelay="100" easingFunction="Sine.easeOut" effectStart="slideShow.stop()"/>
+
+	<mx:Canvas backgroundAlpha="0">
+
+		<!-- item type menu -->
+		<mx:ToggleButtonBar id="itemTypeMenu" buttonWidth="150" buttonHeight="22"
+			direction="vertical" verticalGap="-2" verticalCenter="0" labelField="name"
+			dataProvider="{itemTypeList}"/>
+
+		<mx:HBox verticalAlign="middle" left="80">
+
+			<!-- item menu container -->
+			<controls:BoxContainer styleName="lightBlue" paddingTop="0" paddingBottom="0" verticalGap="0">
+
+				<mx:HBox verticalAlign="middle" backgroundAlpha="0">
+
+					<!-- scroll to first page -->
+					<mx:Button styleName="scrollVivid" width="20" height="20"
+						icon="@Embed('images/iconLeftDblArrow.png')"
+						downIcon="@Embed('images/iconLeftDblArrow_down.png')"
+						click="{scrollItemMenu(Keyboard.HOME)}"/>
+
+					<!-- scroll to prev page -->
+					<mx:Button styleName="scroll" width="20" height="20"
+						icon="@Embed('images/iconLeftArrow.png')"
+						downIcon="@Embed('images/iconLeftArrow_down.png')"
+						click="{scrollItemMenu(Keyboard.PAGE_UP)}"/>
+
+					<!--item menu -->
+					<controls:ItemTileList id="itemMenu" columnCount="4" rowCount="1" verticalScrollPolicy="off"
+						dataTipField="name" showDataTips="true" styleName="transparent"
+						change="{onSelection()}"/>
+
+					<!-- scroll to next page -->
+					<mx:Button styleName="scroll" width="20" height="20"
+						icon="@Embed('images/iconRightArrow.png')"
+						downIcon="@Embed('images/iconRightArrow_down.png')"
+						click="{scrollItemMenu(Keyboard.PAGE_DOWN)}"/>
+
+					<!-- scroll to last page -->
+					<mx:Button styleName="scrollVivid" width="20" height="20"
+						icon="@Embed('images/iconRightDblArrow.png')"
+						downIcon="@Embed('images/iconRightDblArrow_down.png')"
+						click="{scrollItemMenu(Keyboard.END)}"/>
+
+				</mx:HBox>
+
+				<!-- page number label -->
+				<mx:Label color="0x133870" fontSize="13" textAlign="center"
+					text="{itemMenu.selectedIndex + 1 + '/' + itemMenu.dataProvider.length}"/>
+
+			</controls:BoxContainer>
+
+			<!-- commit buttons -->
+			<mx:VBox>
+
+				<!-- save -->
+				<mx:Button label="Save" fontSize="14" width="100%"
+					click="{dispatchEvent(new Event('save'))}"/>
+
+				<!-- cancel -->
+				<mx:Button label="Cancel" fontSize="14" width="100%"
+					click="{dispatchEvent(new Event('revert'))}"/>
+
+			</mx:VBox>
+
+		</mx:HBox>
+
+	</mx:Canvas>
+</controls:TitlePanel>

@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" xmlns:pda="com.sdg.view.pda.*"
+	implements="com.sdg.view.pda.interfaces.IPDASidePanel" width="346" height="510">
+	
+	<mx:Script>
+		<![CDATA[
+			import com.sdg.view.avatarcard.IntegratedAvatarInfoPanel;
+			import com.sdg.view.avatarcard.AvatarCardTwoSide;
+			import com.sdg.control.PDAController;
+			import com.sdg.graphics.customShapes.RoundRectComplex;
+			
+			private static const CARD_WIDTH:Number = 340;
+			private static const CARD_HEIGHT:Number = 520;
+			
+			private var _controller:PDAController;
+			private var _isInitialized:Boolean = false;
+			private var _avInfoPanel:IntegratedAvatarInfoPanel;
+			
+			public function init(controller:PDAController = null):void
+			{
+				this.controller = controller;
+				
+				// Create avatar info panel.
+				_avInfoPanel = new IntegratedAvatarInfoPanel(_controller.avatar, CARD_WIDTH, CARD_HEIGHT, false, false, true);
+				rawChildren.addChild(_avInfoPanel);
+				
+				_isInitialized = true;
+				refresh();
+			}
+			
+			////////////////////
+			// PUBLIC FUNCTIONS
+			////////////////////
+			
+			public function refresh():void
+			{
+				if (_avInfoPanel) rawChildren.removeChild(_avInfoPanel);
+				_avInfoPanel = new IntegratedAvatarInfoPanel(_controller.avatar, CARD_WIDTH, CARD_HEIGHT, false, false, true);
+				rawChildren.addChild(_avInfoPanel);
+			}
+			
+			public function close():void
+			{
+				save();
+				
+				// Remove avatar card.
+				if (_avInfoPanel != null)
+				{
+					if (rawChildren.contains(_avInfoPanel)) rawChildren.removeChild(_avInfoPanel);
+					_avInfoPanel.destroy();
+					_avInfoPanel = null;
+				}
+			}
+			
+			////////////////////
+			// PRIVATE FUNCTIONS
+			////////////////////
+			
+			private function save():void
+			{
+				if (_controller.avatar.apparel.length == 0)	return;
+				
+				_controller.saveAvatar();
+			}
+			
+			////////////////////
+			// GET/SET METHODS
+			////////////////////
+			
+			public function set controller(value:PDAController):void
+			{
+				_controller = value;
+			}
+			
+			public function get isInitialized():Boolean
+			{
+				return _isInitialized;
+			}
+			
+		]]>
+	</mx:Script>
+</mx:Canvas>

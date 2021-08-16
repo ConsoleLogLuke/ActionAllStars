@@ -1,0 +1,538 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas
+	xmlns:mx="http://www.adobe.com/2006/mxml"
+	xmlns:sdgcontrols="com.sdg.components.controls.*"
+	xmlns:business="com.sdg.business.*"
+	horizontalScrollPolicy="off"
+	verticalScrollPolicy="off" implements="com.sdg.components.dialog.ISdgDialog">
+	<mx:Script>
+		<![CDATA[
+			import com.sdg.model.AvatarLevel;
+			import mx.events.StateChangeEvent;
+			import mx.core.IStateClient;
+			import mx.events.FlexEvent;
+			import com.sdg.components.controls.ItemAttributesTootip;
+			import mx.events.ToolTipEvent;
+			import mx.core.Application;
+			import mx.events.ListEvent;
+			import com.sdg.utils.MainUtil;
+			import com.sdg.model.IPreviewItem;
+			import com.sdg.events.ItemPurchaseEvent;
+			import mx.binding.utils.ChangeWatcher;
+			import mx.collections.ArrayCollection;
+			import mx.events.PropertyChangeEvent;
+			import mx.events.CloseEvent;
+			import mx.managers.PopUpManager;
+
+			import com.sdg.commands.StoreCategoriesCommand;
+			import com.sdg.commands.StoreItemsCommand;
+			import com.sdg.components.dialog.ISdgDialog;
+			import com.sdg.components.renderers.TileItemLabelRenderer;
+			import com.sdg.components.renderers.TileItemRenderer;
+			import com.sdg.components.controls.SdgAlert;
+			import com.sdg.control.SdgFrontController;
+			import com.sdg.events.AvatarListEvent;
+			import com.sdg.events.StoreCategoriesEvent;
+			import com.sdg.events.StoreItemsEvent;
+			import com.sdg.model.Avatar;
+			import com.sdg.model.User;
+			import com.sdg.model.ModelLocator;
+			import com.sdg.model.Store;
+			import com.sdg.model.StoreItem;
+			import com.sdg.model.StoreCategory;
+			import com.sdg.utils.PreviewUtil;
+//			import com.sdg.utils.MainUtil;
+//			import mx.core.Application;
+//			import com.sdg.net.socket.SocketClient;
+
+			private var _store:Store;
+			private var _avatar:Avatar = ModelLocator.getInstance().avatar;
+			private var _lastPreviewItem:StoreItem;
+			private var _purchasedItem:StoreItem;
+			private var _attributesTooltip:ItemAttributesTootip;
+
+			public function init(params:Object):void
+			{
+				// load the avatar in the preview
+				avatarPreview.loadAvatar(_avatar, true, true, true);
+
+				// get the storeID from params
+				var storeId:int = params.storeId;
+
+				_store = ModelLocator.getInstance().stores[storeId] as Store;
+				if (_store == null)
+				{
+					// create a new store with an id of '1'
+					_store = new Store("General", storeId);
+
+					// add the store to ModelLocator
+					ModelLocator.getInstance().stores[_store.id] = _store;
+				}
+
+				// create a default home category for the store
+				breadCrumb.addLink("Home", -1);
+
+				// get and display the child categories of HOME
+    			displayCategory(null);
+
+    			labelTokenCount.text = "You Have " + _avatar.currency + " Tokens";
+
+    			ChangeWatcher.watch(_avatar, "purchaseStatus", onPurchaseStatus);
+    			ChangeWatcher.watch(_avatar, "currency", onCurrencyChange);
+    		}
+
+    		// Displays the category items in the TileList
+    		private function displayCategory(storeCategory:StoreCategory):void
+    		{
+    			storeLabel.text = "Click a Category";
+
+    			// hide the store item dialog if is showing
+    			hideStoreItemDialog();
+
+				// if store category is null, get the categories by the store id
+				if (storeCategory == null)
+				{
+					if (_store.rootCategories.length == 0)
+					{
+						getCategoriesFromServerByStoreId(_store.id);
+					}
+
+					storeTileList.dataProvider = _store.rootCategories;
+					storeTileList.columnWidth = 135;
+					storeTileList.rowHeight = 135;
+					storeTileList.setStyle("itemWidth", 120);
+					storeTileList.setStyle("itemHeight",120);
+					storeTileList.itemRenderer = new ClassFactory(TileItemLabelRenderer);
+				}
+
+				// display sub-categories if there are any
+				else if (storeCategory.subCategoryCount > 0)
+				{
+					// if we have no subcategories here - request them from the server
+					if (storeCategory.childCategories.length == 0)
+						getCategoriesFromServer(storeCategory.id);
+
+					// the the sub categories the new tile list
+					storeTileList.dataProvider = storeCategory.childCategories;
+					storeTileList.columnWidth = 135;
+					storeTileList.rowHeight = 135;
+					storeTileList.setStyle("itemWidth", 120);
+					storeTileList.setStyle("itemHeight",120);
+					storeTileList.itemRenderer = new ClassFactory(TileItemLabelRenderer);
+				}
+
+				// otherwise display store items if there any
+				else
+				{
+					storeLabel.text = "Click an Item";
+					// if we have no store items here - request them from the server
+					if (storeCategory.items.length == 0)
+						getStoreItemsFromServer(storeCategory.id);
+
+					// the the sub categories the new tile list
+					storeTileList.dataProvider = storeCategory.items;
+
+					storeTileList.columnWidth = 80;
+					storeTileList.rowHeight = 80;
+					storeTileList.setStyle("itemWidth", 64);
+					storeTileList.setStyle("itemHeight", 64);
+					storeTileList.itemRenderer = new ClassFactory(TileItemRenderer);
+				}
+			}
+
+			private function hideStoreItemDialog():void
+			{
+				this.itemDialog.includeInLayout = false;
+				this.itemDialog.visible = false;
+				this.itemSoldBanner.visible = false;
+			}
+
+			private function showStoreItemDialog(storeItem:StoreItem):void
+			{
+				// set the dialog text
+				itemTitle.text = storeItem.name;
+				itemDescription.text = storeItem.description;
+				itemPrice.text = "Price: " + storeItem.price + " Tokens"
+
+				if (storeItem.qtyOwned > 0)
+				{
+					itemDialog.setStyle("borderColor", 0x7c7c7c);
+					itemTitle.styleName = "storeItemOwned";
+					itemDescription.styleName = "storeItemDescOwned";
+					itemPrice.styleName = "storeItemOwned";
+					buyButton.visible = false;
+					itemSoldBanner.visible = true;
+				}
+				else
+				{
+					itemDialog.setStyle("borderColor", 0xbe7400);
+					itemTitle.styleName = "storeItem";
+					itemDescription.styleName = "storeItemDesc";
+					itemPrice.styleName = "storeItem";
+					buyButton.visible = true;
+					itemSoldBanner.visible = false;
+				}
+
+				// make the dailog visible
+				itemDialog.includeInLayout = true;
+				itemDialog.visible = true;
+			}
+
+			private function getCategoriesFromServer(parentId:int):void
+			{
+				dispatchEvent(new StoreCategoriesEvent(parentId));
+			}
+
+			private function getCategoriesFromServerByStoreId(storeId:int):void
+			{
+				dispatchEvent(new StoreCategoriesEvent(-1, storeId));
+			}
+
+			private function getStoreItemsFromServer(parentId:int):void
+			{
+				dispatchEvent(new StoreItemsEvent(_store.id, parentId, _avatar.avatarId));
+			}
+
+			private function removeLastPreviewItem():void
+			{
+				// don't show the last previewItem
+				if (_lastPreviewItem != null && _lastPreviewItem.itemClassId == 1)
+				{
+					if (_lastPreviewItem.isGroup)
+					{
+						// remove the last collection items and show the original
+						for each (var childItem:StoreItem in _lastPreviewItem.childItems)
+						{
+							var originalPreviewItem:IPreviewItem =
+								_avatar.apparel.getItemAt(PreviewUtil.getLayerId(childItem.itemTypeId)) as IPreviewItem;
+
+							if (originalPreviewItem == null)
+							{
+								// if this is a hat, selecting hair will remove the hat
+								if (childItem.itemTypeId == 9)
+									avatarPreview.selectApparel(IPreviewItem(_avatar.apparel[PreviewUtil.getLayerId(8)]));
+								else
+									avatarPreview.removeApparel(childItem.itemTypeId);
+							}
+							else
+								avatarPreview.selectApparel(originalPreviewItem);
+						}
+					}
+					else
+					{
+						// display the original item
+						originalPreviewItem =
+							_avatar.apparel.getItemAt(PreviewUtil.getLayerId(_lastPreviewItem.itemTypeId)) as IPreviewItem;
+
+						// just remove the item if nothing was on before
+						if (originalPreviewItem == null)
+							avatarPreview.removeApparel(_lastPreviewItem.itemTypeId);
+						else
+							avatarPreview.selectApparel(originalPreviewItem);
+					}
+				}
+			}
+
+			private function itemPurchase():void
+			{
+				var storeItem:StoreItem = storeTileList.selectedItem as StoreItem;
+				if (storeItem == null)
+				{
+					trace("storeItem is null");
+					return;
+				}
+
+				// not a premuim user?
+//				if (ModelLocator.getInstance().avatar.membershipStatus != 1 && ModelLocator.getInstance().avatar.membershipStatus != 2)
+//				{
+//					MainUtil.showDialog(MonthFreeUpsellDialog, {messaging:"Sorry, you need to upgrade to Premium Membership level to purchase store items."});
+//					return
+//				}
+
+				// check to see if we have enough currency
+				if (_avatar.currency < storeItem.price)
+				{
+					SdgAlert.show("You don't have enough tokens to purchase this item. Play more games to get more tokens!", "Time Out!");
+					return;
+				}
+
+				// level requirement?
+				if (_avatar.level < storeItem.levelRequirement)
+				{
+					var a_or_an:String = storeItem.levelRequirement == 5 ? "an" : "a";
+
+					SdgAlert.show("You must be at least " + a_or_an + " " + AvatarLevel.getLevelName(storeItem.levelRequirement) + " level athlete to purchase this item.", "Time Out!");
+					return;
+				}
+
+				// puchase the item
+				_purchasedItem = storeItem;
+				dispatchEvent(new ItemPurchaseEvent(_avatar, storeItem, _store.id));
+			}
+
+			// event handlers
+
+			private function onTileChange():void
+			{
+
+				// handle store category clicks here
+				var storeCategory:StoreCategory = storeTileList.selectedItem as StoreCategory;
+				if (storeCategory != null)
+				{
+					// add the category to the breadcrumb
+					breadCrumb.addLink(storeCategory.name, storeCategory.id);
+
+					// display the store items or sub-categories
+					displayCategory(storeCategory);
+					return;
+				}
+
+				// handle store item clicks here
+				var storeItem:StoreItem = storeTileList.selectedItem as StoreItem;
+				if (storeItem == null)
+					return;
+
+				// do we have an apparel item?
+				if (storeItem.itemClassId == 1)
+				{
+	               	// remove the preview item if necessary
+	               	if (_lastPreviewItem && _lastPreviewItem.itemTypeId != storeItem.itemTypeId)
+	               	{
+  						// don't remove if this and the last previewItem are both headwear
+  						if (!(PreviewUtil.isHeadwear(_lastPreviewItem.itemTypeId) && PreviewUtil.isHeadwear(storeItem.itemTypeId)))
+		               		removeLastPreviewItem();
+	               	}
+
+					// show the avater preview
+					if (avatarPreview.visible == false)
+					{
+						// hide the itemPreview control
+						itemPreview.visible = false;
+						itemPreview.includeInLayout = false;
+
+						// show the avatarPreview control
+						avatarPreview.includeInLayout = true;
+						avatarPreview.visible = true;
+					}
+
+					if (storeItem.isGroup)
+					{
+						// this is a collection storeItem, show each child storeItem
+						for each (var childItem:StoreItem in storeItem.childItems)
+						{
+							avatarPreview.selectApparel(childItem);
+						}
+					}
+					else
+					{
+						avatarPreview.selectApparel(storeItem);
+					}
+				}
+
+				// or is this an non-apparel item
+				else if (storeItem.itemClassId == 2)
+				{
+					// show the preview item
+					itemPreview.showItem(storeItem);
+
+	                // hide the avatar preview and show the 'item preview' if necessary
+					if (itemPreview.visible == false)
+					{
+						avatarPreview.visible = false;
+						avatarPreview.includeInLayout = false;
+
+						itemPreview.includeInLayout = true;
+						itemPreview.visible = true;
+					}
+				}
+
+				_lastPreviewItem = storeItem;
+
+				// show the item dialog
+				showStoreItemDialog(storeItem);
+			}
+
+			private function onItemRollOver(event:ListEvent):void
+			{
+				var storeItem:StoreItem = event.itemRenderer.data as StoreItem;
+				if (storeItem && storeItem.hasCustomAttributes)
+				{
+					if (!_attributesTooltip)
+						_attributesTooltip = MainUtil.showDialog(ItemAttributesTootip, {item:storeItem, itemRenderer:event.itemRenderer}, false, false) as ItemAttributesTootip;
+					else if (_attributesTooltip.parent == null)
+					{
+						MainUtil.reShowDialog(_attributesTooltip, false);
+
+						_attributesTooltip.item = storeItem;
+						_attributesTooltip.itemRenderer = event.itemRenderer;
+					}
+					else if (_attributesTooltip.itemName.text != storeItem.name)
+					{
+						_attributesTooltip.item = storeItem;
+						_attributesTooltip.itemRenderer = event.itemRenderer;
+					}
+				}
+				else
+				{
+					// don't show the tooltip on items with no attributes
+					if (this._attributesTooltip && _attributesTooltip.initialized)
+						_attributesTooltip.close();
+				}
+			}
+
+			private function onItemRollOut(event:ListEvent):void
+			{
+				if (this._attributesTooltip && _attributesTooltip.initialized)
+				{
+			    	if (IStateClient(event.itemRenderer).currentState != "highlighted" && IStateClient(event.itemRenderer).currentState != "selected")
+						_attributesTooltip.close();
+				}
+  		    }
+
+  		    private function onRollOut(event:Event):void
+  		    {
+				if (this._attributesTooltip && _attributesTooltip.initialized)
+					_attributesTooltip.close();
+  		    }
+
+			private function onBreadCrumbClick(evt:TextEvent):void
+			{
+				var storeCategory:StoreCategory = _store.getCategoryById(parseInt(evt.text));
+
+               	// goto the category we just clicked
+               	breadCrumb.trunkateToLink(storeCategory != null ? storeCategory.id : -1);
+
+               	// show the items in the category
+               	displayCategory(storeCategory);
+
+               	// remove the preview item if necessary
+               	removeLastPreviewItem();
+			}
+
+			private function onPurchaseStatus(e:PropertyChangeEvent):void
+			{
+
+				//han: do we need thos whole function at all??
+				if (!_purchasedItem)
+					return;
+
+				// the purchaseStatus on the avater should be 1
+				if (e.newValue == 1)
+				{
+					// reload the avatar since we need the the adjusted currency info
+					_avatar.purchaseStatus = 0;
+					var user:User = ModelLocator.getInstance().user;
+					dispatchEvent(new AvatarListEvent(user.username));
+
+					// show a 'purchased' confirmation dialog
+					SdgAlert.show("Thank you for your purchase", "ITEM PURCHASED", SdgAlert.OK, SdgAlert.OK, onThankyoufForPurchaseDialogClosed);
+				}
+				else if (e.newValue == 2)
+				{
+					trace("Error: purchase failed!");
+				}
+			}
+
+			private function onThankyoufForPurchaseDialogClosed(event:Event):void
+			{
+				// show the user that the item is now owned
+				_purchasedItem.qtyOwned++;
+				showStoreItemDialog(_purchasedItem);
+
+				_purchasedItem = null;
+			}
+
+			private function onCurrencyChange(e:PropertyChangeEvent):void
+			{
+				labelTokenCount.text = "You Have " + _avatar.currency + " Tokens";
+			}
+
+			public function close():void
+			{
+				// make sure the tooltip is closed
+				if (this._attributesTooltip && _attributesTooltip.initialized)
+					_attributesTooltip.close();
+
+				PopUpManager.removePopUp(this);
+			}
+
+		]]>
+
+	</mx:Script>
+
+	<!-- this Canvas is our parent container with the 'store' background -->
+	<sdgcontrols:TitlePanel title="Action AllStars Store" width="796" height="465" backgroundColor="#494949" showCloseButton="true" close="close()" helpId="2118">
+
+		<!-- This box lays out the avatar preview on the left and the store item list on the right -->
+		<mx:HBox x="28" y="55" horizontalGap="24">
+
+			<!-- the left side (avatar preview) -->
+			<mx:VBox verticalGap="12">
+				<sdgcontrols:AvatarPreview id="avatarPreview"/>
+				<sdgcontrols:SimpleItemPreview id="itemPreview" includeInLayout="false" visible="false"/>
+				<mx:Canvas backgroundImage="@Embed('images/store/bluebarBg.png')" height="31" width="100%">
+					<mx:Label id="labelUserName" text="{_avatar.name}" styleName="storeSubTitle" verticalCenter="1" horizontalCenter="0"/>
+				</mx:Canvas>
+			</mx:VBox>
+
+			<!-- a verticle division line -->
+			<mx:VRule height="100%"/>
+
+			<!-- the right side (store items) -->
+			<mx:Canvas width="432">
+
+				<mx:VBox width="100%">
+
+					<!-- the top red bar label -->
+					<mx:Canvas backgroundImage="@Embed('images/store/redbarBg.png')" width="100%">
+						<mx:Label id="storeLabel" styleName="storeSubTitle" horizontalCenter="0"/>
+					</mx:Canvas>
+
+					<!-- the store items list containter -->
+					<mx:VBox width="100%" height="325" paddingLeft="5" paddingRight="5" paddingTop="10" verticalGap="0" verticalScrollPolicy="off" horizontalScrollPolicy="off">
+
+						<!-- the bread crumb -->
+						<sdgcontrols:BreadCrumb id="breadCrumb" link="onBreadCrumbClick(event)" />
+
+						<sdgcontrols:ItemTileList
+							verticalScrollPolicy="auto"
+							id="storeTileList"
+							styleName="store"
+							change="onTileChange()"
+						    itemRollOver="onItemRollOver(event)"
+						    itemRollOut="onItemRollOut(event)"
+						    rollOut="onRollOut(event)"
+							columnCount="3"
+							rowCount="2"
+							itemWidth="130"
+							itemHeight="130"
+							columnWidth="135"
+							rowHeight="135"
+							width="100%" />
+
+						<mx:Label text="" />
+						<mx:Canvas width="100%">
+							<mx:HBox id="itemDialog" width="100%" paddingLeft="15"  paddingTop="10" paddingBottom="10" paddingRight="15" borderStyle="solid" borderColor="#be7400" borderThickness="3" cornerRadius="6" includeInLayout="false" visible="false">
+								<mx:VBox width="300" verticalGap="0">
+									<mx:Label id="itemTitle" styleName="storeItem" />
+									<mx:Text id="itemDescription" styleName="storeItemDesc" />
+									<mx:Label id="itemPrice" styleName="storeItem" />
+								</mx:VBox>
+								<mx:Button id="buyButton" label="Buy" click="itemPurchase();" verticalCenter="0" color="#864601" styleName="orange" height="100%" width="100%"/>
+							</mx:HBox>
+							<mx:Image id="itemSoldBanner" source="@Embed('images/store/itemOwned_icon.png')" visible="false" horizontalCenter="0" verticalCenter="0" />
+						</mx:Canvas>
+					</mx:VBox>
+				</mx:VBox>
+
+				<mx:Canvas width="100%" y="345">
+					<!-- the bottom red bar label -->
+					<mx:Canvas backgroundImage="@Embed('images/store/redbarBg.png')" width="100%" y="15">
+						<mx:Label id="labelTokenCount" styleName="storeSubTitle" horizontalCenter="0"/>
+					</mx:Canvas>
+					<mx:Image source="@Embed(source='images/iconTokens.png')" x="370"/>
+				</mx:Canvas>
+			</mx:Canvas>
+		</mx:HBox>
+	</sdgcontrols:TitlePanel>
+</mx:Canvas>

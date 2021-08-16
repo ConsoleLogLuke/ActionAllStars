@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Image xmlns:mx="http://www.adobe.com/2006/mxml">
+	<mx:Script>
+		<![CDATA[
+			import com.sdg.net.Environment;
+			import com.sdg.model.ModelLocator;
+			
+			private var _closeCallBack:Function;
+			private var _ccCode:int;
+			
+			override public function set visible(value:Boolean):void
+			{
+				super.visible = value;
+				if (value)
+				{
+					this.source = Environment.getApplicationUrl() + "/test/static/upsell/loginNag?partnerId=0";
+					//this.source = "assets/swfs/premium_feature_page.swf";
+					this.addEventListener(Event.INIT, onInit);
+					this.addEventListener(IOErrorEvent.IO_ERROR, onIOError);
+				}
+			}
+			
+			public function set closeCallBack(value:Function):void
+			{
+				_closeCallBack = value;
+			}
+			
+			public function set ccCode(value:int):void
+			{
+				_ccCode = value;
+				Object(this.content).cc = _ccCode;
+			}
+			
+			private function onInit(event:Event):void
+			{
+				this.removeEventListener(Event.INIT, onInit);
+				this.removeEventListener(IOErrorEvent.IO_ERROR, onIOError);
+				
+				try
+				{
+					// get the swf
+					var swf:Object = Object(this.content);
+					
+					swf.applicationDomain = Environment.getApplicationDomain();
+					swf.returnUrl = Environment.returnUrl;
+					swf.userId = ModelLocator.getInstance().user.userId;
+					swf.avatarId = ModelLocator.getInstance().avatar.avatarId;
+					swf.membershipStatus = ModelLocator.getInstance().avatar.membershipStatus;
+					swf.partnerId = ModelLocator.getInstance().affiliate;
+					swf.cc = _ccCode;
+					swf.showJustPlayButton = true;
+					swf.addEventListener("Close", onClose);
+				}
+				catch(e:Error)
+				{
+					trace("upsellSwf error: " + e.message);
+				}
+			}
+			
+			private function onIOError(event:IOErrorEvent):void
+			{
+				this.removeEventListener(Event.INIT, onInit);
+				this.removeEventListener(IOErrorEvent.IO_ERROR, onIOError);
+				trace("ioErrorHandler: " + event.text);
+				onClose(event);
+			}
+			
+			private function onClose(event:Event):void
+			{
+				//dispatchEvent(new Event("Close"));
+				//this.visible = false;
+				if (_closeCallBack != null)
+					_closeCallBack();
+			}
+		]]>
+	</mx:Script>
+	
+</mx:Image>

@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas
+	xmlns:mx="http://www.adobe.com/2006/mxml"
+	implements="com.sdg.components.dialog.ISdgDialog"
+	width="925" height="665" >
+	
+	<mx:Script>
+		<![CDATA[
+			import com.sdg.events.ShowOverlayEvent;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			import mx.managers.PopUpManager;
+			import com.sdg.events.SdgSwfEvent;
+			
+			private var _params:Object;
+			
+			/**
+			 * Get the paths to the text and swf files 
+			 */
+			public function init(params:Object):void
+			{
+				CairngormEventDispatcher.getInstance().dispatchEvent(new ShowOverlayEvent());
+				
+				// save the params to a member
+				_params = params;
+				frontLayerSwf.source = _params.swfPath;
+			}
+			
+			private function ioErrorHandler(event:IOErrorEvent):void
+			{
+				trace("ioErrorHandler: " + event.text);
+				close();
+			}
+
+			public function close():void
+			{
+				PopUpManager.removePopUp(this);
+			}
+			
+			private function onClose(e:Event):void
+			{
+				close();
+				dispatchEvent(new Event(Event.CLOSE));
+			}
+            
+			private function initFrontLayerSwf():void
+			{
+				try
+				{
+					// get the swf
+					var swf:Object = Object(frontLayerSwf.content);
+					
+					// add our listeners
+					swf.addEventListener(Event.CLOSE, onClose);
+					swf.addEventListener(SdgSwfEvent.SDG_SWF_EVENT, onSdgSwfEvent);
+					
+					// pass the params to the swf
+					swf.data = _params;
+					//swf.setXML(_params.xml);
+				}
+				catch(e:Error)
+				{
+					trace("overlaySwf error: " + e.message);
+					close();
+				}
+			}
+			
+			private function onSdgSwfEvent(ev:SdgSwfEvent):void
+			{
+				// this is needed because flex doesn't allow the custom flash event to be 
+				// converted to the custom event in flex
+				var event:SdgSwfEvent = new SdgSwfEvent();
+				event.data = ev.data;
+				dispatchEvent(event);
+			}
+		]]>
+
+	</mx:Script>
+	<mx:SWFLoader id="frontLayerSwf" init="initFrontLayerSwf()" ioError="ioErrorHandler(event)" />
+</mx:Canvas>

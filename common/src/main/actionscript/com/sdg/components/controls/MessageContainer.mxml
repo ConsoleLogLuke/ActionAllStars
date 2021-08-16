@@ -1,0 +1,279 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="278" height="93"
+	backgroundColor="#000000" backgroundAlpha=".8" verticalScrollPolicy="off" horizontalScrollPolicy="off"
+	implements="com.sdg.model.ISetAvatar" borderStyle="solid" borderThickness="0" cornerRadius="5" creationComplete="init()">
+	<mx:Script>
+		<![CDATA[
+			import com.sdg.control.room.itemClasses.AvatarController;
+			import com.sdg.events.AvatarEvent;
+			import com.sdg.model.Avatar;
+			import com.sdg.control.room.RoomManager;
+			import com.sdg.net.Environment;
+			import com.sdg.events.RoomNavigateEvent;
+			import com.sdg.model.NotificationIcon;
+			import com.sdg.events.HudEvent;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+
+			//private var _messageText:String;
+			private var _type:String;
+			private var _style:String = DISPLAY;
+			private var _homeTurfPending:Boolean = false;
+
+			private static var DISPLAY:String = "display";
+			private static var UNREAD:String = "unread";
+			private static var READ:String = "read";
+
+			[Embed(source="images/hud/thumbsUp.swf")]
+			public var thumbsUp:Class;
+			[Embed(source="images/hud/thumbsDown.swf")]
+			public var thumbsDown:Class;
+			[Embed(source="images/hud/deleteMsg.swf")]
+			public var deleteMsg:Class;
+
+			private function init():void
+			{
+				//bodyText.text = _messageText;
+				if (_type == HudEvent.NOTIFICATION)
+				{
+					// jab notification
+					if (this.data.message == "jab message")
+					{
+						//trace(Environment.getApplicationUrl() + this.data.swfUrl);
+						leftImage.source = Environment.getApplicationUrl() + this.data.swfUrl;
+						var params:Object = {sender:this.data.senderName, senderAvatarId:this.data.senderAvatarId, jabId:this.data.jabId, text:this.data.text, gameSessionId:String(this.data.gameSessionId), gameId:int(this.data.gameId)};
+						leftImage.addEventListener(Event.INIT, function(event:Event):void {onInit(event, params, "jabBack", onJabBack)});
+						leftImage.addEventListener(IOErrorEvent.IO_ERROR, onIOError);
+						this.height = 125;
+						this.setStyle("backgroundColor", null);
+						//this.setStyle("borderStyle", "none");
+					}
+					else
+					{
+						bodyText.htmlText = this.data.message;
+						var obj:Object = NotificationIcon.getIcon(int(this.data.icon));
+
+						// setup click
+						if (this.data.clickHandler != null)
+						{
+							this.buttonMode = true;
+							this.addEventListener(MouseEvent.CLICK, onClick);
+						}
+
+						this.setStyle("borderColor", obj.color);
+						this.setStyle("borderThickness", 3);
+
+						leftImage.source = obj.icon;
+						leftImage.x = 5;
+						leftImage.setStyle("verticalCenter", 0);
+						bodyText.width = 187;
+						bodyText.x = 60
+						bodyText.setStyle("verticalCenter", 0);
+					}
+
+					rightImage.source = deleteMsg;
+					rightImage.setStyle("right", 5);
+					rightImage.setStyle("bottom", 5);
+					rightImage.width = 15;
+					rightImage.height = 15;
+					rightImage.addEventListener(MouseEvent.CLICK, onDelete);
+				}
+				else
+				{
+					bodyText.htmlText = this.data.message;
+					leftImage.source = thumbsUp;
+					leftImage.setStyle("left", 10);
+					leftImage.setStyle("bottom", 5);
+					leftImage.data = true;
+					leftImage.addEventListener(MouseEvent.CLICK, onReply);
+
+					rightImage.source = thumbsDown;
+					rightImage.setStyle("right", 10);
+					rightImage.setStyle("bottom", 5);
+					rightImage.data = false;
+					rightImage.addEventListener(MouseEvent.CLICK, onReply);
+
+					bodyText.width = 258;
+					bodyText.y = 5;
+					bodyText.setStyle("horizontalCenter", 0);
+				}
+
+				setMessageStyle(_style);
+			}
+
+			public function set avatar(value:Avatar):void
+			{
+				// are we waiting on a request to go to the home turf?
+				if (_homeTurfPending)
+				{
+					_homeTurfPending = false;
+
+					// set the home turf avatar
+					RoomManager.getInstance().homeTurfAvatar = value;
+
+					// navigate to the home turf
+					dispatchEvent(new RoomNavigateEvent(RoomNavigateEvent.ENTER_ROOM, RoomManager.getInstance().homeTurfAvatar.privateRoom));
+				}
+			}
+
+			private function onJabBack(event:Event):void
+			{
+				RoomManager.getInstance().userController.jab(this.data.senderAvatarId, this.data.senderName, this.data.jabId);
+			}
+
+			private function onInit(event:Event, params:Object, eventString:String = null, callBack:Function = null):void
+			{
+				leftImage.removeEventListener(Event.INIT, arguments.callee);
+				leftImage.removeEventListener(IOErrorEvent.IO_ERROR, onIOError);
+
+				try
+				{
+					// get the swf
+					var swf:Object = Object(leftImage.content);
+					swf.params = params;
+					swf.cookie = params;
+					DisplayObject(swf).addEventListener(MouseEvent.CLICK, onHudSwfClick);
+				}
+				catch(e:Error)
+				{
+					trace("notification animation error: " + e.message);
+				}
+			}
+
+			private function onHudSwfClick(event:Event):void
+			{
+				var cookie:Object = event.currentTarget.cookie as Object;
+				if (cookie)
+				{
+					var homeTurfAvatarId:int = cookie.senderAvatarId as int;
+					var jabId:int = cookie.jabId as int;
+
+					// home turf invite?
+					if (homeTurfAvatarId && jabId && jabId == 4)
+					{
+						if (RoomManager.getInstance().homeTurfAvatar && RoomManager.getInstance().homeTurfAvatar.avatarId == homeTurfAvatarId)
+						{
+							// if the home turf avatar is already the one we need, just navigate to the home turf
+							dispatchEvent(new RoomNavigateEvent(RoomNavigateEvent.ENTER_ROOM, RoomManager.getInstance().homeTurfAvatar.privateRoom));
+						}
+						else
+						{
+							// get the home turf avatar and then navigate to the home turf
+							_homeTurfPending = true;
+							dispatchEvent(new AvatarEvent(homeTurfAvatarId, this));
+						}
+					}
+
+					// game invite?
+					if (jabId && jabId == 100)
+					{
+						var avatarController:AvatarController = RoomManager.getInstance().userController;
+						avatarController.acceptInvite(avatarController.avatar.avatarId, cookie.senderAvatarId, cookie.gameSessionId, cookie.gameId);
+					}
+				}
+			}
+
+			private function onIOError(event:IOErrorEvent):void
+			{
+				trace("ioErrorHandler: " + event.text);
+				leftImage.removeEventListener(Event.INIT, arguments.callee);
+				leftImage.removeEventListener(IOErrorEvent.IO_ERROR, onIOError);
+			}
+
+			private function onClick(event:MouseEvent):void
+			{
+				if (this.data.params != null)
+					this.data.clickHandler(this.data.params);
+				else
+					this.data.clickHandler();
+			}
+
+			private function onDelete(event:MouseEvent):void
+			{
+				rightImage.removeEventListener(MouseEvent.CLICK, onDelete);
+				this.removeEventListener(MouseEvent.CLICK, onClick);
+
+				var params:Object = {messageContainer:this};
+				CairngormEventDispatcher.getInstance().dispatchEvent(new HudEvent(HudEvent.DELETE_NOTIFICATION, params));
+			}
+
+			private function onReply(event:MouseEvent):void
+			{
+				leftImage.removeEventListener(MouseEvent.CLICK, onReply);
+				rightImage.removeEventListener(MouseEvent.CLICK, onReply);
+
+				var params:Object = {messageContainer:this, isTrue:event.currentTarget.data};
+
+				var nextStep:String;
+				if (_type == HudEvent.BUDDY_REQUEST)
+					nextStep = HudEvent.REPLY_BUDDY;
+				else if (_type == HudEvent.CARD_REQUEST)
+					nextStep = HudEvent.REPLY_CARD;
+
+				CairngormEventDispatcher.getInstance().dispatchEvent(new HudEvent(nextStep, params));
+			}
+
+			private function setMessageStyle(style:String):void
+			{
+				_style = style;
+				if (bodyText && !(_type == HudEvent.NOTIFICATION && this.data.message == "jab message"))
+				{
+					switch (_style)
+					{
+						case UNREAD:
+							this.setStyle("backgroundColor", "#fffaaf");
+							bodyText.setStyle("color", "#000000");
+							break;
+						case READ:
+							this.setStyle("backgroundColor", "#ffffff");
+							bodyText.setStyle("color", "#000000");
+							break;
+					}
+				}
+			}
+
+			public function convertToHudMessage():void
+			{
+				setMessageStyle(UNREAD);
+			}
+
+			public function markAsRead():void
+			{
+				setMessageStyle(READ);
+			}
+
+			public function get isUnread():Boolean
+			{
+				return _style == UNREAD;
+			}
+
+//			public function set messageText(value:String):void
+//			{
+//				_messageText = value;
+//			}
+//
+//			public function get messageText():String
+//			{
+//				return _messageText;
+//			}
+
+			public function set messageType(value:String):void
+			{
+				_type = value;
+			}
+
+			public function get messageType():String
+			{
+				return _type;
+			}
+		]]>
+	</mx:Script>
+
+	<mx:Style>
+
+	</mx:Style>
+
+	<mx:Text id="bodyText" color="#ffffff" fontSize="12" selectable="false" mouseChildren="false"/>
+
+	<mx:Image id="leftImage"/>
+	<mx:Image id="rightImage"/>
+</mx:Canvas>

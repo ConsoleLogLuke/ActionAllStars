@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas
+	xmlns:mx="http://www.adobe.com/2006/mxml"
+	implements="com.sdg.components.dialog.ISdgDialog"
+	width="611" height="372" mouseDownOutside="close()"
+	backgroundImage="@Embed('images/guestRegistration/upsellBG.swf')">
+
+	<mx:Script>
+		<![CDATA[
+			import com.sdg.utils.MainUtil;
+			import mx.managers.PopUpManager;
+
+			public function init(params:Object):void
+			{
+				if (params != null)
+					dialogMessage.text = String(params);
+			}
+
+			public function close():void
+			{
+				PopUpManager.removePopUp(this);
+			}
+		]]>
+	</mx:Script>
+
+	<mx:Text id="dialogMessage" text="This feature is only available if you register." color="#e1faff" x="30" y="56" fontSize="14" fontThickness="200"/>
+	<mx:Image id="registerButton" source="@Embed('images/guestRegistration/FreeButton.swf')" horizontalCenter="-138" y="85"
+		click="MainUtil.postAvatarIdToURL('register.jsp', 0, 2)"/>
+	<mx:Image id="membershipButton" source="@Embed('images/guestRegistration/ProButton.swf')" horizontalCenter="130" y="85"
+		click="MainUtil.postAvatarIdToURL('register.jsp', 0, 3)"/>
+	<mx:Button id="closeButton" skin="@Embed('images/closeDefaultBtn.png')" overSkin="@Embed('images/closeOverBtn.png')"
+		downSkin="@Embed('images/closeDownBtn.png')" right="16" top="16" click="close()"/>
+</mx:Canvas>

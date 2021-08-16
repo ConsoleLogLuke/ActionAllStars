@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:VBox xmlns:mx="http://www.adobe.com/2006/mxml"
+	horizontalAlign="center" verticalAlign="middle"
+	horizontalScrollPolicy="off" verticalScrollPolicy="off"
+	dataChange="{imageSource = data.thumbnailUrl; label = data.name;}" buttonMode="true"
+	>
+	
+	<mx:Script>
+		<![CDATA[
+			[Bindable]
+			public var imageSource:String;
+			
+			[Bindable]
+			protected var state:String;
+			
+			override public function get currentState():String
+			{
+				return state;
+			}
+			
+			override public function set currentState(value:String):void
+			{
+				state = value;
+			}
+		]]>
+	</mx:Script>
+	
+	<mx:Canvas id="tileBackground"
+		backgroundColor="0xFFFFFF" backgroundImage="{imageSource}"
+		borderColor="{state == 'selected' ? getStyle('selectionColor') : 
+					  state == 'highlighted' ? getStyle('rollOverColor') : getStyle('disabledColor')}"
+		borderThickness="{state == 'selected' ? 3 : 2}"
+		borderStyle="solid" dropShadowEnabled="true"
+		width="{state == 'selected' ? getStyle('itemWidth') + 6 : getStyle('itemWidth')}"
+		height="{state == 'selected' ? getStyle('itemHeight') + 6 : getStyle('itemHeight')}"
+		>
+		<mx:Label text="{label}" horizontalCenter="0" top="5" color="0x133870"/>
+	</mx:Canvas>
+</mx:VBox>

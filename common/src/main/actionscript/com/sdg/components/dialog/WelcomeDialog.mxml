@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="532" height="410"
+	implements="com.sdg.components.dialog.ISdgDialog"
+	backgroundImage="@Embed('images/guestRegistration/bg_WelcomeUserName.swf')"
+	horizontalScrollPolicy="off"
+	verticalScrollPolicy="off">
+
+	<mx:Script>
+		<![CDATA[
+			import com.sdg.model.Buddy;
+			import com.sdg.model.ModelLocator;
+			import com.sdg.graphics.RoundRectStyle;
+			import com.sdg.model.Avatar;
+			import com.sdg.display.LineStyle;
+			import com.sdg.graphics.customShapes.RoundRectComplex;
+			import mx.managers.PopUpManager;
+			import com.sdg.graphics.GradientStyle;
+			import com.sdg.components.controls.store.StoreNavBar;
+
+			public function init(params:Object):void
+			{
+				var button:StoreNavBar = new StoreNavBar(156,30,"GAME ON!");
+				button.roundRectStyle = new RoundRectStyle(15, 15);
+				button.labelFormat = new TextFormat('EuroStyle', 20, 0x913300, true);
+				button.buttonMode = true;
+				button.addEventListener(MouseEvent.CLICK, onCloseClick);
+				button.addEventListener(MouseEvent.MOUSE_OVER, onButtonMouseOver);
+				button.addEventListener(MouseEvent.MOUSE_OUT, onButtonMouseOut);
+
+				this.rawChildren.addChild(button);
+				button.labelX = button.width/2 - button.labelWidth/2;
+				setDefaultButton(button);
+
+				button.x = width/2 - button.width/2;
+				button.y = height - button.height - 92;
+
+				avatarName.text = params.name;
+				level.text = "Level: " + params.level;
+
+				var referFriend:Buddy = ModelLocator.getInstance().referFriend;
+				if (referFriend != null)
+				{
+					avatarName.setStyle("fontSize", 31);
+					avatarName.y = 142;
+					level.y = 177;
+
+					var congrats:Label = new Label();
+					congrats.text = "Congratulations!";
+					congrats.setStyle("textAlign", "center");
+					congrats.setStyle("fontFamily", "EuroStyle");
+					congrats.setStyle("fontStyle", "italic");
+					congrats.setStyle("fontWeight", "bold");
+					congrats.setStyle("fontSize", 35);
+					congrats.setStyle("horizontalCenter", 0);
+					congrats.filters = [new GlowFilter(0x00ccff, .7, 8, 8, 2, 10)];
+					addChild(congrats);
+					congrats.y = 195;
+
+
+					var prizeMessage:Label = new Label();
+					prizeMessage.text = "A " + params.giftName + " has been placed in your customizer!";
+					prizeMessage.setStyle("textAlign", "center");
+					prizeMessage.setStyle("fontFamily", "EuroStyle");
+					prizeMessage.setStyle("fontStyle", "italic");
+					prizeMessage.setStyle("fontWeight", "bold");
+					prizeMessage.setStyle("fontSize", 16);
+					prizeMessage.setStyle("horizontalCenter", 0);
+
+					addChild(prizeMessage);
+					prizeMessage.y = 240;
+				}
+
+				function onButtonMouseOver(event:MouseEvent):void
+				{
+					setMouseOverButton(event.currentTarget);
+				}
+
+				function onButtonMouseOut(event:MouseEvent):void
+				{
+					setDefaultButton(event.currentTarget);
+				}
+
+				function setDefaultButton(button:StoreNavBar):void
+				{
+					button.labelColor = 0x913300;
+					button.borderStyle = new LineStyle(0x913300, 1, 1);
+
+					var gradientBoxMatrix:Matrix = new Matrix();
+					gradientBoxMatrix.createGradientBox(button.width, button.height, Math.PI/2, 0, 0);
+					button.gradient = new GradientStyle(GradientType.LINEAR, [0xf8db5c, 0xd28602], [1, 1], [0, 255], gradientBoxMatrix);
+				}
+
+				function setMouseOverButton(button:StoreNavBar):void
+				{
+					button.labelColor = 0xffcc33;
+					button.borderStyle = new LineStyle(0xff9900, 1, 1);
+
+					var gradientBoxMatrix:Matrix = new Matrix();
+					gradientBoxMatrix.createGradientBox(button.width, button.height, Math.PI/2, 0, 0);
+					button.gradient = new GradientStyle(GradientType.LINEAR, [0xd18500, 0xa54c0a], [1, 1], [0, 255], gradientBoxMatrix);
+				}
+			}
+
+			public function onCloseClick(e:Event):void
+			{
+				this.close();
+			}
+
+			public function close():void
+			{
+				PopUpManager.removePopUp(this);
+			}
+		]]>
+	</mx:Script>
+	<!--<mx:VBox  height="114" y="155" width="484" x="22" backgroundColor="#fff000">-->
+	<mx:Label id="avatarName" textAlign="center" fontFamily="EuroStyle" fontStyle="italic" fontWeight="bold" fontSize="50" horizontalCenter="0" y="155"/>
+	<mx:Label id="level" textAlign="center" fontFamily="EuroStyle" fontStyle="italic" fontWeight="bold" fontSize="12" horizontalCenter="0" y="235"/>
+	<!--</mx:VBox>-->
+</mx:Canvas>

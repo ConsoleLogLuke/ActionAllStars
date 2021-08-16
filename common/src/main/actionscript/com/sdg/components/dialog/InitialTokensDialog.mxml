@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml"
+	xmlns:sdgcontrols="com.sdg.components.controls.*" width="553" height="500"
+	xmlns:business="com.sdg.business.*"
+	implements="com.sdg.components.dialog.ISdgDialog" xmlns:store="com.sdg.components.controls.store.*">
+
+	<mx:Script>
+		<![CDATA[
+			import com.sdg.graphics.RoundRectStyle;
+			import com.sdg.buttonformat.ButtonFormat;
+			import com.sdg.buttonstyle.ButtonSyle;
+			import com.sdg.display.GradientFillStyle;
+			import com.sdg.display.BoxStyle;
+			import com.sdg.controls.BasicButton;
+			import com.sdg.controls.BasicStaticButton;
+			import com.sdg.display.LineStyle;
+			import com.sdg.graphics.customShapes.RoundRectComplex;
+			import mx.managers.PopUpManager;
+			import com.sdg.graphics.GradientStyle;
+			import mx.controls.Text;
+			import com.sdg.components.controls.store.StoreNavBar;
+
+			public function init(params:Object):void
+			{
+				var button:StoreNavBar = new StoreNavBar(156, 30, "SWEET!");
+				button.roundRectStyle = new RoundRectStyle(15, 15);
+				button.labelFormat = new TextFormat('EuroStyle', 20, 0x9D330B, true);
+				button.buttonMode = true;
+				button.addEventListener(MouseEvent.CLICK, onCloseClick);
+				button.addEventListener(MouseEvent.MOUSE_OVER, onButtonMouseOver);
+				button.addEventListener(MouseEvent.MOUSE_OUT, onButtonMouseOut);
+
+				this.rawChildren.addChild(button);
+				button.labelX = button.width/2 - button.labelWidth/2;
+				setDefaultButton(button);
+
+				button.x = width/2 - button.width/2;
+				button.y = 336;
+
+				function onButtonMouseOver(event:MouseEvent):void
+				{
+					setMouseOverButton(event.currentTarget);
+				}
+
+				function onButtonMouseOut(event:MouseEvent):void
+				{
+					setDefaultButton(event.currentTarget);
+				}
+
+				function setDefaultButton(button:StoreNavBar):void
+				{
+					button.labelColor = 0x9D330B;
+					button.borderStyle = new LineStyle(0x913300, 1, 1);
+
+					var gradientBoxMatrix:Matrix = new Matrix();
+					gradientBoxMatrix.createGradientBox(button.width, button.height, Math.PI/2, 0, 0);
+					button.gradient = new GradientStyle(GradientType.LINEAR, [0xF7D85B, 0xD88616], [1, 1], [0, 255], gradientBoxMatrix);
+				}
+
+				function setMouseOverButton(button:StoreNavBar):void
+				{
+					button.labelColor = 0xffcc33;
+					button.borderStyle = new LineStyle(0xff9900, 1, 1);
+
+					var gradientBoxMatrix:Matrix = new Matrix();
+					gradientBoxMatrix.createGradientBox(button.width, button.height, Math.PI/2, 0, 0);
+					button.gradient = new GradientStyle(GradientType.LINEAR, [0xd18500, 0xa54c0a], [1, 1], [0, 255], gradientBoxMatrix);
+				}
+
+
+//				var offStyle:BoxStyle = new BoxStyle(new GradientFillStyle(GradientType.LINEAR, [0xF7D85B, 0xD88616], [1, 1], [1, 255], Math.PI / 2), 0x913300, 1, 1, 15);
+//				var overStyle:BoxStyle = new BoxStyle(new GradientFillStyle(GradientType.LINEAR, [0xd18500, 0xa54c0a], [1, 1], [1, 255], Math.PI / 2), 0xff9900, 1, 1, 15);
+//				var buttonStyle:ButtonSyle = new ButtonSyle(offStyle, overStyle, overStyle);
+//				var offFormat:TextFormat = new TextFormat('EuroStyle', 20, 0x9D330B, true, false);
+//				var overFormat:TextFormat = new TextFormat('EuroStyle', 20, 0xffcc33, true, false);
+//				var buttonFormat:ButtonFormat = new ButtonFormat(offFormat, overFormat, overFormat);
+//				//var button:BasicButton;
+//				//button = new BasicButton("SWEET!", 156,30, buttonStyle);
+//				var button:BasicStaticButton;
+//				//button = new BasicStaticButton("SWEET!", 156,30, buttonStyle);
+//				button = new BasicStaticButton("SWEET!", 156,30, buttonStyle,true,buttonFormat);
+//
+//				button.x = 205;
+//				button.y = 336;
+//				//button.labelFormat = new TextFormat('EuroStyle', 20, 0x9D330B, true, false);
+//				//button.label.filters = [new DropShadowFilter(2, 45, 0, 1, 4, 4)];
+//				//button.embedFonts = true;
+//				button.addEventListener(MouseEvent.CLICK,onCloseClick);
+//				//button.buttonMode = true;
+//
+//				this.rawChildren.addChild(button);
+			}
+
+			public function onCloseClick(e:Event):void
+			{
+				this.close();
+			}
+
+			public function close():void
+			{
+				PopUpManager.removePopUp(this);
+			}
+		]]>
+	</mx:Script>
+
+	<mx:Image source="@Embed('images/guestRegistration/bg_GuestPrize.swf')" visible="true"/>
+	<mx:VBox  height="105" y="311" width="411" x="70">
+	</mx:VBox>
+</mx:Canvas>

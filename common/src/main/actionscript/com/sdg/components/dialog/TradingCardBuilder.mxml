@@ -1,0 +1,252 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas
+	xmlns:mx="http://www.adobe.com/2006/mxml"
+	xmlns:controls="com.sdg.components.controls.*"
+	implements="com.sdg.components.dialog.ISdgDialog, com.sdg.model.ISetAvatar">
+
+	<mx:Script>
+		<![CDATA[
+
+			import mx.binding.utils.ChangeWatcher;
+			import mx.collections.ArrayCollection;
+			import mx.events.CloseEvent;
+			import mx.managers.PopUpManager;
+
+			import com.sdg.components.controls.AvatarPreview;
+			import com.sdg.components.controls.SdgAlert;
+			import com.sdg.events.InventoryListEvent;
+			import com.sdg.events.TradingCardBackgroundsEvent;
+			import com.sdg.events.TradingCardFrameEvent;
+			import com.sdg.events.TradingCardSaveEvent;
+			import com.sdg.model.Avatar;
+			import com.sdg.model.AvatarLevel;
+			import com.sdg.model.InventoryItem;
+			import com.sdg.model.ModelLocator;
+			import com.sdg.utils.PreviewUtil;
+
+			private var _avatar:Avatar = ModelLocator.getInstance().avatar;
+			private var _selectedBackgroundId:uint;
+
+			[Bindable]
+			private var _fontColor:uint;
+
+			[Bindable]
+			private var _backgrounds:ArrayCollection = new ArrayCollection();
+
+			public function init(params:Object):void
+			{
+				// currently font color is determined by the card level
+				_fontColor = AvatarLevel.getFontColor(_avatar.level);
+
+				// set the avatarPreview charateristics
+				this.tradingCardFrame.width = 240;
+				this.tradingCardFrame.height = 344;
+				this.avatarPreview.width = 240;
+				this.avatarPreview.height = 344;
+				this.avatarPreview.reset();
+				this.avatarPreview.setStyle("backgroundImage", "");
+				this.avatarPreview.loadAvatar(_avatar);
+
+				// watch the background images - so we can set the default background to the first one loaded
+				ChangeWatcher.watch(_backgrounds, "length", setDefaultBackground);
+
+				// get the backgrounds
+				dispatchEvent(new TradingCardBackgroundsEvent(_avatar.avatarId, _backgrounds));
+
+				// get the trading card frame
+				dispatchEvent(new TradingCardFrameEvent(_avatar.avatarId, this.tradingCardFrame));
+
+				// get the avatar
+	     		//dispatchEvent(new AvatarEvent(ModelLocator.getInstance().avatar, this);
+//	     		if (_avatar.membershipStatus == 0)
+//	     		{
+//	     			itemBox.visible = false;
+//	     			goPremium.visible = true;
+//	     		}
+			}
+
+			public function set avatar(value:Avatar):void
+			{
+
+			}
+
+			public function close():void
+			{
+				PopUpManager.removePopUp(this);
+			}
+
+			private function getBackgrounds():void
+			{
+				//goPremium.visible = false;
+	     		//itemBox.visible = true;
+
+				buttonRemoveHat.includeInLayout = false;
+				buttonRemoveHat.visible = false;
+				itemTypeLabel.title = InventoryItem.getTypeNameById(1019).charAt(0).toUpperCase() + InventoryItem.getTypeNameById(1019).substring(1).toLocaleLowerCase();
+				itemGrid.dataProvider = this._backgrounds;
+			}
+
+			private function setDefaultBackground(event:Event):void
+			{
+				if (this._backgrounds.length == 0)
+					return;
+
+				var background:InventoryItem = InventoryItem(_backgrounds.getItemAt(0));
+				this.avatarPreview.setStyle("backgroundImage", background.previewUrl);
+
+				_selectedBackgroundId = background.inventoryItemId;
+			}
+
+			private function getInventoryType(itemTypeId:uint):void
+			{
+	     		//goPremium.visible = false;
+	     		//itemBox.visible = true;
+
+				buttonRemoveHat.includeInLayout = itemTypeId == 9;
+				buttonRemoveHat.visible = itemTypeId == 9;
+
+				itemTypeLabel.title = InventoryItem.getTypeNameById(itemTypeId).charAt(0).toUpperCase() + InventoryItem.getTypeNameById(itemTypeId).substring(1).toLocaleLowerCase();
+				itemGrid.dataProvider = ModelLocator.getInstance().avatar.getInventoryListById(itemTypeId);
+				dispatchEvent(new InventoryListEvent(_avatar.avatarId, itemTypeId));
+			}
+
+			private function removeItem(itemTypeId:uint):void
+			{
+				// if we are removing a hat, make sure we show the hair again - selecting hair will remove the hat
+//				if (itemTypeId == 9)
+//					buttonRemoveHat.visible = false;
+
+				// remove the item from avatarPreview
+				avatarPreview.removeApparel(itemTypeId);
+
+				// remove the item from the avatar object
+				_avatar.removeApparel(PreviewUtil.getLayerId(itemTypeId));
+
+				// de-select any thumbnail item
+				itemGrid.selectedItem = null;
+			}
+
+			private function onSelection():void
+			{
+				var inventoryItem:InventoryItem = InventoryItem(itemGrid.selectedItem);
+				if (inventoryItem.itemTypeId == 1019)
+				{
+					// this is a background image
+					_selectedBackgroundId = inventoryItem.inventoryItemId;
+					this.avatarPreview.setStyle("backgroundImage", inventoryItem.previewUrl);
+				}
+				else
+				{
+					// this should be an avatar apparel item
+					this.avatarPreview.selectApparel(inventoryItem);
+					_avatar.setApparel(inventoryItem);
+				}
+			}
+
+			public function onSubmitCardClick():void
+			{
+				SdgAlert.show("Save this design as your trading card?", "Save Card", SdgAlert.YES | SdgAlert.NO, SdgAlert.YES, onSubmitDialogClose);
+			}
+
+			private function onSubmitDialogClose(event:CloseEvent):void
+			{
+				if (event.detail == SdgAlert.YES)
+				{
+					// save the trading card
+					dispatchEvent(new TradingCardSaveEvent(_avatar.avatarId, this._selectedBackgroundId, _avatar.apparel.toArray()));
+					this.close();
+				}
+			}
+
+		]]>
+	</mx:Script>
+
+	<mx:Style source="styles/style.css" />
+	<mx:Style>
+
+		TitlePanel.cardTitle
+		{
+			titleStyleName: smallTitle;
+			headerHeight: 35;
+		}
+
+		VBox.background
+		{
+			backgroundColor: #e0eeff;
+			cornerRadius: 5;
+			borderStyle: solid;
+			borderColor: #7ca4da;
+		}
+
+	</mx:Style>
+
+	<mx:DateFormatter id="mintingDateFormatter" formatString="MMMM D, YYYY" />
+	<mx:HBox horizontalGap="0">
+		<!--<controls:TitlePanel title="Customize Your Trading Card!" width="580" height="500" styleName="cardTitle" paddingTop="0" paddingLeft="10" paddingRight="10" paddingBottom="14" close="close()" helpId="2119" helpButtonSize="small" >-->
+		<controls:TitlePanel title="Customize Your Trading Card!" width="580" height="500" styleName="cardTitle" paddingTop="0" paddingLeft="10" paddingRight="10" paddingBottom="14" close="close()" >
+			<mx:HBox horizontalGap="10" width="100%" >
+				<mx:VBox width="265" height="380" styleName="background" horizontalAlign="center" verticalAlign="middle">
+				    <mx:Canvas width="240" height="344" horizontalScrollPolicy="off" verticalScrollPolicy="off" clipContent="true">
+					    <controls:AvatarPreview id="avatarPreview" />
+					    <mx:Image id="tradingCardFrame" width="240" height="344" />
+					    <mx:Label id="avatarName" horizontalCenter="0" text="{_avatar.name}" color="{_fontColor}" y="300" width="100%" fontSize="22" textAlign="center" fontFamily="GillSans"  fontWeight="normal"/>
+			    		<mx:Label id="mintingDate" horizontalCenter="0" y="325" text="{mintingDateFormatter.format(new Date())}" color="{_fontColor}" fontFamily="GillSans" />
+			    	</mx:Canvas>
+				</mx:VBox>
+
+				<mx:Canvas width="100%" height="380" styleName="background">
+					<mx:VBox id="itemBox" width="100%" height="100%" paddingLeft="7" paddingRight="7" paddingTop="4" paddingBottom="4" horizontalAlign="center">
+						<controls:TitlePlate id="itemTypeLabel" width="100%" />
+							<controls:ItemTileList
+							borderStyle="none"
+							styleName="lightBlue"
+							id="itemGrid"
+							change="onSelection()"
+							columnCount="3"	rowCount="4"
+							rowHeight="73" columnWidth="73"
+							width="100%" height="100%"/>
+						<controls:TitlePlate width="100%" />
+						<mx:Button id="buttonRemoveHat" label="Remove Hat" click="removeItem(9)" includeInLayout="false" visible="false"/>
+					</mx:VBox>
+					<!--<mx:Image id="goPremium" source="@Embed(source='images/cardKiosk/tcBuilderGoPremium.swf')" horizontalCenter="0" visible="false"/>-->
+				</mx:Canvas>
+			</mx:HBox>
+			<mx:Box horizontalAlign="center" verticalAlign="middle" width="100%" height="100%">
+				<mx:Button label="Submit Card" width="185" styleName="orange" click="onSubmitCardClick()"/>
+			</mx:Box>
+		</controls:TitlePanel>
+		<mx:Canvas>
+			<mx:VBox id="adminButtons" verticalGap="11" y="32">
+				<mx:Button styleName="tab" click="getInventoryType(9)"
+					icon="@Embed('images/avatarCustomizer/hatsDefault.png')"
+					overIcon="@Embed('images/avatarCustomizer/hatsOver.png')"
+					downIcon="@Embed('images/avatarCustomizer/hatsDown.png')"/>
+				<mx:Button styleName="tab" click="getInventoryType(7)"
+					icon="@Embed('images/avatarCustomizer/shirtsDefault.png')"
+					overIcon="@Embed('images/avatarCustomizer/shirtsOver.png')"
+					downIcon="@Embed('images/avatarCustomizer/shirtsDown.png')"/>
+				<mx:Button styleName="tab" click="getInventoryType(6)"
+					icon="@Embed('images/avatarCustomizer/pantsDefault.png')"
+					overIcon="@Embed('images/avatarCustomizer/pantsOver.png')"
+					downIcon="@Embed('images/avatarCustomizer/pantsDown.png')"/>
+				<mx:Button styleName="tab" click="getInventoryType(5)"
+					icon="@Embed('images/avatarCustomizer/shoesDefault.png')"
+					overIcon="@Embed('images/avatarCustomizer/shoesOver.png')"
+					downIcon="@Embed('images/avatarCustomizer/shoesDown.png')"/>
+				<!--<mx:Button styleName="tab" click="getInventoryType(2)"
+					icon="@Embed('images/avatarCustomizer/glassesDefault.png')"
+					overIcon="@Embed('images/avatarCustomizer/glassesOver.png')"
+					downIcon="@Embed('images/avatarCustomizer/glassesDown.png')"/>-->
+				<mx:Button styleName="tab" click="getBackgrounds()"
+					icon="@Embed('images/avatarCustomizer/bgDefaultTab.png')"
+					overIcon="@Embed('images/avatarCustomizer/bgOverTab.png')"
+					downIcon="@Embed('images/avatarCustomizer/bgDownTab.png')"/>
+				<mx:Button styleName="tab" visible="false"
+					icon="@Embed('images/avatarCustomizer/poseDefaultTab.png')"
+					overIcon="@Embed('images/avatarCustomizer/poseOverTab.png')"
+					downIcon="@Embed('images/avatarCustomizer/poseDownTab.png')"/>
+			</mx:VBox>
+		</mx:Canvas>
+	</mx:HBox>
+
+</mx:Canvas>

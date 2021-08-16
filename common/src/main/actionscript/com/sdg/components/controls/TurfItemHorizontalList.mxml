@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<controls:HorizontalListCustom xmlns:mx="http://www.adobe.com/2006/mxml" xmlns:controls="com.sdg.components.controls.*"
+	paddingLeft="0" paddingTop="0" paddingRight="0" paddingBottom="0" dragEnabled="true" horizontalScrollPolicy="on">
+	
+	<mx:Metadata>
+		[Style(name="itemWidth", type="Number", inherit="no")]
+		[Style(name="itemHeight", type="Number", inherit="no")]
+	</mx:Metadata>
+	
+	<mx:Script>
+		<![CDATA[
+			import mx.managers.DragManager;
+			import mx.core.DragSource;
+			import mx.events.DragEvent;
+			import mx.core.IUIComponent;
+			protected var _imageProxy:IUIComponent;
+			
+			override public function styleChanged(styleProp:String):void
+			{
+				if (styleProp == "itemWidth" || styleProp == "itemHeight")
+					itemsSizeChanged = true;
+				
+				super.styleChanged(styleProp);
+			}
+			
+			override protected function dragStartHandler(event:DragEvent):void
+			{
+				if (event.isDefaultPrevented())
+					return;
+				
+				var dragSource:DragSource = new DragSource();
+				addDragData(dragSource);
+				
+				_imageProxy = dragImage;
+				
+				DragManager.doDrag(this, dragSource, event, _imageProxy, 0, 0, .5, dragMoveEnabled);
+			}
+			
+			public function get proxyImage():IUIComponent
+			{
+				return _imageProxy;
+			}
+		]]>
+	</mx:Script>
+</controls:HorizontalListCustom>

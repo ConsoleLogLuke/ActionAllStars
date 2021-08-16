@@ -1,0 +1,17 @@
+buildscript {
+    repositories {
+        mavenCentral()
+        maven { url 'https://jitpack.io' }
+    }
+    dependencies {
+        classpath 'com.github.ConsoleLogLuke:GradleFx:-SNAPSHOT'
+    }
+}
+
+subprojects {
+    apply plugin: 'gradlefx'
+    apply plugin: 'scaffold'
+
+    group 'com.sdg'
+    version '1.0-SNAPSHOT'
+}

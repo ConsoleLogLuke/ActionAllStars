@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TileList xmlns:mx="http://www.adobe.com/2006/mxml"
+	itemRenderer="com.sdg.components.renderers.TileItemRenderer"
+	columnWidth="80" rowHeight="80"
+	paddingLeft="0"  paddingTop="0" paddingRight="0" paddingBottom="0"
+    horizontalScrollPolicy="off" verticalScrollPolicy="on"
+	dragEnabled="true"
+	xmlns:controls="com.sdg.components.controls.*"> 
+	
+	<mx:Metadata>
+		[Style(name="itemWidth", type="Number", inherit="no")]
+		[Style(name="itemHeight", type="Number", inherit="no")]
+	</mx:Metadata>
+	
+	<mx:Script>
+		<![CDATA[
+		
+		import mx.controls.listClasses.IListItemRenderer;
+		import mx.core.IStateClient;
+		import mx.core.mx_internal;
+		
+		use namespace mx_internal;
+		
+		override protected function createChildren():void
+		{
+			super.createChildren();
+			listContent.removeChild(selectionLayer);
+		}
+		
+		override protected function drawItem(
+							item:IListItemRenderer, selected:Boolean = false,
+                            highlighted:Boolean = false, caret:Boolean = false,
+                            transition:Boolean = false):void
+		{
+    		super.drawItem(item, selected, highlighted, caret, transition);
+    		
+    		if (item)
+    		{
+    			if (item is IStateClient)
+    			{
+	    			IStateClient(item).currentState = selected ? "selected" : highlighted ? "highlighted" : null;
+	    		}
+	    	}
+		}
+		
+		override public function styleChanged(styleProp:String):void
+		{
+			if (styleProp == "itemWidth" || styleProp == "itemHeight")
+				itemsSizeChanged = true;
+				
+			super.styleChanged(styleProp);
+		}
+		]]>
+	</mx:Script>
+</mx:TileList>

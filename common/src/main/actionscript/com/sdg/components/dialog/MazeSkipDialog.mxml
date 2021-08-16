@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:UIComponent xmlns:mx="http://www.adobe.com/2006/mxml" implements="com.sdg.components.dialog.ISdgDialog" width="925" height="665">
+	<mx:Script>
+		<![CDATA[
+			import com.sdg.events.RoomNavigateEvent;
+			import com.sdg.util.AssetUtil;
+			import com.sdg.net.QuickLoader;
+			import mx.managers.PopUpManager;
+			
+			private var _onButton1:Function;
+			private var _onButton2:Function;
+			
+			public function init(params:Object):void
+			{
+				_onButton1 = (params.onButton1 != null) ? params.onButton1 : null;
+				_onButton2 = (params.onButton2 != null) ? params.onButton2 : null;
+				
+				var displayUrl:String = AssetUtil.GetGameAssetUrl(79, 'MazeCompleted.swf');
+				var display:DisplayObject = new QuickLoader(displayUrl, onComplete, onError, 2);
+				
+				function onError():void
+				{
+					close();
+				}
+				
+				function onComplete():void
+				{
+					display.addEventListener('button1', onButtonClick1);
+					display.addEventListener('button2', onButtonClick2);
+					addChild(display);
+				}
+				
+				function onButtonClick1(e:Event):void
+				{
+					display.removeEventListener('button1', onButtonClick1);
+					display.removeEventListener('button2', onButtonClick2);
+					removeChild(display);
+					
+					if (_onButton1 != null) _onButton1();
+					
+					close();
+				}
+				
+				function onButtonClick2(e:Event):void
+				{
+					display.removeEventListener('button1', onButtonClick1);
+					display.removeEventListener('button2', onButtonClick2);
+					removeChild(display);
+					
+					if (_onButton2 != null) _onButton2();
+					
+					close();
+				}
+			}
+			
+			public function close():void
+			{
+				PopUpManager.removePopUp(this);
+				_onButton1 = null;
+				_onButton2 = null;
+			}
+		]]>
+	</mx:Script>
+
+</mx:UIComponent>

@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<cairngorm:ServiceLocator xmlns:mx="http://www.adobe.com/2006/mxml" xmlns:cairngorm="http://www.adobe.com/2006/cairngorm">
+	<mx:Script>
+	  <![CDATA[
+	   import com.sdg.net.Environment;
+	   
+	   [Bindable]
+	   private static var appUrl:String = Environment.getApplicationUrl();
+	   
+	   public static function setBaseUrl(url:String):void
+	   {
+	   		appUrl = url;
+	   }
+	   
+	  ]]>
+	</mx:Script>
+	<!-- IMPORTANT! Setting the method to post will cause a fault for any URL -->
+	<mx:HTTPService id="inventoryList" url="{appUrl + '/test/inventory/find'}" method="GET" resultFormat="e4x" />
+	<mx:HTTPService id="verifyFriend" url="{appUrl + '/test/referFriend'}" method="POST" resultFormat="e4x" />
+	<mx:HTTPService id="avatarApparel" url="{appUrl + '/test/inventory/getCurrentAvatarApparel'}" method="GET" resultFormat="e4x" />
+	<mx:HTTPService id="avatarApparelSave" url="{appUrl + '/test/inventory/save'}" method="POST" resultFormat="e4x" />
+	<mx:HTTPService id="getUnityNBATeams" url="{appUrl + '/test/teamNba/list'}" method="GET" resultFormat="e4x" />
+	<mx:HTTPService id="saveRegistration" url="{appUrl + '/test/avatar/add'}" method="POST" resultFormat="e4x" />
+	<mx:HTTPService id="saveFavTeams" url="{appUrl + '/test/affiliation/save'}" method="POST" resultFormat="e4x" />
+	<mx:HTTPService id="getFavTeams" url="{appUrl + '/test/affiliation/list'}" method="GET" resultFormat="e4x" />
+	<mx:HTTPService id="makeGuestAccount" url="{appUrl + '/test/avatar/guest'}" method="POST" resultFormat="e4x" />
+	<mx:HTTPService id="roomCheck" url="{appUrl + '/test/roomCheck'}" method="GET" resultFormat="e4x" />
+	<mx:HTTPService id="setPayPal" url="{appUrl + '/test/setpaypal'}" method="POST" resultFormat="e4x" />
+	<mx:HTTPService id="getTickerFeed" url="{appUrl + '/test/sports'}" method="GET" resultFormat="e4x" />
+	<mx:HTTPService id="getAsn" url="{appUrl + '/test/asnEdition'}" method="GET" resultFormat="e4x" />
+	<mx:HTTPService id="getGameStats" url="{appUrl + '/test/gameStats'}" method="GET" resultFormat="e4x" />
+	<mx:HTTPService id="getGameTeams" url="{appUrl + '/test/gameTeams'}" method="GET" resultFormat="e4x" />	
+	<mx:HTTPService id="pickem" url="{appUrl + '/test/pickem'}" method="GET" resultFormat="e4x" />
+	<mx:HTTPService id="mvpLogProcess" url="{appUrl + '/test/logProcess'}" method="POST" resultFormat="e4x"/>
+	<mx:HTTPService id="getAvatarStat" url="{appUrl + '/test/dyn/getStat'}" method="GET" resultFormat="e4x" />
+	<mx:HTTPService id="saveAvatarStat" url="{appUrl + '/test/dyn/saveStat'}" method="POST" resultFormat="e4x" />
+	<mx:HTTPService id="getBuddyList" url="{appUrl + '/test/buddy'}" method="GET" resultFormat="e4x" />
+	<mx:HTTPService id="getPartyList" url="{appUrl + '/api/dyn/b/pl'}" method="GET" resultFormat="e4x" />
+	<mx:HTTPService id="changePassword" url="{appUrl + '/test/change/athletepassword'}" method="POST" resultFormat="e4x" />
+	<mx:HTTPService id="changeParentPassword" url="{appUrl + '/test/change/parentpassword'}" method="POST" resultFormat="e4x" />
+	<mx:HTTPService id="changeChatMode" url="{appUrl + '/test/change/chatmode'}" method="POST" resultFormat="e4x" />
+	<mx:HTTPService id="changeNewsletterOption" url="{appUrl + '/test/change/newsletteroption'}" method="POST" resultFormat="e4x" />
+	<mx:HTTPService id="resendActivation" url="{appUrl + '/test/resendvalidation'}" method="GET" resultFormat="e4x" />
+	<mx:HTTPService id="savePrivateRoom" url="{appUrl + '/test/inventory/savePrivateRoom'}" method="POST" resultFormat="e4x" />
+	<mx:HTTPService id="login" url="{appUrl + '/test/login'}" method="GET" resultFormat="e4x"/>
+	<mx:HTTPService id="mvpLogin" url="{appUrl + '/test/mvpStatus'}" method="GET" resultFormat="e4x"/>
+	<mx:HTTPService id="avatar" url="{appUrl + '/test/avatar'}" method="GET" resultFormat="e4x" />
+	<mx:HTTPService id="getBillDate" url="{appUrl + '/test/getdate'}" method="GET" resultFormat="e4x" />
+	<mx:HTTPService id="storeCategories" url="{appUrl + '/test/category'}" method="GET" resultFormat="e4x" />
+	<mx:HTTPService id="storeItems" url="{appUrl + '/test/catalog'}" method="GET" resultFormat="e4x" />
+	<mx:HTTPService id="itemPurchase" url="{appUrl + '/test/itemPurchase'}" method="POST" resultFormat="e4x" />
+	<mx:HTTPService id="saveModeratorReport" url="{appUrl + '/test/saveModeratorReport'}" method="POST" resultFormat="e4x" />
+	<mx:HTTPService id="animationSet" url="{appUrl + '/test/animationSet'}" method="GET" resultFormat="e4x" />
+	<mx:HTTPService id="itemViewMetrics" url="{appUrl + '/test/itemViewMetrics'}" method="GET" resultFormat="e4x" />
+	<mx:HTTPService id="spriteTemplate" url="{appUrl + '/test/spriteTemplate'}" method="GET" resultFormat="e4x" />
+	<mx:HTTPService id="levelMessaging" url="{appUrl + '/test/levelMessaging'}" method="GET" resultFormat="e4x" />
+	<mx:HTTPService id="badgeMessaging" url="{appUrl + '/test/badgeMessaging'}" method="GET" resultFormat="e4x" />
+	<mx:HTTPService id="itemTypeList" url="{appUrl + '/test/itemType'}" method="GET" resultFormat="e4x" />
+	<mx:HTTPService id="serverList" url="{appUrl + '/test/serverList'}" method="GET" resultFormat="e4x" />
+	<mx:HTTPService id="challenges" url="{appUrl + '/test/quest/list'}" method="GET" resultFormat="e4x" />
+	<mx:HTTPService id="levelList" url="{appUrl + '/test/level/list'}" method="GET" resultFormat="e4x" />
+	<mx:HTTPService id="tradingCardBackgroundList" url="{appUrl + '/test/background/list'}" method="GET" resultFormat="e4x" />
+	<mx:HTTPService id="tradingCardFrame" url="{appUrl + '/test/tradingCardTemplate/get'}" method="GET" resultFormat="e4x" />
+	<mx:HTTPService id="tradingCardSave" url="{appUrl + '/test/tradingCard/save'}" method="POST" resultFormat="e4x" />
+	<mx:HTTPService id="gameAttributes" url="{appUrl + '/test/game/get'}" method="GET" resultFormat="e4x" />
+	<mx:HTTPService id="gameResult" url="{appUrl + '/test/game/postResult'}" method="POST" resultFormat="e4x" />
+	<mx:HTTPService id="validateUsername" url="{appUrl + '/test/user/checkName'}" method="GET" resultFormat="e4x" />
+	<mx:HTTPService id="getKioskCards" url="{appUrl + '/test/tradingCard/getKioskCards'}" resultFormat="e4x" />
+	<mx:HTTPService id="purchaseTradingCardPack" url="{appUrl + '/test/tradingCard/purchasePack'}" resultFormat="e4x" />
+	<mx:HTTPService id="deleteTradingCard" url="{appUrl + '/test/tradingCard/delete'}" resultFormat="e4x" />
+	<mx:HTTPService id="getAlbumCards" url="{appUrl + '/test/tradingCard/getAlbumCards'}" resultFormat="e4x" />
+	<mx:HTTPService id="tutorialReset" url="{appUrl + '/test/tutorialReset'}" method="POST" resultFormat="e4x" />
+	<mx:HTTPService id="seasonalGiftSelection" url="{appUrl + '/test/pickSeasonal'}" method="POST" resultFormat="e4x" />
+	<mx:HTTPService id="getSeasonal" url="{appUrl + '/test/getSeasonal'}" method="POST" resultFormat="e4x" />
+	<mx:HTTPService id="getJabs" url="{appUrl + '/test/jab'}" method="GET" resultFormat="e4x" />
+	<mx:HTTPService id="getEmotes" url="{appUrl + '/test/emote'}" method="GET" resultFormat="e4x" />
+	<mx:HTTPService id="saveAttribute" url="{appUrl + '/test/dyn/saveAttribute'}" method="POST" resultFormat="e4x" />
+	<mx:HTTPService id="getItemSets" url="{appUrl + '/test/dyn/itemSet/list'}" method="GET" resultFormat="e4x" />
+	<mx:HTTPService id="buttonClick" url="{appUrl + '/test/buttonClick'}" method="POST" resultFormat="e4x" />
+	<mx:HTTPService id="petList" url="{appUrl + '/test/petList'}" method="GET" resultFormat="e4x" />
+	<mx:HTTPService id="messageBoardAdd" url="{appUrl + '/api/dyn/msgboard/add'}" method="POST" resultFormat="e4x" />
+	<mx:HTTPService id="messageBoardList" url="{appUrl + '/api/dyn/msgboard/list'}" method="GET" resultFormat="e4x" />
+	<mx:HTTPService id="messageBoardUpdate" url="{appUrl + '/api/dyn/msgboard/update'}" method="POST" resultFormat="e4x" />
+</cairngorm:ServiceLocator>

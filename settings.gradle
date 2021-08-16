@@ -1,0 +1,3 @@
+rootProject.name = 'ActionAllStars'
+include 'assets'
+include 'common'

@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml"
+	xmlns:sdgcontrols="com.sdg.components.controls.*"
+	xmlns:pda="com.sdg.view.pda.*"
+	implements="com.sdg.view.pda.interfaces.IPDASidePanel, com.sdg.model.ISetAvatar"
+	width="340" height="520">	
+	
+	<mx:Script>
+		<![CDATA[
+			import com.sdg.model.Buddy;
+			import com.sdg.view.avatarcard.IntegratedAvatarInfoPanel;
+			import com.sdg.net.socket.SocketClient;
+			import com.sdg.events.RoomNavigateEvent;
+			import com.sdg.components.dialog.SaveYourGameDialog;
+			import com.sdg.model.MembershipStatus;
+			import com.sdg.model.ModelLocator;
+			import com.sdg.control.BuddyManager;
+			import com.sdg.display.AvatarSprite;
+			import com.sdg.view.avatarcard.AvatarInfoSidePanelWithControls;
+			import com.sdg.net.QuickLoader;
+			import com.sdg.utils.ItemUtil;
+			import com.sdg.view.LayeredImage;
+			import com.sdg.view.avatarcard.AvatarInfoPanel;
+			import com.sdg.components.controls.SdgAlertChrome;
+			import mx.events.CloseEvent;
+			import com.sdg.view.avatarcard.AvatarCardTwoSide;
+			import com.sdg.components.dialog.JabDialog2;
+			import com.sdg.utils.MainUtil;
+			import com.sdg.view.pda.interfaces.IPDAButton;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			import com.sdg.events.AvatarApparelEvent;
+			import com.sdg.model.Avatar;
+			import com.sdg.control.PDAController;
+			import com.sdg.graphics.customShapes.RoundRectComplex;
+			
+			private static const CARD_WIDTH:Number = 300;
+			private static const CARD_HEIGHT:Number = 430;
+			
+			private var _controller:PDAController;
+			private var _isInitialized:Boolean = false;
+			private var _avatar:Avatar;
+			private var _buddyInfo:Buddy;
+			private var _avInfoPanel:IntegratedAvatarInfoPanel;
+			
+			public function init(controller:PDAController = null):void
+			{
+				this.controller = controller;
+				_isInitialized = true;
+			}
+			
+			////////////////////
+			// PUBLIC FUNCTIONS
+			////////////////////
+			
+			public function close():void
+			{
+				// Handle clean up.
+				
+				// Remove previous avatar info panel.
+				if (_avInfoPanel)
+				{
+					_avInfoPanel.destroy();
+					rawChildren.removeChild(_avInfoPanel);
+				}
+				
+				// Remove references.
+				_avInfoPanel = null;
+			}
+			
+			public function refresh():void
+			{
+				
+			}
+			
+			////////////////////
+			// GET/SET METHODS
+			////////////////////
+			
+			public function set avatar(value:Avatar):void
+			{
+				if (value == _avatar) return;
+				_avatar = value;
+				
+				// If we have buddy info for this avatar, merge some data into the avatar.
+				if (_buddyInfo && _buddyInfo.avatarId == _avatar.avatarId)
+				{
+					_avatar.roomId = _buddyInfo.roomId;
+				}
+				
+				// Remove previous avatar info panel.
+				if (_avInfoPanel)
+				{
+					_avInfoPanel.destroy();
+					rawChildren.removeChild(_avInfoPanel);
+				}
+				
+				// Add a new avatar info panel.
+				_avInfoPanel = new IntegratedAvatarInfoPanel(_avatar, 340, 520, true, false, true, true);
+				rawChildren.addChild(_avInfoPanel);
+			}
+			
+			public function set buddyInfo(value:Buddy):void
+			{
+				_buddyInfo = value;
+			}
+			
+			public function set controller(value:PDAController):void
+			{
+				_controller = value;
+			}
+			
+			public function get isInitialized():Boolean
+			{
+				return _isInitialized;
+			}
+			
+			////////////////////
+			// EVENT HANDLERS
+			////////////////////
+			
+		]]>
+	</mx:Script>
+</mx:Canvas>

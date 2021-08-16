@@ -1,0 +1,531 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="925" height="668"
+					xmlns:controls="com.sdg.components.controls.*"
+					implements="com.sdg.components.dialog.ISdgDialog"	 >
+
+	<mx:Script>
+		<![CDATA[
+
+		import com.adobe.cairngorm.control.CairngormEventDispatcher;
+
+		import com.sdg.events.SeasonalGiftSelectionEvent;
+		import com.sdg.components.controls.SdgAlert;
+		import com.sdg.components.dialog.helpers.QuestionAnswerSet;
+//		import com.sdg.components.dialog.helpers.SeasonalGiftsXml;	// test data
+		import com.sdg.model.ModelLocator;
+		import com.sdg.net.Environment;
+		import com.sdg.utils.Constants;
+
+		import mx.collections.ArrayCollection;
+		import mx.controls.Button;
+		import mx.managers.PopUpManager;
+
+
+		private var _seasonalDataInput:XML;
+
+			 /* Begin Prize Picker  */
+
+		private const TRIGGER_FIRST_SURVEY:int = 4;
+		private const TRIGGER_SECOND_SURVEY:int = 7;
+
+		[Embed(source='images/seasonalGifts/giftBox.swf')]
+		private var _giftBoxSwfSrc:Class;
+
+		[Embed(source='images/seasonalGifts/7thGift.swf')]
+		private var _7thGiftSwfSrc:Class;
+
+		private var _numOwned:int;			// number of owned items, used to  trigger survey
+		private var _pickedPrize:int;		// index into _prizes of the picked prize
+		private var _prizes:Array = new Array;
+		private var _returnTopQ:int;	// selected answer A 0==none selected
+		private var _returnBottomQ:int;	// selected answer B 0==none selected
+		private var _numQuestions:int;		// nunmber of questions in survey
+
+		//build output uses these to send back to server
+		private var _avatarId:uint;
+		private var _itemId:uint;
+		private	var _answerId:String;
+		private	var _additionalComments:String;
+
+//		private var sgxml:SeasonalGiftsXml = new SeasonalGiftsXml;	// debug using static data
+//		private var staticData:XML = sgxml.seasonalData;  ;			// debug using static data
+
+		public function init(params:Object):void
+		{
+//			_seasonalDataInput = staticData;						// debug using static data
+			_seasonalDataInput = XML(params.xmlData);
+
+			var xprizes:XMLList = _seasonalDataInput.seasonal.prizes.children();
+			_numOwned = 0;				// clear trigger counter
+
+			for each (var item:XML in xprizes )	// get the xml into the array
+			{
+				var prize:Array = new Array;
+
+				prize["orderId"] = int(item.orderId[0]);
+				prize["itemId"] = int(item.itemId[0]);
+				prize["owned"] = int(item.owned[0]);
+				prize["permanentFlag"] = int(item.permanentFlag[0]);
+				prize["name"] = String(item.name[0]);
+				prize["thumbnailUrl"] = Environment.getApplicationUrl() + "/test/inventoryThumbnail?itemId=" + String(item.itemId[0]);
+				_prizes[int(item.orderId[0])] = prize;
+			}
+
+			_setControls();		// set the image tags for the controls to reflect state as from xml
+			_setSurveyXML();	// setup the questions too
+			_switchMessage();	// switch inventoryAward messages according to avatar membership status
+
+//			inventoryItem.previewUrl = Environment.getApplicationUrl() + "/test/inventoryPreview?itemId=" + inventoryItem.itemId + "&contextId=" + contextId;
+//			inventoryItem.previewUrlAlt = Environment.getApplicationUrl() + "/test/inventoryPreview?itemId=" + inventoryItem.itemId + "&contextId=" + contextId + "&layerId=9010";
+//			inventoryItem.thumbnailUrl = Environment.getApplicationUrl() + "/test/inventoryThumbnail?itemId=" + inventoryItem.itemId;
+		}
+
+
+		private static const GUEST_MESSAGE:String ="Guests: Don't Forget to Save Your Progress to Keep Your Special Gift!";
+		private static const FREE_PREMIUM_MESSAGE:String = "Come Back Tomorrow to Get a New Gift!";
+		private static const FREE_PREMIUM_MESSAGE7:String = "Nice Work, You Unlocked All 7 Gifts! \n New Items Will be Available on Oct. 29th.";
+		private static const ERROR_MESSAGE:String = "Player Status Unknown";
+
+		private function _switchMessage():void
+		{
+			switch( ModelLocator.getInstance().avatar.membershipStatus )	// for real
+
+//			switch( Constants.MEMBER_STATUS_GUEST )	// for test
+
+			{
+				case Constants.MEMBER_STATUS_FREE :
+				case Constants.MEMBER_STATUS_PREMIUM_CANCELLED :
+				case Constants.MEMBER_STATUS_PREMIUM :
+				{
+					if(_numOwned == (TRIGGER_SECOND_SURVEY -1) ) // for gift 7 (not awarded yet) - post alternate
+					{
+						inventoryText.text = FREE_PREMIUM_MESSAGE7;
+					}
+					else
+					{
+						inventoryText.text = FREE_PREMIUM_MESSAGE;
+					}
+					break;
+				}
+				case Constants.MEMBER_STATUS_GUEST :
+					inventoryText.text = GUEST_MESSAGE;
+					break;
+
+				default:
+					inventoryText.text = ERROR_MESSAGE;
+			}
+		}
+
+
+		// get out answers into an XML string to send back to the server
+		private function buildOutput():void
+		{
+			_avatarId			= ModelLocator.getInstance().avatar.avatarId;
+			_itemId				= uint( _prizes[_pickedPrize]["itemId"]);
+			_answerId			= String("");
+			_additionalComments	= String("");
+
+			if( _returnTopQ != 0 )			// if this was a survey pass
+			{
+				_answerId	  		= String(_returnTopQ) + "," + String(_returnBottomQ );
+				_additionalComments	= surveyComments.text;
+			}
+		}
+
+		private function _setControls():void
+		{
+			_numOwned=0;
+
+			if(_prizes[1]["owned"] == 1 ) // is this owned?
+			{ //	g1Url =_prizes[1]["thumbnailUrl"];	// if owned pass url
+				gift1.source =_prizes[1]["thumbnailUrl"];
+				_numOwned++;
+			}
+			else
+			{
+				gift1.source =_giftBoxSwfSrc;
+				cx1.mouseChildren=true;			// default state is disabled
+			}
+
+			if(_prizes[2]["owned"] == 1 ) // is this owned?
+			{ 	gift2.source =_prizes[2]["thumbnailUrl"];	// if owned pass url
+				_numOwned++;
+			}
+			else
+			{
+				gift2.source =_giftBoxSwfSrc;
+				cx2.mouseChildren=true;
+			}
+
+			if(_prizes[3]["owned"] == 1 ) // is this owned?
+			{ 	gift3.source =_prizes[3]["thumbnailUrl"];	// if owned pass url
+				_numOwned++;
+			}
+			else
+			{
+				gift3.source =_giftBoxSwfSrc;
+				cx3.mouseChildren=true;
+			}
+
+			if(_prizes[4]["owned"] == 1 ) // is this owned?
+			{ 	gift4.source =_prizes[4]["thumbnailUrl"];	// if owned pass url
+				_numOwned++;
+			}
+			else
+			{
+				gift4.source =_giftBoxSwfSrc;
+				cx4.mouseChildren=true;
+			}
+
+			if(_prizes[5]["owned"] == 1 ) // is this owned?
+			{ 	gift5.source =_prizes[5]["thumbnailUrl"];	// if owned pass url
+				_numOwned++;
+			}
+			else
+			{
+				gift5.source =_giftBoxSwfSrc;
+				cx5.mouseChildren=true;
+			}
+
+			if(_prizes[6]["owned"] == 1 ) // is this owned?
+			{ 	gift6.source =_prizes[6]["thumbnailUrl"];	// if owned pass url
+				_numOwned++;
+			}
+			else
+			{
+				gift6.source =_giftBoxSwfSrc;
+				cx6.mouseChildren=true;
+			}
+
+			if(_prizes[7]["owned"] == 1 ) // is this owned?
+			{ 	gift7.source =_prizes[7]["thumbnailUrl"];	// if owned pass url
+				_numOwned++;
+			}
+			else
+			{
+				gift7.source = _7thGiftSwfSrc;
+				if( _numOwned == 6 )	// can they use the final box?
+				{ cx7.mouseChildren=true; }
+			}
+
+		}
+
+		// we got a click from a control, it must be an unowned item
+		// this needs to change to reflect the response from the survey swf
+		// they only get the goodie if they give us what we want - ANSWERS WE WANT ANSWERS
+
+		private function onClick(index:int):void
+		{
+//			if( index == 7 )						// special case the 7th control
+//			{
+//				if( _numOwned < 6 )					// we don't have all the previous items
+//				return;
+//			}
+
+			_pickedPrize = index;					// need this to get item id to award in buildOutput
+			_prizes[index]["owned"] = 1;			// mark it so - we may
+			awardSurveyDisplay.source =_prizes[index]["thumbnailUrl"];		// this is what is offerec
+			awardInventoryDisplay.source =_prizes[index]["thumbnailUrl"];	// this is what they get
+			_setControls();													// set images, recalc owned
+
+			trace("clicked on " + index + " _numOwned = " + _numOwned );
+
+		// on trigger surveys => survey panel... which returns via validate answers to build xml
+
+			if( _numQuestions != 0 )
+			{
+				if( _numOwned == TRIGGER_FIRST_SURVEY )
+				{
+					surveyDisplay.visible = true;
+					pickItemsDisplay.visible = false;
+					return;
+				}
+
+				if( _numOwned == TRIGGER_SECOND_SURVEY )
+				{
+					surveyDisplay.visible = true;
+					pickItemsDisplay.visible = false;
+					return;
+				}
+			}
+
+		// all others just give them the award...
+			pickItemsDisplay.visible = false;
+			inventoryDisplay.visible=true;
+		}
+
+		private function validateAnswers():void
+		{
+			if( checkAnswers()== true ) // got an answer to our questions
+			{
+				trace( " Answer to top: " + _returnTopQ + " bottom: " + _returnBottomQ );
+		//		SdgAlert.show("Congrats big boy.", "Survey Complete");
+		//		buildOutput(true);
+				surveyDisplay.visible=false;
+				inventoryDisplay.visible=true;
+			}
+			else
+			{
+				SdgAlert.show("Please answer the two questions to unlock your free gift.", "Survey Incomplete");
+			}
+		}
+
+		public function close():void
+		{
+			buildOutput();				// capture data from controls to vars
+			// send the data
+		 	CairngormEventDispatcher.getInstance().dispatchEvent(new SeasonalGiftSelectionEvent( _avatarId, _itemId, _answerId, _additionalComments));
+			PopUpManager.removePopUp(this);
+			dispatchEvent(new Event(Event.CLOSE));
+		}
+
+
+		/************************* Survey Query ******************************/
+
+//		private var _xmlData:XML;
+		private var _questionAnswerA:QuestionAnswerSet;
+		private var _questionAnswerB:QuestionAnswerSet;
+
+		private var _xmlQuestions:Array;
+		private var _xmlAnswersA:Array;
+		private var _xmlAnswersB:Array;
+
+
+		private function _setSurveyXML():void
+		{
+
+			_numQuestions = _seasonalDataInput.seasonal.survey.children().length();	// debug
+//			_numQuestions = 0;
+
+			if( _numQuestions == 0 ) // no questions just return
+			{ return; }
+
+//			_xmlData = new XML(_seasonalDataInput);
+
+			decodeQuestionsAnswers(_seasonalDataInput);	// pass in the questions and answers
+			populateQandA();
+			return;
+		}
+
+		private function decodeQuestionsAnswers(xmlData:XML):void
+		{
+			var _qXml1:XML = xmlData.seasonal.survey.question[0];
+			_questionAnswerA = new QuestionAnswerSet( _qXml1 );
+
+			var _qXml2:XML = xmlData.seasonal.survey.question[1];
+			_questionAnswerB = new QuestionAnswerSet( _qXml2 );
+		}
+
+		// could be prettier but we only have two questions
+
+		private function populateQandA():void
+		{
+			if( _questionAnswerA.getQOrderId() == 1 )				// if q1 ==> first control
+			{
+				question1_txt.text = _questionAnswerA.getQText();	//set first control with q1
+
+				answer1AText_txt.label = _questionAnswerA.getAnswerText(0);
+				answer2AText_txt.label = _questionAnswerA.getAnswerText(1);
+				answer3AText_txt.label = _questionAnswerA.getAnswerText(2);
+				answer4AText_txt.label = _questionAnswerA.getAnswerText(3);
+
+				question2_txt.text = _questionAnswerB.getQText();	//set second control with q2
+
+				answer1BText_txt.label = _questionAnswerB.getAnswerText(0);
+				answer2BText_txt.label = _questionAnswerB.getAnswerText(1);
+				answer3BText_txt.label = _questionAnswerB.getAnswerText(2);
+				answer4BText_txt.label = _questionAnswerB.getAnswerText(3);
+			}
+			else
+			{
+				question1_txt.text = _questionAnswerB.getQText();	//set first control with q2
+
+				answer1AText_txt.label = _questionAnswerB.getAnswerText(0);
+				answer2AText_txt.label = _questionAnswerB.getAnswerText(1);
+				answer3AText_txt.label = _questionAnswerB.getAnswerText(2);
+				answer4AText_txt.label = _questionAnswerB.getAnswerText(3);
+
+				question2_txt.text = _questionAnswerA.getQText();	//set second control with q1
+
+				answer1BText_txt.label = _questionAnswerA.getAnswerText(0);
+				answer2BText_txt.label = _questionAnswerA.getAnswerText(1);
+				answer3BText_txt.label = _questionAnswerA.getAnswerText(2);
+				answer4BText_txt.label = _questionAnswerA.getAnswerText(3);
+			}
+		}
+
+
+		// get results
+
+		private function checkAnswers():Boolean
+		{
+			var _aPicked:int = -1;
+			var _bPicked:int = -1;
+
+			// check the top radio group
+			if( answer1AText_txt.selected ){ _aPicked = 0; }
+			if( answer2AText_txt.selected ){ _aPicked = 1; }
+			if( answer3AText_txt.selected ){ _aPicked = 2; }
+			if( answer4AText_txt.selected ){ _aPicked = 3; }
+
+
+			// check the bottom radio group
+			if( answer1BText_txt.selected ){ _bPicked = 0; }
+			if( answer2BText_txt.selected ){ _bPicked = 1; }
+			if( answer3BText_txt.selected ){ _bPicked = 2; }
+			if( answer4BText_txt.selected ){ _bPicked = 3; }
+
+			if(  (_aPicked == -1) || (_bPicked == -1 ) )	// one missing == error
+			{
+				return( false );
+			}
+
+			// now do the question order switch
+
+			if( _questionAnswerA.getQOrderId() == 1 )	// a is on top
+			{
+				_returnTopQ 	= _questionAnswerA.getAnswerId(_aPicked );	// top is qA
+				_returnBottomQ	= _questionAnswerB.getAnswerId(_bPicked );
+			}
+			else
+			{
+				_returnTopQ		= _questionAnswerB.getAnswerId(_aPicked ); // top is qb
+				_returnBottomQ 	= _questionAnswerA.getAnswerId(_bPicked );
+			}
+
+			return( true );
+		}
+
+
+
+		]]>
+
+	</mx:Script>
+
+	<mx:Style source="styles/style.css"/>
+
+<!-- pickItemsDisplay -->
+
+	<mx:Canvas id ="pickItemsDisplay" width="890" height="580" verticalCenter="0" horizontalCenter="0" >
+
+		<mx:Image source="@Embed('images/seasonalGifts/bg.swf')" x="22" verticalCenter="0"/>
+
+		<mx:Canvas id="masterbox" verticalCenter="25" x="60">
+
+			<mx:Canvas id="cx1"  width="132" height="106" mouseChildren="false" verticalCenter="-60" >
+			<mx:Text x="8" y="5" ><mx:text>Gift #1</mx:text></mx:Text>
+			<mx:Image id="gift1" source="_giftBoxSwfSrc" horizontalCenter="0" verticalCenter="0" click="onClick(1)"		/>
+			</mx:Canvas>
+
+			<mx:Canvas id="cx2" width="132" height="110" mouseChildren="false" verticalCenter="-60" x="146">
+			<mx:Text x="8" y="5" ><mx:text>Gift #2</mx:text></mx:Text>
+			<mx:Image id="gift2"  source="_giftBoxSwfSrc" horizontalCenter="0" verticalCenter="0" click="onClick(2)"/>
+			</mx:Canvas>
+
+			<mx:Canvas id="cx3" width="132" height="110" mouseChildren="false" verticalCenter="-60" x="292">
+			<mx:Text x="8" y="5" ><mx:text>Gift #3</mx:text></mx:Text>
+			<mx:Image id="gift3" horizontalCenter="0" verticalCenter="0" click="onClick(3)"/>
+			</mx:Canvas>
+
+			<mx:Canvas id="cx4" width="132" height="110" mouseChildren="false" verticalCenter="60" >
+			<mx:Text x="8" y="5" ><mx:text>Gift #4</mx:text></mx:Text>
+			<mx:Image id="gift4" source="_giftBoxSwfSrc" horizontalCenter="0" verticalCenter="0" click="onClick(4)"/>
+			</mx:Canvas>
+
+			<mx:Canvas id="cx5" width="132" height="110" mouseChildren="false" verticalCenter="60" x="146" >
+			<mx:Text x="8" y="5" ><mx:text>Gift #5</mx:text></mx:Text>
+			<mx:Image id="gift5"  source="_giftBoxSwfSrc" horizontalCenter="0" verticalCenter="0" click="onClick(5)"/>
+			</mx:Canvas>
+
+			<mx:Canvas id="cx6" width="132" height="110" mouseChildren="false" verticalCenter="60" x="292" >
+			<mx:Text x="8" y="5" ><mx:text>Gift #6</mx:text></mx:Text>
+			<mx:Image id="gift6" source="_giftBoxSwfSrc" horizontalCenter="0" verticalCenter="0"  click="onClick(6)"/>
+			</mx:Canvas>
+
+			<mx:Canvas id="cx7" width="290" height="240" mouseChildren="false" verticalCenter="0" x="440" >
+			<mx:Image id="gift7" source="_7thGiftSwfSrc"   click="onClick(7)"/>
+			<mx:Text x="15" y="12"  selectable="false" ><mx:text>Special Gift</mx:text></mx:Text>
+			</mx:Canvas>
+
+		</mx:Canvas> <!-- close masterBox -->
+		<mx:Image source="@Embed('images/seasonalGifts/avatar.swf')" right="0" top="10"/>
+	</mx:Canvas> <!-- close pickItemsDisplay -->
+
+<!-- inventoryDisplay -->
+
+	<mx:Canvas width="610" height="340" id="inventoryDisplay" verticalCenter="0" horizontalCenter="0"
+			  visible="false" 	backgroundImage="@Embed('images/seasonalGifts/InventoryDisplay.swf')">
+			<mx:Image id="awardInventoryDisplay"  horizontalCenter="0" verticalCenter="0" />
+
+			<mx:Text id="inventoryText"  color="#063259"
+					x="145"
+					y="210"
+					width="320"
+					height="100" fontThickness="200"
+					fontSize="15"  selectable="false" textAlign="center"/>
+
+			<mx:Button id="checkBox" click="close()"
+				width="35" height="35"
+				buttonMode="true" horizontalCenter="0" bottom="20"
+				skin="@Embed('images/guestRegistration/checkBox_Default.png')"
+				overSkin="@Embed('images/guestRegistration/checkBox_MouseOver.png')"
+				disabledSkin="@Embed('images/guestRegistration/checkBox_Disabled.png')"/>
+	</mx:Canvas>	<!-- close inventoryDisplay -->
+
+<!-- surveyDisplay -->
+
+	<mx:Canvas width="668" height="663" id="surveyDisplay"
+		x="0" verticalCenter="0" horizontalCenter="0"
+		backgroundImage="@Embed('images/seasonalGifts/surveyBackground.swf')" visible="false">
+		<mx:Image id="awardSurveyDisplay"  x="73" y="34" />
+		<mx:VBox x="60" y="120" >
+
+		<mx:Box>
+		<mx:Text id="question1_txt"  color="#4c6fa4"
+					height="22"
+					horizontalCenter="0"
+					fontSize="16" fontThickness="200" letterSpacing="1" selectable="false"/>
+
+		<mx:RadioButtonGroup id="AGroup" />
+				<mx:RadioButton groupName="AGroup" id="answer1AText_txt" horizontalCenter="0" height="22" />
+				<mx:RadioButton groupName="AGroup" id="answer2AText_txt" horizontalCenter="0" height="22" />
+				<mx:RadioButton groupName="AGroup" id="answer3AText_txt" horizontalCenter="0" height="22" />
+				<mx:RadioButton groupName="AGroup" id="answer4AText_txt" horizontalCenter="0" height="22" />
+		</mx:Box>
+
+		<mx:Box>
+		<mx:Text id="question2_txt"  color="#4c6fa4"
+					height="22"
+					horizontalCenter="0"
+					fontSize="16" fontThickness="200" letterSpacing="1" selectable="false"/>
+
+		<mx:RadioButtonGroup id="BGroup" />
+				<mx:RadioButton groupName="BGroup" id="answer1BText_txt" horizontalCenter="0"	height="22" />
+				<mx:RadioButton groupName="BGroup" id="answer2BText_txt" horizontalCenter="0"	height="22" />
+				<mx:RadioButton groupName="BGroup" id="answer3BText_txt" horizontalCenter="0"	height="22" />
+				<mx:RadioButton groupName="BGroup" id="answer4BText_txt" horizontalCenter="0"	height="22"/>
+		</mx:Box>
+
+			<mx:Text id="question3_txt"  color="#4c6fa4"
+					height="22" text="Comments or Suggestions?"
+					horizontalCenter="0"
+					fontSize="16" fontThickness="200" letterSpacing="1" selectable="false"/>
+
+			<mx:HBox>
+
+			<mx:TextArea id="surveyComments" height="200" width="400"  dropShadowEnabled="true"
+					fontSize="14" color="#000000"
+					maxChars="300" wordWrap="true" restrict="A-Za-z0-9:! .?,'" />
+			<mx:Canvas>
+				<mx:Image id="submit"
+					x="25" y="160"
+					source="@Embed('images/seasonalGifts/submitButton.swf')"
+					buttonMode="true" click="validateAnswers()"/>
+			</mx:Canvas>
+
+			</mx:HBox>
+
+			</mx:VBox>
+	</mx:Canvas>
+
+</mx:Canvas>

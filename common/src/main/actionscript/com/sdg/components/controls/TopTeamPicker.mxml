@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" xmlns:view="com.sdg.view.*" creationComplete="init()">
+	<mx:Script>
+		<![CDATA[
+			import com.sdg.model.League;
+			import com.sdg.model.Avatar;
+			import com.sdg.model.ModelLocator;
+			import com.sdg.view.ChangeTopTeam;
+			import com.sdg.model.Team;
+			
+			private var _changeTopTeamDialog:ChangeTopTeam;
+			private var _basketballTeam:Team;
+			private var _baseballTeam:Team;
+			private var _footballTeam:Team;
+			private var _avatar:Avatar;
+			
+			private function init():void
+			{
+				_avatar = ModelLocator.getInstance().avatar;
+				_avatar.addEventListener("favorite teams changed", onFavTeamsChanged);
+				//var team1:Team = new Team(33, null, null, 0xff0000);
+				//setTeams(team1, null, null, team1);
+				
+				//<view:ChangeTopTeam id="changeTopTeamDialog" x="130" topTeamChanged="onTopTeamChanged(event)"/>
+			}
+			
+			private function onFavTeamsChanged(event:Event):void
+			{
+				setTeams(_avatar.getFavoriteTeam(League.NBA_ID),
+						_avatar.getFavoriteTeam(League.MLB_ID),
+						_avatar.getFavoriteTeam(League.AAS_FOOTBALL_ID),
+						_avatar.favoriteTeam);
+			}
+			
+			public function setTeams(basketballTeam:Team, baseballTeam:Team, footballTeam:Team, topTeam:Team):void
+			{
+				_basketballTeam = basketballTeam;
+				_baseballTeam = baseballTeam;
+				_footballTeam = footballTeam;
+				
+				if (topTeam == null)
+					topTeam = new Team(0, "Action AllStars", null, 0x999999, 0x333333);
+				
+				topTeamIcon.team = topTeam;
+			}
+			
+			private function onTopTeamClicked(event:MouseEvent):void
+			{
+				if (_changeTopTeamDialog == null)
+				{
+					_changeTopTeamDialog = new ChangeTopTeam();
+					addChild(_changeTopTeamDialog);
+					_changeTopTeamDialog.x = 72;
+					_changeTopTeamDialog.addEventListener("topTeamChanged", onTopTeamChanged);
+				}
+				
+				_changeTopTeamDialog.setTeams(_basketballTeam, _baseballTeam, _footballTeam);
+				_changeTopTeamDialog.topTeam = topTeamIcon.team;
+				_changeTopTeamDialog.visible = true;
+			}
+			
+			private function onTopTeamChanged(event:Event):void
+			{
+				topTeamIcon.team = _changeTopTeamDialog.topTeam;
+			}
+		]]>
+	</mx:Script>
+	<view:TopTeamPick id="topTeamIcon" y="50" click="onTopTeamClicked(event)"/>
+</mx:Canvas>

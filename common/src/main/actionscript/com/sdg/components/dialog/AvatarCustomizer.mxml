@@ -1,0 +1,848 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas
+	xmlns:mx="http://www.adobe.com/2006/mxml"
+	xmlns:sdgcontrols="com.sdg.components.controls.*"
+	xmlns:business="com.sdg.business.*"
+	implements="com.sdg.components.dialog.ISdgDialog, com.sdg.model.ISetAvatar"
+	horizontalScrollPolicy="off"
+	verticalScrollPolicy="off">
+		<mx:Script>
+		<![CDATA[
+			import com.sdg.control.room.itemClasses.AvatarController;
+			import com.sdg.components.controls.ItemAttributesTootip;
+			import mx.events.ListEvent;
+			import mx.events.FlexEvent;
+			import com.sdg.control.room.RoomManager;
+			import com.sdg.utils.GameUtil;
+			import com.sdg.model.InventoryItem;
+			import com.sdg.model.Avatar;
+			import com.sdg.model.ModelLocator;
+			import com.sdg.events.InventoryListEvent;
+			import com.sdg.events.AvatarEvent;
+			import com.sdg.events.AvatarApparelSaveEvent;
+			import com.sdg.events.RoomNavigateEvent;
+			import mx.collections.ArrayCollection;
+			import mx.controls.Image;
+			import mx.core.IStateClient;
+			import mx.events.CollectionEvent;
+			import mx.events.CollectionEventKind;
+			import mx.events.PropertyChangeEvent;
+			import mx.events.CloseEvent;
+			import mx.managers.PopUpManager;
+			import mx.binding.utils.*;
+			import mx.effects.easing.*;
+
+			import com.sdg.control.BuddyManager;
+			import com.sdg.events.SocketEvent;
+			import com.sdg.model.IPreviewItem;
+			import com.sdg.model.ModelLocator;
+			import com.sdg.model.Server;
+			import com.sdg.net.socket.SocketClient;
+			import com.sdg.utils.PreviewUtil;
+
+			import com.sdg.components.dialog.BuddyList;
+			import com.sdg.utils.MainUtil;
+			import com.sdg.components.controls.SdgAlert;
+			import mx.core.IFlexDisplayObject;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			import mx.core.Application;
+
+			[Bindable]
+			private var _avatar:Avatar;
+
+			private var _headwear:ArrayCollection;
+			private var _showAdmin:Boolean;
+			//private var _isMember:Boolean;
+			//private var _jabCount:int = 2;
+			private var _jabEnabled:Boolean = true;
+			private var _attributesTooltip:ItemAttributesTootip;
+
+			[Embed(source="images/buddy/buddyAddDefaultIcon.png")]
+			private var _addBuddyIcon:Class;
+			[Embed(source="images/buddy/buddyRemoveDefaultIcon.png")]
+			private var _removeBuddyIcon:Class;
+			[Embed(source="images/buddy/buddyIgnoreActiveIcon.png")]
+			private var _ignoreActiveIcon:Class;
+			[Embed(source="images/buddy/buddyIgnoreInactiveIcon.png")]
+			private var _ignoreInactiveIcon:Class;
+			[Embed(source="images/avatarCustomizer/avatarCard_buddy.png")]
+			private var _avatarBuddy:Class;
+			[Embed(source="images/avatarCustomizer/avatarCard_nonBuddy.png")]
+			private var _avatarNonBuddy:Class;
+			[Embed(source="images/avatarCustomizer/avatarCard_you.png")]
+			private var _avatarYou:Class;
+
+			public function set avatar(value:Avatar):void
+			{
+				_avatar = value;
+				_showAdmin = ModelLocator.getInstance().avatar.userId == _avatar.userId;
+
+				// be paranoid at first
+				adminButtons.visible = false;
+				if (_showAdmin)
+				{
+					adminButtons.visible = true;
+					avatarCardIcon.source = _avatarYou;
+					avatarCardIcon.toolTip = "You";
+					this.x -= 130;
+
+					if (starMeter.content)
+					{
+						Object(starMeter.content).setLevel(_avatar.level, _avatar.currency);
+						Object(starMeter.content).setPercentage(GameUtil.percentageToNextLevel(_avatar.level, _avatar.points));
+					}
+
+					this.titlePanel.height = 500;
+					this.slidingMenu.height = 500;
+
+					starMeter.visible = starMeter.includeInLayout = true;
+					buddyDetails.visible = buddyDetails.includeInLayout = false;
+					//jabCounter.visible = jabCounter.includeInLayout = false;
+				}
+
+				// set the avatarLevel TitlePlate background and text color
+				switch (_avatar.level)
+				{
+					case 1:
+						avatarLevel.title = "Amateur";
+						avatarLevel.styleName = "amateur";
+						avatarLevel.titleHeader.setStyle("color", "#666666");
+						break;
+					case 2:
+						avatarLevel.title = "Rookie";
+						avatarLevel.styleName = "rookie";
+						avatarLevel.titleHeader.setStyle("color", "#ffffff");
+						break;
+					case 3:
+						avatarLevel.title = "Pro";
+						avatarLevel.styleName = "pro";
+						avatarLevel.titleHeader.setStyle("color", "#ffffff");
+						break;
+					case 4:
+						avatarLevel.title = "Veteran";
+						avatarLevel.styleName = "veteran";
+						avatarLevel.titleHeader.setStyle("color", "#ffffff");
+						break;
+					case 5:
+						avatarLevel.title = "Allstar";
+						avatarLevel.styleName = "allstar";
+						avatarLevel.titleHeader.setStyle("color", "#ffffff");
+						break;
+					default:
+						break;
+				}
+
+				avatarPreview.loadAvatar(_avatar);
+
+				if (!_showAdmin)
+				{
+					this.setupBuddyButtons();
+
+					this.titlePanel.height = 460;
+					this.slidingMenu.height = 460;
+
+					starMeter.visible = starMeter.includeInLayout = false;
+					buddyDetails.visible = buddyDetails.includeInLayout = true;
+
+					// show the invite button if we are in inviteMode
+					var isInRoom:Boolean = RoomManager.getInstance().currentRoom.getAvatarById(avatar.avatarId) != null;
+					var userController:AvatarController = RoomManager.getInstance().userController;
+					inviteButton.visible = userController.inviteModeOn && isInRoom && !userController.isAvatarInInvitePanel(avatar.avatarId);
+				}
+			}
+
+			public function get avatar():Avatar
+			{
+				return this._avatar;
+			}
+
+			public function init(params:Object):void
+			{
+				if (params == null)
+					return;
+
+				//_isMember = ModelLocator.getInstance().avatar.membershipStatus == 1 || ModelLocator.getInstance().avatar.membershipStatus == 2;
+
+				if (params.avatar != null)
+					this.avatar = params.avatar;
+				else if (params.avatarId != null)
+		     		dispatchEvent(new AvatarEvent(params.avatarId, this));
+		    }
+
+		    public function close():void
+			{
+				// remove the avatar from the preview control so we don't see it when launching this dialog the next time
+				this.avatarPreview.cleanUp();
+
+				var buddyListDialog:BuddyList = this.parentDocument as BuddyList;
+				if (buddyListDialog)
+					buddyListDialog.closeAvatarCustomizer();
+				else
+					save();
+
+				PopUpManager.removePopUp(this);
+			}
+
+			public function setupBuddyButtons():void
+			{
+				// make sure we have an avatar
+				if (!this._avatar)
+					return;
+
+            	// see if the current avatar is in our buddy list
+            	var avatarIsBuddy:Boolean = BuddyManager.isBuddy(_avatar.avatarId);
+
+				// set an isbuddy property on the button
+				if (buttonAddRemoveBuddy.data == null)
+					buttonAddRemoveBuddy.data = new Object();
+				buttonAddRemoveBuddy.data.isBuddy = avatarIsBuddy;
+
+				// set up add/remove buddy icon
+				if (avatarIsBuddy)
+				{
+					buttonAddRemoveBuddy.setStyle("icon", _removeBuddyIcon);
+					buttonAddRemoveBuddy.toolTip = "Remove " + _avatar.name + " from your buddy list";
+
+					buttonGotoBuddyHome.toolTip = "Goto " + _avatar.name + "'s home turf";
+					avatarCardIcon.source = _avatarBuddy;
+					avatarCardIcon.toolTip = "Buddy";
+
+					if (_jabEnabled)
+					{
+						buttonJab.includeInLayout = buttonJab.visible = BuddyManager.isBuddyOnline(_avatar.avatarId);
+						//jabCounter.includeInLayout = jabCounter.visible = (!_isMember && BuddyManager.isBuddyOnline(_avatar.avatarId));
+					}
+				}
+				else
+				{
+					buttonAddRemoveBuddy.setStyle("icon", _addBuddyIcon);
+					buttonAddRemoveBuddy.toolTip = "Add " + _avatar.name + " to your buddy list";
+					avatarCardIcon.source = _avatarNonBuddy;
+					avatarCardIcon.toolTip = "Athlete";
+
+					if (_jabEnabled)
+					{
+						buttonJab.includeInLayout = buttonJab.visible = true;
+						//jabCounter.includeInLayout = jabCounter.visible = !_isMember;
+					}
+				}
+
+				// avatar ignore button
+				setIngoreButton();
+
+				// only show the gotoBuddyHome button if the avatar is a buddy
+				buttonGotoBuddyHome.includeInLayout = buttonGotoBuddyHome.visible = avatarIsBuddy;
+
+				// the tooltip for reportToModerator
+				//buttonReportToMod.toolTip = "Report " + _avatar.name + " to the moderator";
+			}
+
+			private function setIngoreButton():void
+			{
+				if (ModelLocator.getInstance().ignoredAvatars[_avatar.avatarId])
+				{
+					// this avatar is being ignored
+					buttonIgnore.setStyle("icon", _ignoreActiveIcon);
+					buttonIgnore.toolTip = "Click to un-ignore " + _avatar.name;
+				}
+				else
+				{
+					// this avatar is not being ignored
+					buttonIgnore.setStyle("icon", _ignoreInactiveIcon);
+					buttonIgnore.toolTip = "Click to ignore " + _avatar.name;
+				}
+			}
+
+			private function get isWearingHeadwear():Boolean
+			{
+				return _avatar.getHeadwearType() != 0;
+			}
+
+			private function get isWearingGlasses():Boolean
+			{
+				return _avatar.apparel[PreviewUtil.getLayerId(PreviewUtil.GLASSES)] is InventoryItem;
+			}
+
+			private function getInventoryType(itemTypeId:uint):void
+			{
+				unshowPickem();
+
+				// show/hide the "remove hat" or "remove glasses" button
+				buttonRemoveHat.visible = buttonRemoveHat.includeInLayout = false;
+				buttonRemoveGlasses.visible = buttonRemoveGlasses.includeInLayout = itemTypeId == PreviewUtil.GLASSES && this.isWearingGlasses;
+				buttonSetupGame.visible = buttonSetupGame.includeInLayout = false;
+
+				expandMenu();
+				itemTypeLabel.title = InventoryItem.getTypeNameById(itemTypeId);
+
+				// uppercase the first letter of the item type label
+				itemTypeLabel.title = itemTypeLabel.title.charAt(0).toUpperCase() + itemTypeLabel.title.substring(1);
+
+				CairngormEventDispatcher.getInstance().addEventListener(InventoryListEvent.LIST_COMPLETED, onInventoryListCompleted);
+				dispatchEvent(new InventoryListEvent(_avatar.avatarId, itemTypeId));
+			}
+
+			private function getHeadwearInventory():void
+			{
+				unshowPickem();
+
+				buttonRemoveGlasses.visible = buttonRemoveGlasses.includeInLayout = false;
+				buttonRemoveHat.visible = this.isWearingHeadwear;
+
+				expandMenu();
+				itemTypeLabel.title = "Headwear";
+
+				// first get our hats
+				CairngormEventDispatcher.getInstance().addEventListener(InventoryListEvent.LIST_COMPLETED, onInventoryListCompleted);
+				dispatchEvent(new InventoryListEvent(_avatar.avatarId, PreviewUtil.HAT));
+			}
+
+			private function onInventoryListCompleted(ev:InventoryListEvent):void
+        	{
+//        		if (_avatar.membershipStatus == 0)
+//        		{
+//	        		for each (var item:InventoryItem in _avatar.getInventoryListById(ev.itemTypeId))
+//	        		{
+//	        			if (item.itemValueType == InventoryItem.PREMIUM)
+//	        			{
+//	        				item.isGreyedOut = true;
+//	        			}
+//	        		}
+//	        	}
+
+	        	// gather our headwear
+	        	switch (ev.itemTypeId)
+	        	{
+	        		case PreviewUtil.HAT:
+	        			_headwear = new ArrayCollection(_avatar.getInventoryListById(PreviewUtil.HAT).source);
+						dispatchEvent(new InventoryListEvent(_avatar.avatarId, PreviewUtil.BEANIE));
+						break;
+	        		case PreviewUtil.BEANIE:
+						_headwear.source = _headwear.source.concat(_avatar.getInventoryListById(PreviewUtil.BEANIE).source);
+						dispatchEvent(new InventoryListEvent(_avatar.avatarId, PreviewUtil.HEADBAND));
+						break;
+	        		case PreviewUtil.HEADBAND:
+						_headwear.source = _headwear.source.concat(_avatar.getInventoryListById(PreviewUtil.HEADBAND).source);
+						dispatchEvent(new InventoryListEvent(_avatar.avatarId, PreviewUtil.VISOR));
+						break;
+	        		case PreviewUtil.VISOR:
+						_headwear.source = _headwear.source.concat(_avatar.getInventoryListById(PreviewUtil.VISOR).source);
+						dispatchEvent(new InventoryListEvent(_avatar.avatarId, PreviewUtil.HELMET));
+						break;
+	        		case PreviewUtil.HELMET:
+						_headwear.source = _headwear.source.concat(_avatar.getInventoryListById(PreviewUtil.HELMET).source);
+						itemGrid.dataProvider = _headwear;
+			        	CairngormEventDispatcher.getInstance().removeEventListener(InventoryListEvent.LIST_COMPLETED, onInventoryListCompleted);
+						break;
+					default:
+						// this is non-headwear - just bind to it
+			        	CairngormEventDispatcher.getInstance().removeEventListener(InventoryListEvent.LIST_COMPLETED, onInventoryListCompleted);
+		        		itemGrid.dataProvider = ModelLocator.getInstance().avatar.getInventoryListById(ev.itemTypeId);
+		        		break;
+	        	}
+	        }
+
+			private function save():void
+			{
+				if (!_showAdmin || _avatar.apparel.length == 0)
+					return;
+
+				if (avatarPreview.apparelChanged(_avatar.apparel))
+					dispatchEvent(new AvatarApparelSaveEvent(_avatar));
+
+				avatarPreview.loadAvatar(_avatar);
+			}
+
+			private function onSelection():void
+			{
+				var item:InventoryItem = itemGrid.selectedItem as InventoryItem;
+
+				if (!item.isGreyedOut)
+				{
+					if (item.itemTypeId == PreviewUtil.BOARD_GAME)
+					{
+						// show the preview item
+						itemPreview.showItem(item);
+
+		                // hide the avatar preview and show the 'item preview' if necessary
+						if (!itemPreview.visible)
+						{
+							avatarPreview.visible = false;
+							avatarPreview.includeInLayout = false;
+
+							itemPreview.includeInLayout = true;
+							itemPreview.visible = true;
+						}
+
+						// show the 'setup game' button
+						buttonSetupGame.visible = true;
+					}
+					else
+					{
+						// show the avater preview
+						if (!avatarPreview.visible)
+						{
+							// hide the itemPreview control
+							itemPreview.visible = false;
+							itemPreview.includeInLayout = false;
+
+							// show the avatarPreview control
+							avatarPreview.includeInLayout = true;
+							avatarPreview.visible = true;
+						}
+
+						// apperal items
+						_avatar.setApparel(item);
+						avatarPreview.selectApparel(item);
+						trace("item name: " + item.name + " id: " + item.itemId);
+
+						// show the "remove hat/glasses" button if we just put on a hat/glasses
+						if (PreviewUtil.isHeadwear(item.itemTypeId))
+							buttonRemoveHat.visible = buttonRemoveHat.includeInLayout = true;
+						else if (item.itemTypeId == PreviewUtil.GLASSES)
+							buttonRemoveGlasses.visible = buttonRemoveGlasses.includeInLayout = true;
+					}
+				}
+				else
+				{
+					var alert:SdgAlert = SdgAlert.show("Sorry, you need to upgrade to Premium Membership level to put on this item.",
+						"Upgrade To Premium Now!", SdgAlert.NO | SdgAlert.YES, SdgAlert.NO, onUpgrade);
+					alert.setButtonLabel(SdgAlert.NO, "Upgrade Now");
+					alert.setButtonLabel(SdgAlert.YES, "Back");
+
+					itemGrid.selectedItem = null;
+				}
+			}
+
+			private function onUpgrade(event:CloseEvent):void
+			{
+				if (event.detail == SdgAlert.NO)
+					MainUtil.postAvatarIdToURL("membership.jsp");
+			}
+
+			private function onstarMeterInit(event:Event):void
+			{
+				if (_avatar)
+				{
+					Object(starMeter.content).setLevel(_avatar.level, _avatar.currency);
+					Object(starMeter.content).setPercentage(GameUtil.percentageToNextLevel(_avatar.level, _avatar.points));
+					trace("Level percentage: " + GameUtil.normalizePercentage(_avatar.level, _avatar.points));
+				}
+			}
+
+			private function removeItem(itemTypeId:uint):void
+			{
+				// hide the "remove hat/glasses" button if necessary
+				if (PreviewUtil.isHeadwear(itemTypeId))
+					buttonRemoveHat.visible = buttonRemoveHat.includeInLayout = false;
+				else if (itemTypeId == PreviewUtil.GLASSES)
+					buttonRemoveGlasses.visible = buttonRemoveGlasses.includeInLayout = false;
+
+				// remove the item from avatarPreview
+				avatarPreview.removeApparel(itemTypeId);
+
+				// remove the item from the avatar object
+				_avatar.removeApparel(PreviewUtil.getLayerId(itemTypeId));
+
+				// de-select any thumbnail item
+				itemGrid.selectedItem = null;
+			}
+
+			private function expandMenu():void
+			{
+				expandEffect.end();
+				expandEffect.play();
+			}
+
+			private function collapseMenu():void
+			{
+				collapseEffect.end();
+				collapseEffect.play();
+			}
+
+			private function reportToModerator():void
+			{
+				MainUtil.showDialog(ModeratorBehaviorDialog, {accused:_avatar});
+			}
+
+			private function toggleIgnore():void
+			{
+				// get the ignored state
+				var isIgnored:Boolean = ModelLocator.getInstance().ignoredAvatars[_avatar.avatarId];
+
+				// toggle it
+				ModelLocator.getInstance().ignoredAvatars[_avatar.avatarId] = !isIgnored;
+
+				// set the ignore button
+				setIngoreButton();
+
+				// log this action
+	            SocketClient.getInstance().sendPluginMessage("avatar_handler", "ignore", { ignoredAvatarId:_avatar.avatarId, ignoreStatus:isIgnored ? 1 : 0 });
+	        }
+
+			private function addRemoveBuddy():void
+			{
+				// if the avatar is already a buddy call buddyRemove, otherwise call buddyRequest
+				if (buttonAddRemoveBuddy.data.isBuddy)
+					SocketClient.sendMessage("avatar_handler", "buddyRemove", "buddy", { avatarId:ModelLocator.getInstance().avatar.avatarId, buddyAvatarId:_avatar.avatarId, friendTypeId:1, statusId:2 } );
+				else
+				{
+					// if you are a guest
+					if (ModelLocator.getInstance().avatar.membershipStatus == 3)
+					{
+						//upsell
+						//MainUtil.showDialog(MonthFreeUpsellDialog, {showPremiumHeader:false, messaging:"This feature is only available if you register."});
+						MainUtil.showDialog(SaveYourGameDialog);
+						return;
+					}
+					// if buddy is a guest
+					else if (_avatar.membershipStatus == 3)
+					{
+						// cant buddy a guest
+
+						SdgAlert.show("Oops! " + _avatar.name + " is unable to send or accept buddy requests as a Guest Member.", "Time Out!");
+						return;
+					}
+
+					BuddyManager.makeBuddyRequest(_avatar.avatarId, _avatar.name);
+				}
+				this.close();
+			}
+
+			private function gotoBuddyHome():void
+			{
+				RoomManager.getInstance().homeTurfAvatar = _avatar;
+				// goto the private room of this avatar
+				dispatchEvent(new RoomNavigateEvent(RoomNavigateEvent.ENTER_ROOM, _avatar.privateRoom));
+
+				// close the buddy list dialog if it is open
+				var buddyListDialog:BuddyList = this.parentDocument as BuddyList;
+				if (buddyListDialog)
+					buddyListDialog.close();
+				else
+					this.close();
+			}
+
+
+			public function showPickem():void
+			{
+				pickem.removeAllChildren();
+				itemGrid.visible = false;
+				buttonRemoveHat.visible = false;
+				buttonRemoveGlasses.visible = false;
+
+				expandMenu();
+				itemTypeLabel.title = "Sports Psychic Scorecard";
+
+				pickem.visible = true;
+				pickemText.visible = true;
+
+				pickem.getScorecard(_avatar.avatarId, this);
+			}
+
+			public function unshowPickem():void
+			{
+				itemGrid.visible = true;
+				pickemText.visible = false;
+				pickem.visible = false;
+			}
+
+			private function showJabDialog(event:Event):void
+			{
+				var button:Button = event.currentTarget as Button;
+
+				var intParams:Object = {
+					avatar:_avatar,
+					button:button,
+					avatarCustomizer:this };
+
+				MainUtil.showDialog(JabDialog, intParams, false, false);
+			}
+
+//			private function setJabCounter(count:int):void
+//			{
+//				if (_showAdmin)
+//					return;
+//
+//				try
+//				{
+//					// set the counter location
+//					var p:Point = buttonJab.parent.localToGlobal(new Point(buttonJab.x, buttonJab.y));
+//					var dialogPoint:Point = new Point(this.x, this.y);
+//					dialogPoint = this.parent ? this.parent.localToGlobal(dialogPoint) : dialogPoint;
+//					jabCounter.x = p.x - dialogPoint.x + 22;
+//					jabCounter.y = p.y - dialogPoint.y + 24;
+//					jabCounter.visible = jabCounter.includeInLayout;
+//
+//					// set the count of available jabs
+//					if (count > -1)
+//					{
+//						_jabCount = count;
+//						var swf:Object = Object(this.jabCounter);
+//						swf.content.setMessageCount(_jabCount);
+//					}
+//				}
+//				catch(e:Error)
+//				{
+//					trace("setJabCounter error: " + e.message);
+//				}
+//			}
+
+			//private function decrementJabCounter():void
+			//{
+			//	if (!_isMember && _jabCount > 0)
+			//		setJabCounter(_jabCount - 1);
+			//}
+
+			private function setupGame():void
+			{
+				RoomManager.getInstance().userController.showInvitePanel(itemGrid.selectedItem, 1);
+				close();
+			}
+
+			private function onItemRollOver(event:ListEvent):void
+			{
+				var inventoryItem:InventoryItem = event.itemRenderer.data as InventoryItem;
+				if (inventoryItem && inventoryItem.hasCustomAttributes)
+				{
+					if (!_attributesTooltip)
+						_attributesTooltip = MainUtil.showDialog(ItemAttributesTootip, {item:inventoryItem, itemRenderer:event.itemRenderer}, false, false) as ItemAttributesTootip;
+					else if (_attributesTooltip.parent == null)
+					{
+						MainUtil.reShowDialog(_attributesTooltip, false);
+
+						_attributesTooltip.item = inventoryItem;
+						_attributesTooltip.itemRenderer = event.itemRenderer;
+					}
+					else if (_attributesTooltip.itemName.text != inventoryItem.name)
+					{
+						_attributesTooltip.item = inventoryItem;
+						_attributesTooltip.itemRenderer = event.itemRenderer;
+					}
+				}
+				else
+				{
+					// don't show the tooltip on items with no attributes
+					if (this._attributesTooltip && _attributesTooltip.initialized)
+						_attributesTooltip.close();
+				}
+			}
+
+			private function onItemRollOut(event:ListEvent):void
+			{
+				if (this._attributesTooltip && _attributesTooltip.initialized)
+				{
+			    	if (IStateClient(event.itemRenderer).currentState != "highlighted" && IStateClient(event.itemRenderer).currentState != "selected")
+						_attributesTooltip.close();
+				}
+  		    }
+
+  		    private function onRollOut(event:Event):void
+  		    {
+				if (this._attributesTooltip && _attributesTooltip.initialized)
+					_attributesTooltip.close();
+  		    }
+
+  		    private function onInviteClick():void
+  		    {
+  		    	// send the invite
+				RoomManager.getInstance().userController.sendInvite(_avatar);
+  		    	close();
+  		    }
+
+
+		]]>
+	</mx:Script>
+
+	<mx:Style source="styles/style.css"/>
+
+	<mx:Style>
+		Button.buddy
+		{
+			upSkin: Embed("images/buddy/buddyBGDefaultBtn.png");
+			overSkin: Embed("images/buddy/buddyBGOverBtn.png");
+			downSkin: Embed("images/buddy/buddyBGDownBtn.png");
+			paddingTop: 0;
+			paddingBottom: 0;
+			paddingLeft: 0;
+			paddingRight: 0;
+		}
+		Button.tab
+		{
+			overSkin: Embed("images/avatarCustomizer/tabOver.png");
+			downSkin: Embed("images/avatarCustomizer/tabDown.png");
+			paddingTop: 0;
+			paddingBottom: 0;
+			paddingLeft: 0;
+			paddingRight: 0;
+		}
+		TitlePanel.avatar
+		{
+			titleStyleName: smallTitle;
+			highlightAlphas: 0, 1, 1, 1;
+			headerHeight: 32;
+		}
+
+		TitlePanel.slidingMenu
+		{
+			titleStyleName: smallTitle;
+			highlightAlphas: 0, 0, 0, 0;
+			headerHeight: 32;
+		}
+	</mx:Style>
+
+	<mx:Move id="collapseEffect" xTo="-156" duration="1000" target="{slidingMenu}"/>
+	<mx:Move id="expandEffect" xTo="196" duration="1000" target="{slidingMenu}" easingFunction="Sine.easeOut"/>
+
+	<!--<mx:Button label="SAVE PROFILE" styleName="orange" fontSize="14" click="save()" x="172" bottom="13" width="180" height="36"/>-->
+
+	<mx:Canvas x="15">
+		<sdgcontrols:TitlePanel
+			id="slidingMenu"
+			x="-156"
+			styleName="slidingMenu"
+			width="406" height="500"
+			title="Customizer"
+			textIndent="110" horizontalAlign="right"
+			paddingTop="0" paddingBottom="0" paddingRight="6"
+			showCloseButton="true" close="collapseMenu()"
+			closeButtonUpSkin="@Embed('images/leftArrowDefaultBtn.png')"
+			closeButtonOverSkin="@Embed('images/leftArrowOverBtn.png')"
+			closeButtonDownSkin="@Embed('images/leftArrowDownBtn.png')">
+
+			<mx:Canvas height="100%" textIndent="0">
+				<mx:Canvas width="282" height="417" styleName="lightBlue" cornerRadius="6">
+					<sdgcontrols:TitlePlate id="itemTypeLabel" width="258" fontThickness="200" horizontalCenter="0" y="5"/>
+
+
+					<sdgcontrols:ItemTileList id="itemGrid" borderStyle="none" styleName="lightBlue" horizontalCenter="0" y="38"
+						change="{onSelection()}" columnCount="3" rowCount="5" rowHeight="73" columnWidth="73"
+					    itemRollOver="onItemRollOver(event)"
+					    itemRollOut="onItemRollOut(event)"
+					    rollOut="onRollOut(event)" />
+
+					<sdgcontrols:PickemDialog id="pickem" width="100%" height="100%" visible="false" horizontalCenter="0" y="38"/>
+				</mx:Canvas>
+
+				<mx:Button id="buttonRemoveHat" label="Remove Headwear" horizontalCenter="0" bottom="4"
+					visible="false" includeInLayout="false" click="removeItem(PreviewUtil.HAT)"/>
+				<mx:Button id="buttonRemoveGlasses" label="Remove Eyewear" horizontalCenter="0" bottom="4"
+					visible="false" includeInLayout="false" click="removeItem(PreviewUtil.GLASSES)"/>
+				<mx:Button id="buttonSetupGame" label="Setup Game" horizontalCenter="0" bottom="4"
+					visible="false" includeInLayout="false" click="setupGame()"/>
+				<mx:Text id="pickemText" visible="false" horizontalCenter="0" bottom="8" width="100%" textAlign="center"/>
+			</mx:Canvas>
+		</sdgcontrols:TitlePanel>
+	</mx:Canvas>
+
+	<sdgcontrols:TitlePanel
+		id="titlePanel"
+		width="275" height="500"
+		styleName="avatar"
+		title="{_avatar.name}"
+		cornerRadius="16"
+		borderColor="#a8a8a8"
+		paddingTop="0" paddingBottom="0" paddingLeft="5" paddingRight="5"
+		showCloseButton="true" close="close()">
+
+		<mx:Canvas width="100%">
+			<sdgcontrols:TitlePlate id="avatarLevel" width="100%" styleName="orange" fontThickness="200"/>
+			<sdgcontrols:AvatarPreview id="avatarPreview" y="28" horizontalCenter="0"/>
+			<sdgcontrols:SimpleItemPreview id="itemPreview" y="28" horizontalCenter="0" includeInLayout="false" visible="false"/>
+			<mx:Image id="avatarCardIcon" x="3" y="31"/>
+			<mx:Image id="starMeter" y="372" width="259" source="assets/swfs/StarMeter_1.swf"
+				horizontalCenter="0" init="onstarMeterInit(event)" includeInLayout="false" visible="false"/>
+			<mx:HBox id="buddyDetails" y="378" horizontalCenter="0" >
+				<mx:Button id="buttonAddRemoveBuddy" click="{addRemoveBuddy()}" styleName="buddy" />
+				<!--<mx:Button id="buttonJab" click="{showJabDialog(event)}" render="{this.setJabCounter(-1)}" styleName="buddy"-->
+				<mx:Button id="buttonJab" styleName="buddy" click="{showJabDialog(event)}"
+					visible="false" includeInLayout="false" toolTip="{'Jab ' + _avatar.name}"
+					icon="@Embed(source='images/buddy/buddyJabDefaultIcon.png')"
+					overIcon="@Embed(source='images/buddy/buddyJabOverIcon.png')"
+					downIcon="@Embed(source='images/buddy/buddyJabOverIcon.png')"/>
+				<mx:Button id="buttonGotoBuddyHome" click="{gotoBuddyHome()}" styleName="buddy"
+					icon="@Embed(source='images/buddy/buddyHomeDefaultIcon.png')"
+					overIcon="@Embed(source='images/buddy/buddyHomeOverIcon.png')"
+					downIcon="@Embed(source='images/buddy/buddyHomeOverIcon.png')"/>
+				<!--<mx:Button id="buttonReportToMod" click="reportToModerator()" styleName="buddy"
+					icon="@Embed(source='images/buddy/buddyModDefaultIcon.png')"
+					overIcon="@Embed(source='images/buddy/buddyModOverIcon.png')"
+					downIcon="@Embed(source='images/buddy/buddyModOverIcon.png')"/>-->
+				<mx:Button id="buttonIgnore" click="toggleIgnore()" styleName="buddy" />
+			</mx:HBox>
+			<mx:Button id="inviteButton" label="Invite" visible="false" verticalCenter="0" horizontalCenter="0"
+				width="120" fontSize="15" click="onInviteClick()" >
+				<mx:filters>
+					<mx:GlowFilter color="#ffffff" blurX="15" blurY="15" />
+				</mx:filters>
+			</mx:Button>
+
+		</mx:Canvas>
+	</sdgcontrols:TitlePanel>
+
+	<mx:Canvas id="adminButtons" x="276">
+		<mx:VBox verticalGap="3" y="33">
+			<mx:Button styleName="tab" click="{getHeadwearInventory()}"
+				skin="@Embed('images/avatarCustomizer/lightBlueTab.png')"
+				icon="@Embed('images/avatarCustomizer/hatsDefault.png')"
+				toolTip="Hats"/>
+			<mx:Button styleName="tab" click="getInventoryType(14)"
+				skin="@Embed('images/avatarCustomizer/lightBlueTab.png')"
+				icon="@Embed('images/avatarCustomizer/glassesDefault.png')"
+				toolTip="Glasses"/>
+		</mx:VBox>
+
+		<mx:VBox verticalGap="3" y="153">
+			<mx:Button styleName="tab" click="getInventoryType(7)"
+				skin="@Embed('images/avatarCustomizer/blueTab.png')"
+				icon="@Embed('images/avatarCustomizer/shirtsDefault.png')"
+				toolTip="Shirts"/>
+			<mx:Button styleName="tab" click="getInventoryType(6)"
+				skin="@Embed('images/avatarCustomizer/blueTab.png')"
+				icon="@Embed('images/avatarCustomizer/pantsDefault.png')"
+				toolTip="Pants"/>
+			<mx:Button styleName="tab" click="getInventoryType(5)"
+				skin="@Embed('images/avatarCustomizer/blueTab.png')"
+				icon="@Embed('images/avatarCustomizer/shoesDefault.png')"
+				toolTip="Shoes"/>
+		</mx:VBox>
+
+		<mx:VBox verticalGap="3" y="323">
+			<mx:Button styleName="tab" click="{getInventoryType(PreviewUtil.BOARD_GAME)}"
+				skin="@Embed('images/avatarCustomizer/greenTab.png')"
+				icon="@Embed('images/avatarCustomizer/gameIcon.png')"
+				toolTip="Board Games"/>
+			<mx:Button styleName="tab" click="showPickem()"
+				skin="@Embed('images/avatarCustomizer/greenTab.png')"
+				icon="@Embed('images/avatarCustomizer/pickEmIcon.png')"
+				toolTip="Sports Psychic"/>
+		</mx:VBox>
+	</mx:Canvas>
+
+	<mx:Canvas id="questionBubble" width="243" height="112" x="91" visible="false"
+		backgroundImage="@Embed('images/pickem/scorecard_bubble.png')">
+		<mx:Canvas width="225" height="108" horizontalCenter="-7" verticalCenter="0">
+			<mx:Canvas height="53" horizontalCenter="0">
+				<mx:Text id="pickemQuestion" width="204" color="#ffffff"
+					fontSize="11" textAlign="center"
+					horizontalCenter="0" verticalCenter="0"/>
+			</mx:Canvas>
+			<mx:Canvas id="meterContainer" width="{Math.min(225, Math.max(206, 206 + (choice1.width + choice2.width - 192)))}" height="55"
+				bottom="0" horizontalCenter="0">
+				<sdgcontrols:VoteMeter id="voteMeter" horizontalCenter="0"/>
+
+				<mx:Canvas bottom="1" left="0">
+					<mx:Text id="choice1" fontSize="11" left="5" color="#999999"/>
+					<mx:Text id="choice1Percent" fontSize="12" fontThickness="200" y="14" left="20" color="#f37f82"/>
+				</mx:Canvas>
+				<mx:Canvas bottom="1" right="0">
+					<mx:Text id="choice2" fontSize="11" right="5" color="#999999"/>
+					<mx:Text id="choice2Percent" fontSize="12" fontThickness="200" y="14" right="20" color="#74bcff"/>
+				</mx:Canvas>
+			</mx:Canvas>
+		</mx:Canvas>
+	</mx:Canvas>
+
+	<mx:SWFLoader id="pickemResultsIn" visible="false"/>
+	<!--<mx:Image id="jabCounter" source="assets/swfs/hudCount.swf" includeInLayout="false" visible="false" init="{this.setJabCounter(this._jabCount)}" />-->
+</mx:Canvas>

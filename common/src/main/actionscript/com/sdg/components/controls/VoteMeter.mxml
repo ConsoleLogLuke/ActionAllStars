@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="206" height="18"
+	borderStyle="solid" borderThickness="1" cornerRadius="7">
+	<mx:Script>
+		<![CDATA[
+			import mx.core.UIComponent;
+			
+			private var _shift:Number;
+			public var leftColor:uint = 0xf37f82;
+			public var rightColor:uint = 0x74bcff;
+			
+			public function setMeter(leftPercent:int, rightPercent:int):void
+			{
+				this.removeAllChildren();
+				_shift = 0;
+				drawSide(leftPercent, true);
+				drawSide(rightPercent, false);
+			}
+			
+			private function drawSide(percent:int, leftSide:Boolean):void
+			{
+				if (percent <= 0)
+					return;
+					
+				const curveSize:int = 7;
+				var borderThickness:int = this.getStyle("borderThickness");
+				var meterWidth:int = this.width - (2 * borderThickness);
+				var meterHeight:int = this.height - (2 * borderThickness);
+				
+				var sideWidth:Number = (percent/100) * meterWidth;
+				
+				var factor:int = 1;
+				var color:uint = rightColor;
+				
+				if (leftSide)
+				{
+					factor = -1;
+					color = leftColor;
+					_shift = sideWidth;
+				}
+				
+				var startX:Number = _shift + 0;
+				var endX:Number = _shift + (factor * sideWidth);
+				var curveStartX:Number = _shift + (factor * (sideWidth - curveSize));
+							
+				var obj:UIComponent = new UIComponent();
+				var g:Graphics = obj.graphics
+				g.clear();
+				g.beginFill(color, .8);
+				g.moveTo(startX,0);
+				g.lineTo(curveStartX,0);
+				g.curveTo(endX,0,endX,curveSize);
+				g.lineTo(endX,meterHeight - curveSize);
+				g.curveTo(endX,meterHeight,curveStartX,meterHeight);
+				g.lineTo(startX,meterHeight);
+				g.lineTo(startX,0);
+				this.addChild(obj);
+			}
+		]]>
+	</mx:Script>
+</mx:Canvas>

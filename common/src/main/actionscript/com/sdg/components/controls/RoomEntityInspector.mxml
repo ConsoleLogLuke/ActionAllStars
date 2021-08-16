@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<controls:RoomPopUp xmlns:mx="http://www.adobe.com/2006/mxml" xmlns:controls="com.sdg.components.controls.*"
+	styleName="translucent" placement="side">
+
+	<mx:Metadata>
+		[Event(name="rotateItem", type="flash.events.Event")]
+		[Event(name="removeItem", type="flash.events.Event")]
+	</mx:Metadata>
+
+	<!--rotate-->
+	<mx:Button styleName="brightBlue" width="25" height="25" toolTip="Rotate"
+		icon="@Embed(source='images/iconRotate.png')"
+		downIcon="@Embed(source='images/iconRotate_down.png')"
+		click="{dispatchEvent(new Event('rotateItem'))}"/>
+
+	<!--remove-->
+	<mx:Button styleName="deepBlue" width="25" height="25" toolTip="Remove"
+		icon="@Embed(source='images/iconX.png')"
+		downIcon="@Embed(source='images/iconX_down.png')"
+		click="{dispatchEvent(new Event('removeItem'))}"/>
+
+</controls:RoomPopUp>

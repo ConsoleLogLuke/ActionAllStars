@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:VBox xmlns:mx="http://www.adobe.com/2006/mxml"
+	width="310" verticalScrollPolicy="off" horizontalScrollPolicy="off" dataChange="init()" paddingTop="2" paddingBottom="2">
+	<mx:Script>
+		<![CDATA[
+			import mx.events.FlexEvent;
+			import mx.containers.HBox;
+			import mx.controls.Text;
+			import mx.controls.Image;
+			//import com.sdg.components.controls.JabMessage;
+			import com.sdg.control.PDAController;
+			import com.sdg.components.controls.IHudMessage;
+			import mx.controls.TextArea;
+			import com.sdg.model.NotificationIcon;
+			import com.sdg.components.controls.NotificationMessage;
+						
+			private function init():void
+			{
+				this.removeAllChildren();
+				if (data)
+					this.addChild(DisplayObject(data));
+//				if (data is NotificationMessage)
+//				{
+//					trace("notificationMessage");
+//					var box:HBox = new HBox();
+//					this.addChild(box);
+//					box.percentHeight = 100;
+//					box.setStyle("backgroundColor", 0x00ff00);
+//					box.setStyle("verticalAlign", "middle");
+//					box.setStyle("paddingLeft", 5);
+//					box.setStyle("paddingTop", 5);
+//					
+//					var image:Image = new Image();
+//					box.addChild(image);
+//					var iconObj:Object = NotificationIcon.getIcon(data.iconId);
+//					image.source = iconObj.icon;
+//					this.setStyle("borderColor", iconObj.color);
+//					//image.setStyle("verticalCenter", 0);
+//					//image.x = 5;
+//					
+//					var message:Text = new Text();
+//					box.addChild(message);
+//					message.text = data.message;
+//					//message.y = 5;
+//					//message.x = 5 + image.width + 5;
+//				}
+//				else if (data is JabMessage)
+//				{
+//					var jabBox:HBox = new HBox();
+//					this.addChild(jabBox);
+//					
+//					var image1:Image = data.jabImage;
+//					jabBox.addChild(image1);
+//					
+//					//image1
+////					if (this.data.message == "jab message")
+////					{
+////						//trace(Environment.getApplicationUrl() + this.data.swfUrl);
+////						leftImage.source = Environment.getApplicationUrl() + this.data.swfUrl;
+////						var params:Object = {sender:this.data.senderName, senderAvatarId:this.data.senderAvatarId, jabId:this.data.jabId, text:this.data.text};
+////						leftImage.addEventListener(Event.INIT, function(event:Event):void {onInit(event, params, "jabBack", onJabBack)});
+////						leftImage.addEventListener(IOErrorEvent.IO_ERROR, onIOError);
+////						this.height = 125;
+////						this.setStyle("backgroundColor", null);
+////						//this.setStyle("borderStyle", "none");
+//				}
+//					
+
+			}
+			
+			private function onDelete(event:MouseEvent):void
+			{
+				//event.currentTarget.removeEventListener(MouseEvent.CLICK, onDelete);
+				//HudController.getInstance().removeNotification(IHudMessage(data));
+				//PDAController.getInstance().removeNotification(IHudMessage(data));
+			}
+		]]>
+	</mx:Script>
+</mx:VBox>

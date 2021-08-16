@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" xmlns:controls="com.sdg.components.controls.*"
+	implements="com.sdg.components.controls.IHudMessage, com.sdg.model.ISetAvatar" width="294">
+	
+<!--<controls:MessageView xmlns:mx="http://www.adobe.com/2006/mxml" xmlns:controls="com.sdg.components.controls.*"
+	implements="com.sdg.components.controls.IHudMessage, com.sdg.model.ISetAvatar" width="294" leftIndent="0" topIndent="0" bottomIndent="0">-->
+	
+<!--<mx:HBox xmlns:mx="http://www.adobe.com/2006/mxml" implements="com.sdg.components.controls.IHudMessage, com.sdg.model.ISetAvatar"
+	horizontalGap="0" width="294" backgroundColor="#06427d" paddingTop="2" paddingBottom="2">-->
+	<mx:Script>
+		<![CDATA[
+			import com.sdg.control.room.itemClasses.AvatarController;
+			import com.sdg.net.Environment;
+			import com.sdg.model.Avatar;
+			import com.sdg.events.AvatarEvent;
+			import com.sdg.events.RoomNavigateEvent;
+			import com.sdg.control.room.RoomManager;
+			
+			private var _removeCallback:Function;
+			private var	_senderName:String;
+			private var _senderAvatarId:int;
+			private var _jabId:int;
+			private var _jabText:String;
+			private var _homeTurfPending:Boolean = false;
+			private var _gameSessionId:String;
+			private var _gameId:int;
+			
+			private var _isPersonal:Boolean;
+			
+			[Bindable]
+			public var iconSource:String;
+			
+			private function onClick():void
+			{
+				if (_removeCallback != null)
+					_removeCallback(this);
+			}
+			
+			public function get isPersonal():Boolean
+			{
+				return _isPersonal;
+			}
+			
+			public function set isPersonal(value:Boolean):void
+			{
+				_isPersonal = value;
+			}
+			
+			public function set avatar(value:Avatar):void
+			{
+				// are we waiting on a request to go to the home turf?
+				if (_homeTurfPending)
+				{
+					_homeTurfPending = false;
+					
+					// set the home turf avatar
+					RoomManager.getInstance().homeTurfAvatar = value;
+					
+					// navigate to the home turf
+					dispatchEvent(new RoomNavigateEvent(RoomNavigateEvent.ENTER_ROOM, RoomManager.getInstance().homeTurfAvatar.privateRoom));
+				}
+			}
+			
+			public function set read(value:Boolean):void
+			{
+			}
+			
+			private function onInit(event:Event):void
+			{
+				event.currentTarget.removeEventListener(event.type, arguments.callee);
+				
+				var params:Object = {sender:_senderName, senderAvatarId:_senderAvatarId, jabId:_jabId, text:_jabText, gameSessionId:_gameSessionId, gameId:_gameId};
+				
+				try
+				{
+					// get the swf
+					var swf:Object = Object(jabIcon.content);
+					swf.params = params;
+					swf.cookie = params;
+					DisplayObject(swf).addEventListener(MouseEvent.CLICK, onHudSwfClick);
+					
+				}
+				catch(e:Error)
+				{
+					trace("notification animation error: " + e.message);
+				}
+			}
+			
+			private function onHudSwfClick(event:Event):void
+			{
+				var cookie:Object = event.currentTarget.cookie as Object;
+				if (cookie)
+				{
+					var homeTurfAvatarId:int = cookie.senderAvatarId as int;
+					var jabId:int = cookie.jabId as int;
+					
+					// home turf invite?
+					if (homeTurfAvatarId && jabId && jabId == 4)
+					{
+						if (RoomManager.getInstance().homeTurfAvatar && RoomManager.getInstance().homeTurfAvatar.avatarId == homeTurfAvatarId)
+						{
+							// if the home turf avatar is already the one we need, just navigate to the home turf
+							dispatchEvent(new RoomNavigateEvent(RoomNavigateEvent.ENTER_ROOM, RoomManager.getInstance().homeTurfAvatar.privateRoom));
+						}
+						else
+						{
+							// get the home turf avatar and then navigate to the home turf 
+							_homeTurfPending = true;
+							dispatchEvent(new AvatarEvent(homeTurfAvatarId, this));
+						}	
+					}
+					// game invite?
+					if (jabId && jabId == 100)
+					{
+						var avatarController:AvatarController = RoomManager.getInstance().userController;
+						avatarController.acceptInvite(avatarController.avatar.avatarId, cookie.senderAvatarId, cookie.gameSessionId, cookie.gameId);
+					}
+				}
+			}
+			
+			public function set senderName(value:String):void
+			{
+				_senderName = value;
+			}
+			
+			public function set senderAvatarId(value:int):void
+			{
+				_senderAvatarId = value;
+			}
+			
+			public function set jabId(value:int):void
+			{
+				_jabId = value;
+			}
+			
+			public function set jabText(value:String):void
+			{
+				_jabText = value;
+			}
+			
+			public function set removeCallback(value:Function):void
+			{
+				_removeCallback = value;
+			}
+			
+			public function set gameSessionId(value:String):void
+			{
+				_gameSessionId = value;
+			}
+			
+			public function set gameId(value:int):void
+			{
+				_gameId = value;
+			}
+			
+			private function onMouseOver():void
+			{
+				xButton.setStyle("backgroundColor", 0xD62722);
+				xButton.width = 20;
+				xButton.height = 20;
+				theX.setStyle("fontSize", 12);
+			}
+			
+			private function onMouseOut():void
+			{
+				xButton.setStyle("backgroundColor", 0xAF0000);
+				xButton.width = 18;
+				xButton.height = 18;
+				theX.setStyle("fontSize", 11);
+			}
+		]]>
+	</mx:Script>
+	<!--<mx:Image id="jabIcon" source="{Environment.getApplicationUrl() + iconSource}" init="onInit(event)"/>
+	
+	<mx:Canvas width="16" height="100%" backgroundColor="#06427d">
+		<mx:Canvas width="14" height="14" borderStyle="none" verticalCenter="0" right="0" backgroundColor="#a41731"
+			buttonMode="true" mouseChildren="false" click="{onClick()}">
+			<mx:Label textAlign="center" text="X" fontSize="11" fontThickness="200" fontWeight="bold" color="#ffffff"
+				verticalCenter="1" horizontalCenter="-1"/>
+		</mx:Canvas>
+	</mx:Canvas>
+</mx:HBox>-->
+
+	<!--<mx:HBox width="100%" height="100%" verticalCenter="0" verticalAlign="middle" paddingRight="1" horizontalGap="0">
+		<mx:Image id="jabIcon" source="{Environment.getApplicationUrl() + iconSource}" init="onInit(event)"/>
+		
+		<mx:Canvas width="14" height="14">
+			<mx:Canvas id="xButton" width="13" height="13" borderStyle="solid" borderColor="0x000000" borderThickness="1"
+				verticalCenter="0" horizontalCenter="0" backgroundColor="#AF0000" buttonMode="true" mouseChildren="false" click="{onClick()}"
+				mouseOver="{onMouseOver()}" mouseOut="{onMouseOut()}">
+				<mx:Label id="theX" textAlign="center" text="X" fontSize="7" fontThickness="200" fontWeight="bold" color="#ffffff"
+					verticalCenter="1" horizontalCenter="-1" filters="{[new GlowFilter(0x000000, 1, 1, 1, 10)]}"/>
+			</mx:Canvas>
+		</mx:Canvas>
+	</mx:HBox>
+</controls:MessageView>-->
+	<mx:Image id="jabIcon" source="{Environment.getApplicationUrl() + iconSource}" init="onInit(event)" right="2"/>
+	<mx:Canvas width="20" height="20" right="6" verticalCenter="0">
+		<mx:Canvas id="xButton" width="18" height="18" borderStyle="solid" borderColor="0x000000" borderThickness="1"
+			verticalCenter="0" horizontalCenter="0" backgroundColor="#AF0000" buttonMode="true" mouseChildren="false" click="{onClick()}"
+			mouseOver="{onMouseOver()}" mouseOut="{onMouseOut()}">
+			<mx:Label id="theX" textAlign="center" text="X" fontSize="11" fontThickness="200" fontWeight="bold" color="#ffffff"
+				verticalCenter="1" horizontalCenter="-1" filters="{[new GlowFilter(0x000000, 1, 2, 2, 10)]}"/>
+		</mx:Canvas>
+	</mx:Canvas>
+</mx:Canvas>

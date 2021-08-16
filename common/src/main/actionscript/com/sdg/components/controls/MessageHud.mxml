@@ -1,0 +1,242 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas
+	xmlns:mx="http://www.adobe.com/2006/mxml"
+	creationComplete="init()">
+
+	<mx:Script>
+		<![CDATA[
+			import com.sdg.control.HudController;
+			import mx.core.Container;
+			import com.sdg.components.dialog.AvatarCustomizer;
+			import com.sdg.utils.Constants;
+			import com.sdg.control.room.RoomManager;
+			import com.sdg.model.NotificationIcon;
+			import com.sdg.utils.MainUtil;
+			import ch.capi.data.QueueList;
+			import com.sdg.control.BuddyManager;
+			import mx.core.UIComponent;
+			import mx.events.FlexEvent;
+			import com.sdg.events.HudEvent;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			import mx.controls.Text;
+			import com.sdg.components.controls.MessageContainer;
+			import mx.effects.easing.*;
+
+			import com.sdg.model.ModelLocator;
+
+			private var selectedTab:TextArea;
+			private var messageQueue:QueueList = new QueueList();
+			private var timerIntervalId:uint;
+			private var notificationsUnread:int = 0;
+			private var requestsUnread:int = 0;
+			private var requestsNum:int = 0;
+
+			private function init():void
+			{
+				CairngormEventDispatcher.getInstance().addEventListener(HudEvent.HUD_EVENT, onHudEvent);
+				//BuddyManager.getPendingBuddies();
+
+				// debuging
+				//addEventListener(KeyboardEvent.KEY_DOWN, onKeyDown);
+			}
+
+//			private function onKeyDown(event:KeyboardEvent):void
+//			{
+//				if (event.charCode == String("r").charCodeAt(0))
+//				{
+//					var message:String = "superlongname wants to be your buddy. Do you accept?";
+//					CairngormEventDispatcher.getInstance().dispatchEvent(new HudEvent(HudEvent.BUDDY_REQUEST, {buddyAvatarId:361, message:message}));
+//					//HudController.getInstance().addRequest(message, 361, RequestMessage.BUDDY_REQUEST);
+//				}
+//				else if (event.charCode == String("c").charCodeAt(0))
+//				{
+//					CairngormEventDispatcher.getInstance().dispatchEvent(new HudEvent(HudEvent.CHAT_MESSAGE, {avatar:"superlongname", message:"hi there"}));
+//				}
+//				else if (event.charCode == String(NotificationIcon.ASN).charCodeAt(0))
+//					CairngormEventDispatcher.getInstance().dispatchEvent(new HudEvent(HudEvent.NOTIFICATION, {message:"This is ASN.", icon:NotificationIcon.ASN}));
+//				else if (event.charCode == String(NotificationIcon.BUDDY).charCodeAt(0))
+//					CairngormEventDispatcher.getInstance().dispatchEvent(new HudEvent(HudEvent.NOTIFICATION, {message:"SoAndSo is now your buddy.", icon:NotificationIcon.BUDDY}));
+//				else if (event.charCode == String(NotificationIcon.GENERIC).charCodeAt(0))
+//				{
+//					CairngormEventDispatcher.getInstance().dispatchEvent(new HudEvent(HudEvent.NOTIFICATION, {message:"This is Generic.", icon:NotificationIcon.GENERIC}));
+//					//HudController.getInstance().addNotification(new NotificationMessage("This is Generic.", NotificationIcon.GENERIC));
+//				}
+//				else if (event.charCode == String(NotificationIcon.LEVEL_UP).charCodeAt(0))
+//				{
+//					CairngormEventDispatcher.getInstance().dispatchEvent(new HudEvent(HudEvent.NOTIFICATION, {message:"This is Level Up.", icon:NotificationIcon.LEVEL_UP, isPendingRequest:true}));
+//					HudController.getInstance().addNewNotification("This is Level Up Notification.  Testing Testing testing.", NotificationIcon.LEVEL_UP);
+//					//HudController.getInstance().addNotification(new HudMessage("Level Up2"));
+//				}
+//				else if (event.charCode == String(NotificationIcon.NEW).charCodeAt(0))
+//					CairngormEventDispatcher.getInstance().dispatchEvent(new HudEvent(HudEvent.NOTIFICATION, {message:"This is New Event.", icon:NotificationIcon.NEW}));
+//				else if (event.charCode == String(NotificationIcon.RWS).charCodeAt(0))
+//					CairngormEventDispatcher.getInstance().dispatchEvent(new HudEvent(HudEvent.NOTIFICATION, {message:"This is RWS.", icon:NotificationIcon.RWS, clickHandler:clicktest}));
+//				else if (event.charCode == String(NotificationIcon.SAFETY).charCodeAt(0))
+//					CairngormEventDispatcher.getInstance().dispatchEvent(new HudEvent(HudEvent.NOTIFICATION, {message:"This is Safety.", icon:NotificationIcon.SAFETY}));
+//				else if (event.charCode == String(NotificationIcon.SERVER).charCodeAt(0))
+//					CairngormEventDispatcher.getInstance().dispatchEvent(new HudEvent(HudEvent.NOTIFICATION, {message:"This is Server.", icon:NotificationIcon.SERVER}));
+//				else if (event.charCode == String(NotificationIcon.TRADING_CARD).charCodeAt(0))
+//					CairngormEventDispatcher.getInstance().dispatchEvent(new HudEvent(HudEvent.NOTIFICATION, {message:"SoAndSo has sent you a trading card.", icon:NotificationIcon.TRADING_CARD}));
+//				else if (event.charCode == String(NotificationIcon.WARNING).charCodeAt(0))
+//					CairngormEventDispatcher.getInstance().dispatchEvent(new HudEvent(HudEvent.NOTIFICATION, {message:"You have been warned.", icon:NotificationIcon.WARNING}));
+//
+//				else if (event.charCode == String("j").charCodeAt(0))
+//					CairngormEventDispatcher.getInstance().dispatchEvent(new HudEvent(HudEvent.NOTIFICATION,
+//						{message:"jab message", swfUrl:"C:/temp/test/jabNotify2.swf", jabId:1,
+//						senderName:"itsmekevin", senderAvatarId:312, text:"has just dunked on you"}));
+//					//HudController.getInstance().addJab(new JabMessage(
+//			}
+//
+//			private function clicktest():void
+//			{
+//				trace("hi");
+//				//var customizer:AvatarCustomizer = BuddyManager.showAvatarDialog(ModelLocator.getInstance().avatar);
+//				//customizer.showPickem();
+//				//CairngormEventDispatcher.getInstance().dispatchEvent(new RoomNavigateEvent(RoomNavigateEvent.ENTER_ROOM, "public_129"));
+//				//trace(params);
+//			}
+
+			private function onHudEvent(event:HudEvent):void
+			{
+				switch (event.eventType)
+				{
+					case HudEvent.CHAT_MESSAGE:
+						processChatMessage(event.params);
+						break;
+					case HudEvent.ROOM_CHANGE:
+						conditionalMinimize();
+						break;
+				}
+			}
+
+
+
+			private function onChildAdded(event:FlexEvent):void
+			{
+				var component:UIComponent = UIComponent(event.currentTarget);
+				component.removeEventListener(FlexEvent.UPDATE_COMPLETE, arguments.callee);
+
+				chatBox.verticalScrollPosition = chatBox.maxVerticalScrollPosition;
+			}
+
+
+			private function processChatMessage(params:Object):void
+			{
+				var message:Text = new Text();
+				message.setStyle("color", "#000000");
+				message.setStyle("fontSize", 12);
+				message.htmlText = "<FONT color='#1a3b67'>" + params.avatar + ":  </FONT>" + params.message;
+				message.width = chatContainer.width - 20;
+
+				if (chatBox.verticalScrollPosition == chatBox.maxVerticalScrollPosition)
+					message.addEventListener(FlexEvent.UPDATE_COMPLETE, onChildAdded);
+
+				// if max children, then remove the first one first
+				if (chatContainer.numChildren >= 15)
+				{
+					var oldestMessage:Text = Text(chatContainer.getChildAt(0));
+					// +1 for the vertical Gap
+					chatBox.verticalScrollPosition -= (oldestMessage.height + 1);
+					chatContainer.removeChild(oldestMessage);
+				}
+				chatContainer.addChild(message);
+			}
+
+			private function onExitTab():void
+			{
+				selectedTab.setStyle("backgroundColor", "#183857");
+				selectedTab.setStyle("backgroundAlpha", 1);
+
+				this[selectedTab.id + "Hub"].visible = false;
+			}
+
+
+			private function minimize():void
+			{
+				onExitTab();
+				animateEffect.heightTo = 0;
+				animateEffect.play();
+
+				selectedTab = null;
+			}
+
+			private function conditionalMinimize():void
+			{
+				if (selectedTab)
+				{
+					minimize();
+				}
+				else
+				{
+				}
+			}
+
+			private function selectTab(event:MouseEvent):void
+			{
+				var tab:TextArea = event.target as TextArea;
+
+				// same tab selected, minimize
+				if (tab == selectedTab)
+					minimize();
+				else
+				{
+					// new tab selected, close the previous, open new
+					if (selectedTab)
+						onExitTab();
+					//nothing is selected, select tab and play animation
+					else
+					{
+						animateEffect.heightTo = 155;
+						animateEffect.play();
+					}
+					selectedTab = tab;
+					selectedTab.setStyle("backgroundColor", "#000000");
+					selectedTab.setStyle("backgroundAlpha", .8);
+					this[selectedTab.id + "Hub"].visible = true;
+
+					chatBox.verticalScrollPosition = chatBox.maxVerticalScrollPosition;
+				}
+			}
+		]]>
+	</mx:Script>
+
+	<mx:Style>
+		TextArea.textArea
+		{
+			backgroundColor: #183857;
+			color: #ffffff;
+			textAlign: center;
+			fontSize: 13;
+			fontWeight: bold;
+			paddingTop: 7;
+			borderThickness: 0;
+			cornerRadius: 7;
+			font-family: GillSans;
+		}
+	</mx:Style>
+	<mx:Resize id="animateEffect" duration="250" easingFunction="Sine.easeOut" target="{hubContainer}"/>
+	<mx:VBox verticalGap="0">
+		<mx:Canvas id="hubContainer" width="308" height="0" verticalScrollPolicy="off"
+			backgroundColor="#000000" backgroundAlpha=".8" borderStyle="solid" borderThickness="0" cornerRadius="5">
+			<mx:Canvas id="chatLogHub" width="298" height="125" y="25" visible="false" horizontalCenter="0">
+				<mx:VBox width="278" height="125" backgroundColor="#ffffff" backgroundAlpha=".8"
+					borderStyle="solid" borderThickness="0" cornerRadius="5">
+				</mx:VBox>
+				<mx:Canvas id="chatBox" width="298" height="125" verticalScrollPolicy="on">
+					<mx:VBox id="chatContainer" width="278" paddingLeft="10" paddingRight="10" paddingTop="3" paddingBottom="3" verticalGap="1">
+					</mx:VBox>
+				</mx:Canvas>
+			</mx:Canvas>
+
+			<mx:Image source="@Embed('images/hud/hudHeader.png')" top="2"
+				horizontalCenter="0" click="minimize()" buttonMode="true"/>
+		</mx:Canvas>
+
+		<!-- tabs -->
+		<mx:Canvas height="23">
+			<mx:TextArea id="chatLog" text="Chat Log" styleName="textArea" click="selectTab(event)"
+				buttonMode="true" mouseChildren="false" selectable="false"
+				width="96" height="30" y="-7" x="5" editable="false"/>
+		</mx:Canvas>
+	</mx:VBox>
+</mx:Canvas>

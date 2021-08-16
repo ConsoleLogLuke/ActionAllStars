@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml">
+	<mx:Script>
+		<![CDATA[
+			import com.sdg.utils.MainUtil;
+			import mx.managers.PopUpManager;
+			public var closeHandler:Function;
+			
+			private function onClick(event:Event):void
+			{
+				if (closeHandler != null)
+					closeHandler(event);
+			}
+			
+			public static function show():SwfAlert
+			{
+				return MainUtil.showModalDialog(SwfAlert) as SwfAlert;
+			}
+			
+			override protected function updateDisplayList(w:Number, h:Number):void
+			{
+				super.updateDisplayList(w, h);
+				PopUpManager.centerPopUp(this);
+			}
+		]]>
+	</mx:Script>
+	<mx:Image id="backgroundImage"/>
+	<mx:Button id="button" buttonMode="true" styleName="orange" click="onClick(event)" bottom="30" horizontalCenter="0" label="OK"/>
+</mx:Canvas>

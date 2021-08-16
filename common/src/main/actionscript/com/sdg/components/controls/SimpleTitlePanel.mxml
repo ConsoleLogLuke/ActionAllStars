@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml"
+	horizontalScrollPolicy="off" verticalScrollPolicy="off"
+	closeButtonUpSkin="@Embed('images/closeDefaultBtn.png')"
+	closeButtonOverSkin="@Embed('images/closeOverBtn.png')"
+	closeButtonDownSkin="@Embed('images/closeDownBtn.png')">
+
+	<mx:Script>
+		<![CDATA[
+			import flash.filters.GlowFilter;
+
+			import mx.controls.Image;
+			import mx.core.FlexShape;
+			import mx.core.mx_internal;
+			import mx.core.UIComponent;
+			import mx.core.UITextField;
+
+			//import com.sdg.components.controls.DialogHelpIcon;
+
+			use namespace mx_internal;
+
+			private static const TITLE_FILTER:GlowFilter = new GlowFilter(0x923131, 1, 4, 4, 10);
+
+			private var invalidateTitleHighlightFlag:Boolean = true;
+			protected var titleHighlight:FlexShape;
+
+			protected function get titleIconObj():Object
+			{
+				return titleIconObject;
+			}
+
+			override protected function createChildren():void
+			{
+				super.createChildren();
+
+				titleTextField.filters = [TITLE_FILTER];
+
+				if (!titleHighlight)
+					titleHighlight = new FlexShape();
+
+				titleBar.addChild(titleHighlight);
+				closeButton.explicitWidth = 22;
+				closeButton.explicitHeight = 22;
+				title = title;
+			}
+
+			override public function validateSize(recursive:Boolean = false):void
+			{
+				invalidateTitleHighlightFlag = invalidateSizeFlag;
+				super.validateSize(recursive);
+			}
+
+			override protected function updateDisplayList(w:Number, h:Number):void
+			{
+				super.updateDisplayList(w, h);
+
+				if (invalidateTitleHighlightFlag)
+				{
+					// draw title highlight
+					var g:Graphics = titleHighlight.graphics;
+					var highlightH:Number = titleBar.height * .4;
+
+					g.clear();
+					g.beginFill(0xFFFFFF, .16);
+					g.drawRoundRect(
+						4, 4, titleBar.width - 8, highlightH, highlightH * .8);
+					g.endFill();
+
+					invalidateTitleHighlightFlag = false;
+				}
+
+				titleBar.graphics.clear();
+			}
+		]]>
+	</mx:Script>
+</mx:TitleWindow>

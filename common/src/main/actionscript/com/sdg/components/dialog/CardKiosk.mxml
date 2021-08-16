@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas
+	xmlns:mx="http://www.adobe.com/2006/mxml"
+    xmlns:sdgcontrols="com.sdg.components.controls.*"
+    xmlns:business="com.sdg.business.*"
+	implements="com.sdg.components.dialog.ISdgDialog"
+	horizontalScrollPolicy="off"
+	verticalScrollPolicy="off">
+		<mx:Script>
+		<![CDATA[
+			import com.sdg.events.GetKioskCardsEvent;
+			import com.sdg.events.GetAlbumCardsEvent;
+			import com.sdg.events.TradingCardPurchaseEvent;
+			import com.sdg.model.TradingCard;
+			import com.sdg.net.Environment;
+			import mx.controls.Image;
+			import mx.managers.PopUpManager;
+			import com.sdg.components.controls.SdgAlert;
+			import com.sdg.model.ModelLocator;
+			import com.sdg.model.Avatar;
+			import com.sdg.events.AvatarListEvent;
+			import com.adobe.cairngorm.control.CairngormEvent;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+
+			private var _avatar:Avatar;
+
+			[Bindable]
+			private var _q1:uint;
+			[Bindable]
+			private var _q2:uint;
+			[Bindable]
+			private var _q3:uint;
+			[Bindable]
+			private var _q4:uint;
+			[Bindable]
+			private var _q5:uint;
+
+			[Bindable]
+			private var _card_1:TradingCard;
+			[Bindable]
+			private var _card_2:TradingCard;
+			[Bindable]
+			private var _card_3:TradingCard;
+			[Bindable]
+			private var _card_4:TradingCard;
+			[Bindable]
+			private var _card_5:TradingCard;
+
+			[Bindable]
+			private var _tokens:uint;
+
+			public function init(params:Object):void
+			{
+				_avatar = ModelLocator.getInstance().avatar;
+				CairngormEventDispatcher.getInstance().addEventListener(GetKioskCardsEvent.GET_KIOSK_CARDS_COMPLETED, onKioskListCompleted);
+				CairngormEventDispatcher.getInstance().addEventListener(GetAlbumCardsEvent.GET_ALBUM_CARDS_COMPLETED, onAlbumListCompleted);
+				CairngormEventDispatcher.getInstance().addEventListener(TradingCardPurchaseEvent.TRADING_CARD_PURCHASE_COMPLETED, onPurchaseCompleted);
+				loadData();
+
+//				if (_avatar.membershipStatus == 0)
+//				{
+//					proCard.showPremium = true;
+//					veteranCard.showPremium = true;
+//					allStarCard.showPremium = true;
+//				}
+			}
+
+			private function loadData():void
+			{
+				_tokens = _avatar.currency;
+				dispatchEvent(new GetKioskCardsEvent(_avatar.avatarId));
+				dispatchEvent(new GetAlbumCardsEvent(_avatar.avatarId));
+			}
+			private function onPurchaseCompleted(e:TradingCardPurchaseEvent):void
+			{
+				trace("purchase complete " + e.type);
+				//CairngormEventDispatcher.getInstance().removeEventListener(TradingCardPurchaseEvent.TRADING_CARD_PURCHASE_COMPLETED, onPurchaseCompleted,);
+				SdgAlert.show("Your purchase is complete.", "Complete!", SdgAlert.OK);
+				_avatar.currency = _avatar.currency - e.cost;
+				loadData();
+				//init(null);
+			}
+
+			private function onKioskListCompleted(e:GetKioskCardsEvent):void
+			{
+				_card_1 = e.cards[0];
+				_card_2 = e.cards[1];
+				_card_3 = e.cards[2];
+				_card_4 = e.cards[3];
+				_card_5 = e.cards[4];
+				//CairngormEventDispatcher.getInstance().removeEventListener(GetKioskCardsEvent.GET_KIOSK_CARDS_COMPLETED, onKioskListCompleted);
+			}
+			/**
+			 * Get card counts for each level.  Yes it is somewhat of a hack.
+			 * But this is what I've been told to do for now.
+			 * */
+			private function onAlbumListCompleted(e:GetAlbumCardsEvent):void
+			{
+				_q1 = 0;
+				_q2 = 0;
+				_q3 = 0;
+				_q4 = 0;
+				_q5 = 0;
+
+				for each (var card:TradingCard in e.cards)
+				{
+					if (card.depictedAvatarId != this._avatar.avatarId)
+						continue;
+
+					switch (card.avatarLevel)
+					{
+					    case 1 :
+					        _q1++;
+					        break;
+					    case 2 :
+					    	_q2++;
+					    	break;
+					    case 3 :
+					        _q3++;
+					        break;
+					    case 4 :
+					    	_q4++;
+					    	break;
+					    case 5 :
+					    	_q5++;
+					    	break;
+					}
+				}
+				//CairngormEventDispatcher.getInstance().removeEventListener(GetAlbumCardsEvent.GET_ALBUM_CARDS_COMPLETED, onAlbumListCompleted);
+			}
+
+            public function close():void
+            {
+            	PopUpManager.removePopUp(this);
+            	// remove listeners here or events seem to add up, i.e. you'll get multiple events stacking
+            	CairngormEventDispatcher.getInstance().removeEventListener(GetKioskCardsEvent.GET_KIOSK_CARDS_COMPLETED, onKioskListCompleted);
+            	CairngormEventDispatcher.getInstance().removeEventListener(GetAlbumCardsEvent.GET_ALBUM_CARDS_COMPLETED, onAlbumListCompleted);
+            	CairngormEventDispatcher.getInstance().removeEventListener(TradingCardPurchaseEvent.TRADING_CARD_PURCHASE_COMPLETED, onPurchaseCompleted);
+            }
+
+            private function closeSwf(e:Event):void
+            {
+            	dispatchEvent(new AvatarListEvent(ModelLocator.getInstance().user.username));
+            	close();
+            }
+
+            private function errorEvent(e:Event):void
+            {
+            	SdgAlert.show("An error has occurred.", "Time Out!");
+            }
+
+            /*
+            public function componentSwfLoaded(event:Event):void
+			{
+
+				try
+				{
+					event.currentTarget.content.init("CardKiosk", _avatar);
+					event.currentTarget.content.addEventListener('close', closeSwf);
+				}
+				catch(e:Error)
+				{
+					trace("error " + e.message);
+				}
+
+			}
+			*/
+		]]>
+	</mx:Script>
+		<!--<mx:Image source="assets/swfs/TradingCardGame.swf" complete="componentSwfLoaded(event)"  />-->
+
+		<sdgcontrols:TitlePanel showCloseButton="true" close="close()" cornerRadius="10" title="Trading Card Kiosk" horizontalAlign="center" paddingBottom="10" paddingTop="10" paddingLeft="10" paddingRight="10" borderStyle="solid" height="480" width="740" helpId="2105">
+				<sdgcontrols:BoxContainer styleName="lightBlue" width="100%">
+					<mx:Box cornerRadius="5" backgroundColor="#cddcf1" borderColor="#92accc" borderStyle="solid" width="100%">
+						<mx:Text color="#072c59" width="100%" textAlign="center" text="The kiosk is where you can buy copies of the trading cards that you've earned.&#xa;Choose a rank below to purchase a pack of 10 cards.&#xa;" height="40">
+						</mx:Text>
+					</mx:Box>
+					<mx:HBox width="100%" horizontalAlign="center" horizontalGap="24">
+						<sdgcontrols:KioskCard cost="10" tradingCard="{_card_1}" cardLevel="1" quantity="{_q1}" />
+						<sdgcontrols:KioskCard cost="10" tradingCard="{_card_2}" cardLevel="2" quantity="{_q2}" />
+						<sdgcontrols:KioskCard id="proCard" cost="10" tradingCard="{_card_3}" cardLevel="3" quantity="{_q3}"/>
+						<sdgcontrols:KioskCard id="veteranCard" cost="10" tradingCard="{_card_4}" cardLevel="4" quantity="{_q4}"/>
+						<sdgcontrols:KioskCard id="allStarCard" cost="10" tradingCard="{_card_5}" cardLevel="5" quantity="{_q5}"/>
+					</mx:HBox>
+					<mx:Canvas width="100%">
+						<sdgcontrols:TitlePlate id="tokens" title="{'You currently have ' + _tokens + ' tokens'}" width="100%" styleName="blue" y="15" fontThickness="100"/>
+						<mx:Image source="@Embed(source='images/iconTokens.png')" x="640"/>
+					</mx:Canvas>
+                </sdgcontrols:BoxContainer>
+		</sdgcontrols:TitlePanel>
+
+</mx:Canvas>

@@ -1,0 +1,490 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" xmlns:controls="com.sdg.components.controls.*"
+	implements="com.sdg.view.IRoomView" showEffect="{fadeIn}"
+	horizontalScrollPolicy="off" verticalScrollPolicy="off" width="100%" height="100%"
+	creationComplete="init()" >
+		
+		<mx:Metadata>
+			[Event(name="addPopUp", type="com.sdg.events.RoomPopUpEvent")]
+			[Event(name="removePopUp", type="com.sdg.events.RoomPopUpEvent")]
+			[Event(name="centerPopUp", type="com.sdg.events.RoomPopUpEvent")]
+			[Event(name="addQuedPopUp", type="com.sdg.events.RoomPopUpEvent")]
+			[Event(name="removeQuedPopUp", type="com.sdg.events.RoomPopUpEvent")]
+		</mx:Metadata>
+		
+		<mx:Script>
+		<![CDATA[
+			import com.sdg.control.room.itemClasses.PetController;
+			import com.sdg.control.room.itemClasses.IRoomItemController;
+			import com.sdg.model.ItemType;
+			import com.sdg.model.SdgItemClassId;
+			import com.sdg.model.SdgItem;
+			import com.sdg.events.RoomManagerEvent;
+			import com.sdg.view.avatarcard.IntegratedAvatarInfoPanel;
+			import com.sdg.display.AvatarSprite;
+			import com.sdg.net.QuickLoader;
+			import com.sdg.utils.ItemUtil;
+			import com.sdg.view.LayeredImage;
+			import com.sdg.events.AvatarApparelEvent;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			import com.sdg.model.ModelLocator;
+			import com.sdg.control.BuddyManager;
+			import com.sdg.view.avatarcard.AvatarInfoPanelWithControls;
+			import com.sdg.model.Avatar;
+			import com.boostworthy.animation.rendering.RenderMethod;
+			import com.boostworthy.animation.easing.Transitions;
+			import com.boostworthy.events.AnimationEvent;
+			import com.sdg.view.PopUpTransition;
+			import com.boostworthy.animation.management.AnimationManager;
+			import com.sdg.npc.NPCEvent;
+			import com.sdg.control.GameCastController;
+			import com.sdg.control.ControllerMap;
+			import com.sdg.display.SDGContainer;
+			import com.sdg.events.SdgSwfEvent;
+			import com.sdg.collections.QuickList;
+			import com.sdg.control.room.RoomController;
+			import com.sdg.control.room.RoomManager;
+			import com.sdg.components.controls.*;
+			import com.sdg.display.EmbeddedRoomItemDisplay;
+			import com.sdg.display.IRoomItemDisplay;
+			import com.sdg.display.render.*;
+			import com.sdg.events.RoomPopUpEvent;
+			import com.sdg.geom.GeomUtil;
+			import com.sdg.model.Room;
+			import com.sdg.model.RoomTypeId;
+			import com.sdg.sim.render.*;
+			import com.sdg.utils.EventUtil;
+			
+			import flash.display.DisplayObject;
+			import flash.display.DisplayObjectContainer;
+			import flash.events.MouseEvent;
+			import flash.events.TimerEvent;
+			import flash.geom.Matrix;
+			import flash.ui.Mouse;
+			import flash.utils.Timer;
+			
+			import mx.binding.utils.BindingUtils;
+			import mx.core.IUIComponent;
+			import mx.core.Container;
+			import mx.events.FlexEvent;
+			import mx.managers.CursorManagerPriority;
+			import mx.managers.CursorManager;
+			
+			private static var _animMan:AnimationManager = new AnimationManager();
+	
+			protected var backgroundChanged:Boolean;
+			protected var _currentCursor:DisplayObject;
+			protected var embeddedDisplays:QuickList = new QuickList();
+			protected var renderContainer:RenderLayerContainer = new RenderLayerContainer();
+			protected var roomController:RoomController;
+			
+			
+			private var _background:Sprite;
+			private var _gameCastController:GameCastController;
+			private var _isBackgroundVisible:Boolean = true;
+			private var _uiLayer:Sprite;
+			
+			protected function init():void
+			{
+				addEventListener(MouseEvent.MOUSE_MOVE, updateCursorPosition, false, int.MAX_VALUE);
+				
+				renderContainer.addEventListener(MouseEvent.CLICK, renderContainerMouseHandler);
+				rawChildren.addChild(renderContainer);
+				
+				_uiLayer = new Sprite();
+				rawChildren.addChild(_uiLayer);
+				
+				// Create game cast controller.
+				_gameCastController = new GameCastController();
+				
+				roomController = new RoomController(this);
+				BindingUtils.bindProperty(roomController, "currentRoom", RoomManager.getInstance(), "currentRoom");
+			}
+			
+			////////////////////
+			// PUBLIC FUNCTIONS
+			////////////////////
+			
+			public function muteRoomMusicVolume():void
+			{
+				roomController.muteRoomSound();
+			}
+			
+			public function unMuteRoomMusicVolume():void
+			{
+				roomController.unMuteRoomSound();
+			}
+			
+			public function clear():void
+			{
+				renderContainer.removeAllLayers();
+				
+				try
+					{
+						var swf:Object = Object(background);
+						swf.destroy();
+					}
+					catch (e:Error)
+					{
+					   trace("WARNING Background SWF " + roomController.currentRoom.id + " has no destroy method " + e.message);
+					}
+				
+				background = null;
+			}
+			
+			public function addRenderLayer(index:uint, renderLayer:RenderLayer):void
+			{
+				renderContainer.insertLayer(index, renderLayer);
+			}
+			
+			public function getRenderLayer(index:uint):RenderLayer
+			{
+				return renderContainer.getLayer(index);
+			}
+			
+			public function getRenderLayerUnderPoint(x:Number, y:Number):RenderLayer
+			{
+				return renderContainer.getLayerUnderPoint(x, y);
+			}
+			
+			public function addItemDisplay(layer:uint, display:IRoomItemDisplay):void
+			{
+				if (display is EmbeddedRoomItemDisplay)
+				{
+					embeddedDisplays.push(display);
+					
+					var bgContainer:DisplayObjectContainer = background as DisplayObjectContainer;
+					
+					// Update the content of the embedded display with the associated background child.
+					if (bgContainer)
+					{
+						var embedded:EmbeddedRoomItemDisplay = EmbeddedRoomItemDisplay(display);
+						embedded.content = bgContainer.getChildByName(embedded.instanceName);
+					}
+				}
+				else
+				{
+					var renderLayer:RenderLayer = renderContainer.getLayer(layer);
+					
+					if (!renderLayer) throw new Error("No RenderLayer exists at 'index' " + layer + ".");
+					renderLayer.addItem(display.renderItem);
+				}
+			}
+			
+			public function removeItemDisplay(display:IRoomItemDisplay):void
+			{
+				if (display is EmbeddedRoomItemDisplay)
+				{
+					EmbeddedRoomItemDisplay(display).content = null;
+					embeddedDisplays.removeValue(display);
+				}
+				else
+				{
+					var renderLayer:RenderLayer = renderContainer.getLayerContaining(display.renderItem);
+					if (renderLayer) renderLayer.removeItem(display.renderItem);
+				}
+			}
+			
+			public function addPopUp(popUp:DisplayObject):void
+			{
+				dispatchEvent(new RoomPopUpEvent(RoomPopUpEvent.ADD_POPUP, popUp, true));
+			}
+			
+			public function removePopUp(popUp:DisplayObject):void
+			{
+				dispatchEvent(new RoomPopUpEvent(RoomPopUpEvent.REMOVE_POPUP, popUp, true));
+			}
+			
+			public function centerPopUp(popUp:DisplayObject):void
+			{
+				dispatchEvent(new RoomPopUpEvent(RoomPopUpEvent.CENTER_POPUP, popUp, true));
+			}
+			
+			public function addQuedPopUp(popUp:DisplayObject, transition:String = '', params:Object = null):void
+			{
+				// If a transition string was passed in,
+				// an animation will be used to show the pop up.
+				// Look at PopUpTransition for transition types.
+				// Transition strings are public constants of
+				// the PopUpTransition class.
+				//
+				// Params will be passed to the transition function.
+				// Look at the function for details on what params
+				// can be used.
+				PopUpTransition.DoPopUpTransition(popUp, transition, params);
+				
+				dispatchEvent(new RoomPopUpEvent(RoomPopUpEvent.ADD_QUED_POPUP, popUp, true));
+			}
+			
+			public function removeQuedPopUp(popUp:DisplayObject, transition:String = '', params:Object = null):void
+			{
+				// If a transition string was passed in,
+				// an animation will be used to remove the pop up.
+				// Look at PopUpTransition for transition types.
+				// Transition strings are public constants of
+				// the PopUpTransition class.
+				//
+				// Params will be passed to the transition function.
+				// Look at the function for details on what params
+				// can be used.
+				PopUpTransition.DoPopUpTransition(popUp, transition, params, onComplete);
+				
+				function onComplete():void
+				{
+					// Remove pop up.
+					dispatchEvent(new RoomPopUpEvent(RoomPopUpEvent.REMOVE_QUED_POPUP, popUp, true));
+				}
+			}
+			
+			public function setCursor(cursor:DisplayObject):void
+			{
+				// Make sure we're not trying to set the same cursor.
+				if (cursor == _currentCursor) return;
+				
+				// If cursor is null, show system cursor.
+				if (!cursor) Mouse.show();
+				
+				// If there is a current custom cursor, remove it.
+				if (_currentCursor)
+				{
+					rawChildren.removeChild(_currentCursor);
+				}
+				
+				// Set new cursor.
+				_currentCursor = cursor;
+				if (_currentCursor)
+				{
+					rawChildren.addChildAt(_currentCursor, rawChildren.getChildIndex(renderContainer) + 1);
+					updateCursorPosition();
+					Mouse.hide();
+				}
+			}
+			
+			public function getRoomController():RoomController
+			{
+				return roomController;
+			}
+			
+			////////////////////
+			// PROTECTED FUNCTIONS
+			////////////////////
+			
+			protected function addBackgroundListeners():void
+			{
+				_background.addEventListener(SdgSwfEvent.INIT_CONTROLLER, initController);
+				_background.addEventListener(SdgSwfEvent.SDG_SWF_ACTION, onSwfAction);
+				_background.addEventListener('abstract npc click', onAbstractNpcClick);
+				_background.addEventListener(SdgSwfEvent.SDG_SWF_BACKGROUND_ITEM, onBackgroundItemClick);
+			}
+			
+			protected function removeBackgroundListeners():void
+			{
+				_background.removeEventListener(SdgSwfEvent.INIT_CONTROLLER, initController);
+				_background.removeEventListener(SdgSwfEvent.SDG_SWF_ACTION, onSwfAction);
+				_background.removeEventListener('abstract npc click', onAbstractNpcClick);
+				_background.removeEventListener(SdgSwfEvent.SDG_SWF_BACKGROUND_ITEM, onBackgroundItemClick);
+			}
+			
+			override protected function commitProperties():void
+			{
+				super.commitProperties();
+				
+				if (backgroundChanged)
+				{
+					if (_background)
+					{
+						rawChildren.addChildAt(_background, rawChildren.getChildIndex(renderContainer));
+						
+						var bgContainer:DisplayObjectContainer = background as DisplayObjectContainer;
+					
+						if (bgContainer)
+						{
+							// Update the content of embedded displays with the associated background children.
+							for each (var embedded:EmbeddedRoomItemDisplay in embeddedDisplays)
+							{
+								embedded.content = bgContainer.getChildByName(embedded.instanceName);
+							}
+							
+							// Add MouseEvent listeners to support certain bg swfs that don't 
+							// automatically dispatch for some unknown reason.
+							setMouseEventForwarding(bgContainer, true);
+						}
+					}
+				
+					backgroundChanged = false;
+				}
+			}
+			
+			
+			////////////////////
+			// GET/SET METHODS
+			////////////////////
+			
+			public function get background():Sprite
+			{
+				return _background;
+			}
+			
+			public function set background(value:Sprite):void
+			{
+				if (_background && rawChildren.contains(_background))
+				{
+					removeBackgroundListeners();
+					rawChildren.removeChild(_background);
+					setMouseEventForwarding(_background, false);
+				}
+				
+				_background = value;
+				
+				if (_background != null)
+				{
+					// Set background visiblity.
+					_background.visible = _isBackgroundVisible;
+					
+					// Add background listiners.
+					addBackgroundListeners();
+					
+					// Attempt to call init on the background.
+					try
+					{
+						Object(_background).init();
+					}
+					catch (e:Error)
+					{
+						trace('Unable to call init() on background:\n' + e.message);
+					}
+				}
+				backgroundChanged = true;
+				invalidateProperties();
+			}
+			
+			override public function get enabled():Boolean
+			{
+				return super.enabled;
+			}
+			
+			override public function set enabled(value:Boolean):void
+			{
+				super.enabled = value;
+				
+				if (value)
+					renderContainer.startRendering();
+				else
+					renderContainer.stopRendering();
+			}
+			
+			public function set hideCustomCursor(value:Boolean):void
+			{
+				if (_currentCursor) _currentCursor.visible = !value;
+			}
+			
+			public function get gameCastController():GameCastController
+			{
+				return _gameCastController;
+			}
+			
+			public function get isBackgroundVisible():Boolean
+			{
+				return _isBackgroundVisible;
+			}
+			public function set isBackgroundVisible(value:Boolean):void
+			{
+				_isBackgroundVisible = value;
+				if (_background != null) _background.visible = _isBackgroundVisible;
+			}
+			
+			public function get uiLayer():Sprite
+			{
+				return _uiLayer;
+			}
+			
+			
+			////////////////////
+			// EVENT HANDLERS
+			////////////////////
+			
+			protected function updateCursorPosition(event:Event = null):void
+			{
+				if (_currentCursor)
+				{
+					_currentCursor.x = mouseX;
+					_currentCursor.y = mouseY;
+				}
+			}
+			
+			protected function setMouseEventForwarding(target:IEventDispatcher, addFlag:Boolean):void
+			{
+				var types:Array = [MouseEvent.CLICK, MouseEvent.MOUSE_DOWN, MouseEvent.MOUSE_UP, 
+								   MouseEvent.MOUSE_OVER, MouseEvent.MOUSE_OUT, MouseEvent.MOUSE_MOVE];
+				
+				if (addFlag)
+				{
+					for each (var type:String in types)
+					{
+						target.addEventListener(type, dispatch);
+					}
+				}
+				else
+				{
+					for each (type in types)
+					{
+						target.removeEventListener(type, dispatch);
+					}
+				}
+					
+				function dispatch(e:Event):void
+				{
+					dispatchEvent(e);
+				}
+			}
+			
+			protected function renderContainerMouseHandler(event:MouseEvent):void
+			{
+				if (event.target == renderContainer)
+				{
+					dispatchEvent(event);
+				}
+			}
+			
+			protected function initController(e:Event):void
+			{
+				roomController.initController(Object(e).data);
+			}
+			
+			protected function onSwfAction(e:Event):void
+			{
+				roomController.backgroundAction(Object(e).data);
+			}
+			
+			private function onAbstractNpcClick(e:Event):void
+			{
+				// Determine NPC id based on name of event target.
+				var id:String = DisplayObject(e.target).name;
+				var parts:Array = id.split('_', 2);
+				id = parts[1];
+				
+				// Disptach an NPC click event.
+				dispatchEvent(new NPCEvent(NPCEvent.NPC_CLICK, id, true));
+			}
+			
+			private function onBackgroundItemClick(e:Event):void
+			{
+				var itemId:String = DisplayObject(e.target).name;
+				
+				if (e.hasOwnProperty("data"))
+				{
+					InteractiveBgObjectHandler.processInteract(itemId,e["data"]);
+				}
+				else
+				{
+					InteractiveBgObjectHandler.processInteract(itemId);
+				}
+			}
+
+		]]>
+	</mx:Script>
+	
+	<!-- effects -->
+	<mx:Fade id="fadeIn" alphaTo="1" duration="500"/>
+	
+</mx:Canvas>

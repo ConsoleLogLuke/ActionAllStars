@@ -1,0 +1,311 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns="com.sdg.components.controls.*" xmlns:mx="http://www.adobe.com/2006/mxml"
+	width="200"
+	height="50"
+	x="10"
+	y="4"
+	backgroundAlpha="0"
+	borderThickness="0"
+	creationComplete="init()">
+	
+	<mx:Script>
+		<![CDATA[
+			import com.sdg.model.AvatarLevelStatus;
+			import com.sdg.model.Level;
+			import com.sdg.manager.LevelManager;
+			import com.sdg.manager.SoundManager;
+			import com.sdg.model.GameAssetId;
+			import com.sdg.util.AssetUtil;
+			import com.sdg.events.AvatarUpdateEvent;
+			import com.sdg.events.AvatarEvent;
+			import com.sdg.components.dialog.TransactionDialog;
+			import com.sdg.components.dialog.SaveYourGameDialog;
+			import com.sdg.utils.MainUtil;
+			import com.sdg.display.GradientFillStyle;
+			import com.sdg.display.FillStyle;
+			import com.sdg.display.BoxStyle;
+			import com.sdg.buttonstyle.ButtonSyle;
+			import com.sdg.buttonstyle.IButtonStyle;
+			import com.sdg.controls.BasicButton;
+			import com.sdg.model.ModelLocator;
+			import com.sdg.model.Avatar;
+			import com.sdg.net.QuickLoader;
+			import com.sdg.net.Environment;
+			
+			private const rankPointsMapping:Object = {1:1,2:4001,3:10000,4:19000,5:100000};
+			//private const rankPointsMapping:Object = {1:1,2:8000,3:40000,4:62000,5:181000};
+			
+			protected var _indicator:LevelIndicator;
+			protected var _rendered:Boolean = false;
+			protected var _levelName:String = "";
+			protected var _xp:int = 0;
+			protected var _xpGoal:int = 0;
+			
+			// State 
+			protected var _xpPercent:int = 0;
+			protected var _rankField:String = "";
+			protected var _points:String = "";
+			protected var _level:String = "";
+			protected var _showPointsStr:Boolean = false;
+			
+			private function init():void
+			{	
+				_indicator = new LevelIndicator();
+				rawChildren.addChild(DisplayObject(_indicator));
+				// Initialize LevelIndicator
+				_indicator.stars.gotoAndStop(0);
+				_indicator.xpfield.text = "";
+				_indicator.rankfield.text = "";
+				_indicator.xpbar.gotoAndStop(0);
+				_indicator.levelfield.text = "";
+				
+				// Init movies
+				_indicator.xpbar.pointgain.gotoAndStop(0);
+				_indicator.stars.star1.gotoAndStop(0);
+				_indicator.stars.star2.gotoAndStop(0);
+				_indicator.stars.star3.gotoAndStop(0);
+				_indicator.stars.star4.gotoAndStop(0);
+				_indicator.stars.star5.gotoAndStop(0);
+				
+				/* Add Listeners */
+				_indicator.xpbar.addEventListener(MouseEvent.ROLL_OVER,onRollOver);
+				
+				_indicator.stars.star1.addEventListener(MouseEvent.ROLL_OVER,onStar1RollOver);
+				_indicator.stars.star2.addEventListener(MouseEvent.ROLL_OVER,onStar2RollOver);
+				_indicator.stars.star3.addEventListener(MouseEvent.ROLL_OVER,onStar3RollOver);
+				_indicator.stars.star4.addEventListener(MouseEvent.ROLL_OVER,onStar4RollOver);
+				_indicator.stars.star5.addEventListener(MouseEvent.ROLL_OVER,onStar5RollOver);
+				_indicator.stars.star1.addEventListener(MouseEvent.ROLL_OUT,resetIndicator);
+				_indicator.stars.star2.addEventListener(MouseEvent.ROLL_OUT,resetIndicator);
+				_indicator.stars.star3.addEventListener(MouseEvent.ROLL_OUT,resetIndicator);
+				_indicator.stars.star4.addEventListener(MouseEvent.ROLL_OUT,resetIndicator);
+				_indicator.stars.star5.addEventListener(MouseEvent.ROLL_OUT,resetIndicator);
+			}
+			
+			////////////////////
+			// INSTANCE METHODS
+			////////////////////
+			
+			private function displayRealState():void
+			{
+				//setPoints(_points);
+				setRankField(_rankField);
+				setXPPercent(_xpPercent);
+				setLevelField(_level);
+			}
+			
+			private function displayRankState(rankNum:int):void
+			{
+				// Make sure level data is available.
+				if (!LevelManager.LevelDataAvailable) return;
+				
+				if (rankNum > 5) return;
+				if (rankNum < 1) return;
+				
+				var rankPoints:int = rankPointsMapping[rankNum.toString()];
+				
+				var levelStatus:AvatarLevelStatus = LevelManager.GetAvatarLevelStatusFromPoints(ModelLocator.getInstance().avatar,rankPoints);
+				if (!levelStatus)
+				{
+					return;
+				}
+				setRankField(levelStatus.levelName);
+				setLevelField(levelStatus.subLevelIndex.toString());
+				setXPPercent(100);
+			}
+			
+			private function makePointsString(showNumbers:Boolean):void
+			{
+				var levelStr:String = "";
+				levelStr = _xp+" / "+_xpGoal;
+				if (showNumbers)
+					setPoints(levelStr);
+				else
+					setPoints("");
+			}
+			
+			//////////////////////////
+			// SETTER METHODS
+			//////////////////////////
+			
+			//public function setLevelName(value:String):void
+			//{
+			//	_levelName = value;
+			//	setLevelField(_levelName);
+			//}
+			
+			// Not Public Anymore
+			//protected function setLevelField(value:String):void
+			//{	
+			//	_indicator.rankfield.text = value;
+			//	render();
+			//}
+			
+			public function get xpPercent():int
+			{
+				return _xpPercent;
+			}
+			public function set xpPercent(value:int):void
+			{
+				_xpPercent = value;
+				displayRealState();
+			}
+			
+			public function get points():String
+			{
+				return _points;
+			}
+			public function set points(value:String):void
+			{
+				_points = value;
+				displayRealState();
+			}
+
+			public function get rankField():String
+			{
+				return _rankField;
+			}
+			public function set rankField(value:String):void
+			{
+				_rankField = value;
+				displayRealState();
+			}
+			
+			public function get level():String
+			{
+				return _level;
+			}
+			public function set level(value:String):void
+			{
+				_level = value;
+				displayRealState();
+			}
+			
+			public function setRank(value:uint):void
+			{
+				if (value > 0)
+					_indicator.stars.star1.gotoAndStop(2);
+				else
+					_indicator.stars.star1.gotoAndStop(1);
+	
+				if (value > 1)
+					_indicator.stars.star2.gotoAndStop(2);
+				else
+					_indicator.stars.star2.gotoAndStop(1);
+				//turfstars.star2.starbody.gotoAndPlay(Math.round(Math.random()*14));
+					
+				if (value > 2)
+					_indicator.stars.star3.gotoAndStop(2);
+				else
+					_indicator.stars.star3.gotoAndStop(1);
+				//turfstars.star3.starbody.gotoAndPlay(Math.round(Math.random()*14));
+						
+				if (value > 3)
+					_indicator.stars.star4.gotoAndStop(2);
+				else
+					_indicator.stars.star4.gotoAndStop(1);
+				//turfstars.star4.starbody.gotoAndPlay(Math.round(Math.random()*14));
+					
+				if (value > 4)
+					_indicator.stars.star5.gotoAndStop(2);
+				else
+					_indicator.stars.star5.gotoAndStop(1);
+				//turfstars.star5.starbody.gotoAndPlay(Math.round(Math.random()*14));
+			}
+			
+			public function setXP(value:uint):void
+			{
+				_xp = value;
+			}
+			
+			public function setXPGoal(value:uint):void
+			{
+				_xpGoal = value;
+			}
+			
+			////////////////////
+			// PRIVATE SETTERS
+			////////////////////
+			
+			private function setPoints(value:String):void
+			{
+				_indicator.xpfield.text = value;
+			}
+			
+			private function setRankField(value:String):void
+			{
+				_indicator.rankfield.text = value;
+			}
+			
+			private function setXPPercent(value:int):void
+			{
+				_indicator.xpbar.pointgain.gotoAndPlay("start");
+				_indicator.xpbar.gotoAndStop(value);
+			}
+			
+			private function setLevelField(value:String):void
+			{
+				_indicator.levelfield.text = value;
+			}
+			
+			/////////////////////////////////
+			// LISTENER-RELATED FUNCTIONS
+			/////////////////////////////////
+			
+
+			
+			////////////////////
+			// EVENT HANDLERS
+			////////////////////
+			
+			private function resetIndicator(e:Event):void
+			{
+				displayRealState();
+			}
+			
+			private function onRollOver(e:Event):void
+			{
+				removeEventListener(MouseEvent.ROLL_OVER,onRollOver);
+				addEventListener(MouseEvent.ROLL_OUT,onRollOut);
+				
+				makePointsString(true);
+			}
+			
+			private function onRollOut(e:Event):void
+			{
+				removeEventListener(MouseEvent.ROLL_OUT,onRollOut);
+				addEventListener(MouseEvent.ROLL_OVER,onRollOver);
+				
+				makePointsString(false);
+			}
+			
+			private function onStarsRollOver(e:MouseEvent):void
+			{
+				var mv:MovieClip = MovieClip(e.currentTarget);
+			}
+			
+			private function onStar1RollOver(e:Event):void
+			{
+				displayRankState(1);	
+			}
+			private function onStar2RollOver(e:Event):void
+			{
+				displayRankState(2);	
+			}
+			private function onStar3RollOver(e:Event):void
+			{
+				displayRankState(3);	
+			}
+			private function onStar4RollOver(e:Event):void
+			{
+				displayRankState(4);	
+			}
+			private function onStar5RollOver(e:Event):void
+			{
+				displayRankState(5);	
+			}
+			
+		]]>
+	</mx:Script>
+	
+</mx:Canvas>

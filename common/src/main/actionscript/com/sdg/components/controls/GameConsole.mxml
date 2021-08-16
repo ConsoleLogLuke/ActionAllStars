@@ -1,0 +1,874 @@
+<?xml version="1.0" encoding="utf-8"?>
+<BoxContainer xmlns="com.sdg.components.controls.*" xmlns:mx="http://www.adobe.com/2006/mxml"
+	width="925"
+	height="70"
+	backgroundAlpha="0"
+	borderThickness="0"
+	creationComplete="init()"
+	horizontalScrollPolicy="off"
+	verticalScrollPolicy="off">
+	
+	<mx:Script>
+		<![CDATA[
+			import fl.motion.AdjustColor;
+			import com.sdg.model.Reward;
+			import com.sdg.messageBoard.MessageBoardDialog;
+			import com.sdg.utils.VersionUtil;
+			import org.pranaframework.utils.StringUtils;
+			import com.sdg.store.StoreConstants;
+			import com.sdg.events.PrivateRoomEditEvent;
+			import com.sdg.control.AASModuleLoader;
+			import com.sdg.events.RoomManagerEvent;
+			import com.sdg.utils.Constants;
+			import mx.events.CloseEvent;
+			import mx.collections.ArrayCollection;
+			import com.sdg.events.InventoryListEvent;
+			import com.sdg.model.ItemType;
+			import com.sdg.components.dialog.InteractiveSignDialog;
+			import com.sdg.events.GameResultEvent;
+			import com.sdg.model.MembershipStatus;
+			import com.sdg.components.dialog.TeamSelectDialog;
+			import mx.controls.Image;
+			import com.sdg.view.LayeredImage;
+			import com.sdg.events.AvatarUpdateEvent;
+			import com.sdg.model.BadgeLevel;
+			import com.sdg.model.GameAssetId;
+			import com.sdg.util.AssetUtil;
+			import com.sdg.ui.UITriviaResult;
+			import com.sdg.model.Server;
+			import com.sdg.control.PDAController;
+			import com.sdg.utils.PreviewUtil;
+			import com.sdg.events.HudEvent;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			import com.sdg.events.RoomItemActionEvent;
+			import com.sdg.net.socket.methods.SocketRoomMethods;
+			import com.sdg.model.AvatarLevelStatus;
+			import com.sdg.model.Avatar;
+			import com.sdg.manager.LevelManager;
+			import com.sdg.manager.BadgeManager;
+			import com.sdg.components.dialog.EmoteDialog;
+			import com.sdg.components.dialog.ScriptedChat;
+			import com.sdg.components.dialog.SaveYourGameDialog;
+			import com.sdg.utils.MainUtil;
+			import com.sdg.control.BuddyManager;
+			import com.sdg.model.ModelLocator;
+			import com.sdg.events.RoomNavigateEvent;
+			import com.sdg.components.dialog.helpers.MainDialogHelper;
+			import mx.core.Application;
+			import com.sdg.control.room.RoomManager;
+			import com.sdg.events.SocketEvent;
+			import com.sdg.net.socket.SocketClient;
+			import com.sdg.net.Environment;
+			import mx.utils.StringUtil;
+			import com.sdg.logging.LoggingUtil;
+			
+			public static const ASN_BUTTON_ID:String = 'asnButton';
+			public static const PET_BUTTON_ID:String = 'petActionButton';
+			public static const HOME_TURF_BUTTON_ID:String = 'homeTurfButton';
+			public static const BUDDIES_BUTTON_ID:String = 'buddiesButton';
+			public static const CAN_CHAT_BUTTON_ID:String = 'scriptedChatButton';
+			public static const EMOTE_BUTTON_ID:String = 'emoteButton';
+			public static const AWARDS_BUTTON_ID:String = 'badgesButton';
+			public static const FULL_SCREEN_BUTTON_ID:String = 'fullScreenButton';
+			public static const AUDIO_BUTTON_ID:String = 'audioButton';
+			
+			private static var _GREY_FILTER:ColorMatrixFilter;
+			private static var _ALLOW_FULL_SCREEN:Boolean;
+			
+			public var onConsoleReady:Function;
+			
+			protected var _socketClient:SocketClient;
+			protected var _console:Sprite;
+			protected var _consoleAbstract:Object;
+			protected var _scriptedChat:ScriptedChat;
+			protected var _chatLogPanel:ChatLogPanel;
+			//protected var _debugPanel:LevelUpDialogDebugPanel;
+			protected var _userAvatar:Avatar;
+			protected var _chatInput:TextField;
+			protected var _invalidTextFormat:TextFormat;
+			protected var _validTextFormat:TextFormat;
+			protected var _chatMessage:String;
+			
+			protected var _chatEnabled:Boolean; //Current chat status
+			protected var _initialText:Boolean = true; //Boolean regarding _chatInput status
+			protected var _openChatServer:Boolean; //True means Open Chat is the server type
+			
+			protected var _pda:PDAController;
+			
+			private var _disabledButtons:Array;
+			
+			private function init():void
+			{
+				// Default values.
+				_socketClient = SocketClient.getInstance();
+				_chatMessage = '';
+				_userAvatar = ModelLocator.getInstance().avatar;
+				_invalidTextFormat = new TextFormat('EuroStyle', 14, 0xff0000, true);
+				_validTextFormat = new TextFormat('EuroStyle', 14, 0xffffff, true);
+				_chatEnabled = true;
+				_openChatServer = true;
+				_disabledButtons = [];
+				_ALLOW_FULL_SCREEN = true;
+				
+				// Grey filter.
+				var adjustColor:AdjustColor = new AdjustColor();
+				adjustColor.saturation = -100;
+				adjustColor.contrast = 0;
+				adjustColor.brightness = 0;
+				adjustColor.hue = 0;
+				_GREY_FILTER = new ColorMatrixFilter(adjustColor.CalculateFinalFlatArray());
+				
+				// Create chat log panel.
+				_chatLogPanel = new ChatLogPanel();
+				_chatLogPanel.x = 839;
+				_chatLogPanel.y = 0;
+				_chatLogPanel.dragArea = new Rectangle(0, -600, 925, 600 + _chatLogPanel.height + _chatLogPanel.y);
+				_chatLogPanel.saveAnchorPosition();
+				/*
+				_debugPanel = new LevelUpDialogDebugPanel();
+				_debugPanel.x = 575;
+				_debugPanel.y = -600;
+				rawChildren.addChild(_debugPanel);
+				*/
+				// Create chat input.
+				_chatInput = new TextField();
+				_chatInput.defaultTextFormat = _validTextFormat;
+				_chatInput.embedFonts = true;
+				_chatInput.type = TextFieldType.INPUT;
+				_chatInput.multiline = false;
+				_chatInput.restrict = "a-zA-Z0-9' !?,";
+				_chatInput.maxChars = 45;
+				rawChildren.addChild(_chatInput);
+				
+				
+				// Add pda button.
+				//var pdaButton:Sprite = PDAController.getInstance().button;
+				//var pdaButtonWidth:Number = 70;
+				_pda = PDAController.getInstance();
+				
+				// Load the console module.
+				var maxTry:uint = 4;
+				var tries:uint = 0;
+				
+				var url:String = AssetUtil.GetGameAssetUrl(GameAssetId.WORLD, 'GameConsole.swf'); 
+				//var url:String = "GameConsole.swf";
+				
+				var request:URLRequest = new URLRequest(url);
+				var loader:Loader = new Loader();
+				loader.contentLoaderInfo.addEventListener(Event.COMPLETE, onComplete);
+				loader.contentLoaderInfo.addEventListener(IOErrorEvent.IO_ERROR, onError);
+				loader.load(request);
+				
+				// Listen for hud events.
+				CairngormEventDispatcher.getInstance().addEventListener(HudEvent.HUD_EVENT, onHudEvent);
+				
+				function onError(e:IOErrorEvent):void
+				{
+					if (tries++ < maxTry)
+					{
+						loader.load(request);
+					}
+					else
+					{
+						// Remove event listeners.
+						loader.contentLoaderInfo.removeEventListener(Event.COMPLETE, onComplete);
+						loader.contentLoaderInfo.removeEventListener(IOErrorEvent.IO_ERROR, onError);
+					}
+				}
+				
+				function onComplete(e:Event):void
+				{
+					// Remove event listeners.
+					loader.contentLoaderInfo.removeEventListener(Event.COMPLETE, onComplete);
+					loader.contentLoaderInfo.removeEventListener(IOErrorEvent.IO_ERROR, onError);
+					
+					// Add the console module to the display.
+					_console = loader.content as Sprite;
+					_consoleAbstract = _console;
+					rawChildren.addChildAt(_console, 0);
+					
+					// Add the chat log panel below.
+					rawChildren.addChildAt(_chatLogPanel, 0);
+					
+					// Add pda button to console.
+					//pdaButton.x = _console.width - pdaButtonWidth;
+					//pdaButton.y = -18;
+					//_console.addChild(pdaButton);
+					
+					// Position chat input.
+					//var inputAreaObject:DisplayObject = _consoleAbstract.chatInputArea as DisplayObject;
+					//var inputArea:Rectangle = inputAreaObject.getBounds(_console.parent);
+					var inputArea:Rectangle = new Rectangle(299,39,327,29);
+					_chatInput.width = inputArea.width;
+					_chatInput.height = _chatInput.defaultTextFormat.size + 4;
+					_chatInput.x = inputArea.x;
+					_chatInput.y = inputArea.y + (inputArea.height / 2 - _chatInput.height / 2);
+					
+					// Set Chat Status in Game Console while setting chatInputVisible variable
+					//chatInputVisible = ;
+					if (Server.getCurrent().chatMode == Server.ULTRA_SAFE_CHAT)
+					{
+						_chatEnabled = false;
+						_openChatServer = false;
+						_consoleAbstract.setSafeChat(true);
+						rawChildren.removeChild(_chatInput);
+					}
+					
+					//Set Initial Chat
+					_chatInput.text = "Click Here to Chat";
+					
+					// Set Initial Token Count
+					setTokens(_userAvatar.currency);
+					
+					// Add console listeners.
+					//_console.addEventListener('asn click', onAsnClick);
+					_console.addEventListener('world map click',onWorldMapClick);
+					_console.addEventListener('buddies click', onBuddiesClick);
+					initPetButton();
+					_console.addEventListener('petaction click',onPetActionClick);
+					_console.addEventListener('badgeaction click',onBadgeActionClick);
+					_console.addEventListener('chat log click',onChatLogClick);
+					_console.addEventListener('send chat', onSendChat);
+					_console.addEventListener('scripted chat click', onScriptedChatClick);
+					_console.addEventListener('music click',onMusicClick);
+					_console.addEventListener('audio click', onAudioClick);
+					_console.addEventListener('full screen click', onFullScreenClick);
+					_console.addEventListener('home turf click', onHomeTurfClick);
+					_console.addEventListener('turf builder click',onTurfBuilderClick);
+					_console.addEventListener('shop click',onShopClick);
+					_console.addEventListener('PDA click',onPDAClick);
+					//_console.addEventListener('emote click', onEmoteClick);
+					//_console.addEventListener('badges click', onBadgesClick);
+					
+					// Listen for chat input.
+					_chatInput.addEventListener(KeyboardEvent.KEY_DOWN, onChatKeyDown);
+					_chatInput.addEventListener(TextEvent.TEXT_INPUT, onChatTextInput);
+					_chatInput.addEventListener(FocusEvent.FOCUS_IN, onChatTextFocus);
+					
+					// Set Pets Button to proper icon - RETIRED
+					//_consoleAbstract.showPetsButton = Constants.PETS_ENABLED;
+					
+					// Turn Off Full Screen Button if version is 9.x
+					if (VersionUtil.getVersion() < 10)
+					{
+						_consoleAbstract.hideFullScreenButton();
+					}
+					
+					// Listen for full screen events.
+					Application.application.stage.addEventListener(FullScreenEvent.FULL_SCREEN, onFullScreen);
+					
+					if (onConsoleReady != null) onConsoleReady();
+				}
+			}
+			
+			////////////////////
+			// PUBLIC METHODS
+			////////////////////
+			
+			public function startButtonHighlight(buttonId:String):void
+			{
+				if (_consoleAbstract.startButtonHighlight != null) _consoleAbstract.startButtonHighlight(buttonId);
+			}
+			
+			public function stopButtonHighlight(buttonId:String):void
+			{
+				if (_consoleAbstract.stopButtonHighlight != null) _consoleAbstract.stopButtonHighlight(buttonId);
+			}
+			
+			public function setConsoleTurfButton(iconName:String):void
+			{
+				if (_consoleAbstract)
+					_consoleAbstract.setTurfIcon(iconName);
+			}
+			
+			public function setTokens(value:uint):void
+			{
+				if (_consoleAbstract)
+					_consoleAbstract.setAvatarTokens(value.toString());
+				
+			}
+			
+			public function setButtonEnabled(buttonInstanceName:String, isEnabled:Boolean):void
+			{
+				var buttonInstance:SimpleButton = _consoleAbstract[buttonInstanceName] as SimpleButton;
+				if (!buttonInstance) return;
+				// If trying to disable, make sure this button isn't already disabled.
+				// If trying to enable, make sure not already enabled.
+				if (isEnabled == (_disabledButtons.indexOf(buttonInstance) < 0)) return;
+				buttonInstance.mouseEnabled = isEnabled;
+				buttonInstance.filters = (isEnabled) ? [] : [_GREY_FILTER];
+				
+				// Keep track of disabled buttons in an array.
+				if (isEnabled)
+				{
+					_disabledButtons.splice(_disabledButtons.indexOf(buttonInstance), 1);
+				}
+				else
+				{
+					_disabledButtons.push(buttonInstance);
+				}
+			}
+			
+			public function resetDisabledButtons():void
+			{
+				var i:int = 0;
+				var len:int = _disabledButtons.length;
+				for (i; i < len; i++)
+				{
+					var buttonInstance:SimpleButton = _disabledButtons[i];
+					if (!buttonInstance) continue;
+					buttonInstance.mouseEnabled = true;
+					buttonInstance.filters = [];
+				}
+				
+				_disabledButtons = [];
+			}
+			
+			////////////////////
+			// PROTECTED METHODS
+			////////////////////
+			
+			protected function validateChatText(sendIfPassesValidation:Boolean = false):void
+			{
+				// Make sure chat is enabled.
+				if (!_chatEnabled) return;
+				
+				// Make sure the user is registered.
+				var userAvatar:Avatar = ModelLocator.getInstance().avatar;
+				if (userAvatar.membershipStatus == MembershipStatus.GUEST)
+				{
+					MainUtil.showDialog(SaveYourGameDialog);
+					return;
+				}
+				
+				// Make sure the user is not in 'warned' mode.
+				if (_userAvatar.warned)
+				{
+					ModeratorAlertChrome.show("You are limited to scripted chat until your warning period expires.", "Warning Mode");
+					//SdgAlert.show("You are limited to scripted chat until your warning period expires.", "Warning Mode");
+					return;
+				}
+				
+				// Determine chat text
+				if (_chatInput.text == "Click Here to Chat")
+					_chatInput.text = "";
+				var chatMessage:String = _chatInput.text;
+				_chatMessage = StringUtil.trim(chatMessage);
+				
+				// Stop Here If Message is empty string
+				if (chatMessage == '')
+				{
+					return;
+				}
+				
+				_chatInput.setTextFormat(_validTextFormat);
+				
+				// Listen to socket client for plugin events.
+				_socketClient.addEventListener(SocketEvent.PLUGIN_EVENT, onPluginEvent);
+				
+				// Send the socket event.
+				if (_chatMessage != null && _chatMessage != "") _socketClient.sendPluginMessage("chat_validation", "validate", { chat:_chatMessage });
+				
+				function onPluginEvent(e:SocketEvent):void
+				{
+					// Make sure the event is for chat validation.
+					if (e.params.pluginName == "chat_validation" && e.params.action == "chat_validation")
+					{
+						// Remove the event listener.
+						_socketClient.removeEventListener(SocketEvent.PLUGIN_EVENT, onPluginEvent);
+						
+						// Handle validation response.
+						 handleChatValidation(e);
+					}
+				}
+				
+				function handleChatValidation(e:SocketEvent):void
+				{
+					// Make sure we have a validation message.
+					var validationMessage:String = e.params.message as String;
+					if (validationMessage == null || _chatMessage == null) return;
+					
+					if (validationMessage == "1")
+					{
+						// If a '1' was sent then this is a valid message.
+						
+						// Check if we are supposed to send this message.
+						if (sendIfPassesValidation == true)
+						{
+							// Send it.
+							RoomManager.getInstance().sendChat(_chatMessage);
+							
+							// Set the chat text color back to white.
+							_chatInput.text = '';
+							_chatInput.defaultTextFormat = _validTextFormat;
+						}
+					}
+					else	
+					{
+						// This message is not validated.
+						
+						// Determine bad words and highlight them in red.
+						var badWords:Array = validationMessage.split(",");
+						var i:uint = 0;
+						var len:uint = badWords.length;
+						var validatedText:String = _chatMessage;
+						_chatInput.text = validatedText;
+						for (i; i < len; i += 2)
+						{
+							// Determine bad word and it's start index.
+							var badWord:String = badWords[i];
+							var startIndex:uint = badWords[i + 1];
+							
+							_chatInput.setTextFormat(_invalidTextFormat, startIndex, startIndex + badWord.length);
+						}
+						
+						_chatInput.appendText(' ');
+						_chatInput.setSelection(_chatInput.text.length, _chatInput.text.length);
+						_chatInput.setTextFormat(_validTextFormat, _chatInput.text.length - 1);
+						
+						_consoleAbstract.playWordWarning();
+						//var alert:SdgAlertChrome = SdgAlertChrome.show("Sorry we don't know that word! Try again.", "Time Out");
+			        	//alert.setFocus();
+				 	}
+				}
+			}
+			
+			////////////////////
+			// GET/SET METHODS
+			////////////////////
+			
+			public function set audioEnabled(value:Boolean):void
+			{
+				//if (_consoleAbstract) _consoleAbstract.audioEnabled = value;
+			}
+			
+			public function set chatInputVisible(value:Boolean):void
+			{
+				//if (_consoleAbstract) _consoleAbstract.chatInputVisible = value;
+				//_chatInput.visible = value;
+			}
+			
+			public static function get allowFullScreen():Boolean
+			{
+				return _ALLOW_FULL_SCREEN;
+			}
+			public static function set allowFullScreen(value:Boolean):void
+			{
+				_ALLOW_FULL_SCREEN = value;
+				
+				// If full screen is not allowed, make sure we are not in full screen.
+				var stage:Stage = Application.application.stage;
+				if (!_ALLOW_FULL_SCREEN && stage.displayState == StageDisplayState.FULL_SCREEN)
+				{
+					stage.displayState = StageDisplayState.NORMAL;
+					stage.scaleMode = StageScaleMode.NO_BORDER;
+					stage.align = StageAlign.TOP_LEFT;
+				}
+			}
+			
+			////////////////////
+			// EVENT HANDLERS
+			////////////////////
+			
+			private function onSendChat(e:Event):void
+			{
+				validateChatText(true);
+			}
+			
+			private function onAsnClick(e:Event):void
+			{
+				// Show Action Sports News.
+				MainDialogHelper.showDialog({news:true});
+				
+				LoggingUtil.sendClickLogging(LoggingUtil.HUD_ASN_NEWSPAPER_BUTTON_CLICK);
+			}
+			
+			private function onHomeTurfClick(e:Event):void
+			{				
+				LoggingUtil.sendClickLogging(LoggingUtil.HUD_HOME_TURF_BUTTON_CLICK);
+				
+				// Make sure the user is registered.
+				var userAvatar:Avatar = ModelLocator.getInstance().avatar;
+				if (userAvatar.membershipStatus == MembershipStatus.GUEST)
+				{
+					MainUtil.showDialog(SaveYourGameDialog);
+					return;
+				}
+				
+				// Go to user's home turf.
+				dispatchEvent(new RoomNavigateEvent(RoomNavigateEvent.ENTER_ROOM, _userAvatar.privateRoom));
+			}
+			
+			private function onTurfBuilderClick(e:Event):void
+			{
+				/*
+				// Make sure the user is registered.
+				var userAvatar:Avatar = ModelLocator.getInstance().avatar;
+				if (userAvatar.membershipStatus == MembershipStatus.GUEST)
+				{
+					MainUtil.showDialog(SaveYourGameDialog);
+					return;
+				}
+				*/
+				
+				dispatchEvent(new PrivateRoomEditEvent(PrivateRoomEditEvent.EDIT_PRIVATE_ROOM));
+				
+				LoggingUtil.sendClickLogging(LoggingUtil.HUD_TURF_BUILDER_BUTTON_CLICK);
+			}
+			
+			private function onBuddiesClick(e:Event):void
+			{
+				LoggingUtil.sendClickLogging(LoggingUtil.HUD_FRIENDS_BUTTON_CLICK);
+				
+				// Make sure the user is registered.
+				var userAvatar:Avatar = ModelLocator.getInstance().avatar;
+				if (userAvatar.membershipStatus == MembershipStatus.GUEST)
+				{
+					MainUtil.showDialog(SaveYourGameDialog);
+					return;
+				}
+				
+				PDAController.getInstance().showPDA();
+				PDAController.getInstance().showFriendsList();
+			}
+			private function onScriptedChatClick(e:Event):void
+			{
+				LoggingUtil.sendClickLogging(LoggingUtil.CONSOLE_SCRIPTED_CHAT_BUTTON);
+				
+				// Make sure the user is registered.
+				var userAvatar:Avatar = ModelLocator.getInstance().avatar;
+				if (userAvatar.membershipStatus == MembershipStatus.GUEST)
+				{
+					MainUtil.showDialog(SaveYourGameDialog);
+					return;
+				}
+				
+				// Show scripted chat.
+				if (!_scriptedChat)
+				{
+					// Show scripted chat for the first time.
+					_scriptedChat = MainUtil.showDialog(ScriptedChat, null, false, false) as ScriptedChat;
+				}
+				else
+				{
+					// Re-show scripted chat.
+					_scriptedChat.reshow();
+				}
+			}
+			
+			// We need to load in the pets before they hit the button
+			private function initPetButton():void
+			{
+				// Load the pets now just as a test... Really this should load with the avatar.
+				var userAvatar:Avatar = ModelLocator.getInstance().avatar;
+				// This event is picked up by the avatar class
+				CairngormEventDispatcher.getInstance().dispatchEvent(new InventoryListEvent(userAvatar.avatarId, ItemType.PETS));
+			}
+			
+			private function onPetActionClick(e:Event):void
+			{
+				// Catch-All Logging for button press
+				LoggingUtil.sendClickLogging(LoggingUtil.HUD_PETS_BUTTON_CLICK);
+				
+				// case 1: if they are a guest show the registration
+				var userAvatar:Avatar = ModelLocator.getInstance().avatar;
+				if (userAvatar.membershipStatus == MembershipStatus.GUEST)
+				{
+					LoggingUtil.sendClickLogging(LoggingUtil.PET_BUTTON_REG);
+					MainUtil.showDialog(SaveYourGameDialog);
+					return;
+				}
+				//case 2: if they are a free member show the MVP upsell. Needs custom upsell, and logging
+				if (userAvatar.membershipStatus != MembershipStatus.PREMIUM)
+				{
+					trace("Pet click Case2: if they are a free member show the MVP upsell.");
+					
+					LoggingUtil.sendClickLogging(LoggingUtil.MVP_UPSELL_VIEW_PET_BUTTON_ON_HUD);
+					CustomMVPAlert.show(Environment.getApplicationUrl() + "/test/gameSwf/gameId/82/gameFile/mvp_upsell_13.swf",
+											LoggingUtil.MVP_UPSELL_CLICK_PET_BUTTON_ON_HUD, onMVPClose);
+							
+					
+					function onMVPClose(event:CloseEvent):void
+					{
+						var identifier:int = event.detail;
+						
+						if (identifier == LoggingUtil.MVP_UPSELL_CLICK_PET_BUTTON_ON_HUD)
+							MainUtil.goToMVP(identifier);
+					}
+					
+					return;
+				}
+				// List of pets should have already been retrieved on init if thats where the leashed property is.
+				// If the pets haven't been loaded yet then this is aproblem
+				// If we use a system where the pets aren't all loaded yet this needs to be moved to a function that waits for that.
+				
+				// case 3: if they are an MVP but don't own a pet explain how to get a pet.
+				if (userAvatar.membershipStatus == MembershipStatus.PREMIUM && userAvatar.getInventoryListById(ItemType.PETS).length == 0)
+				{
+					trace("Pet click Case3: if they are an MVP but don't own a pet explain how to get a pet.");
+					LoggingUtil.sendClickLogging(LoggingUtil.PET_BUTTON_BUY_PET);
+					var alert:SdgAlertChrome =  SdgAlertChrome.show("Pet Shop NOW OPEN!","Adopt a Pet!",onClose, null, true, false);
+					alert.addButton("Close", 1);
+					alert.addButton("Go There", 2);
+					function onClose(event:CloseEvent):void
+					{
+						if (event.detail == 2)
+						{
+							// Teleport to Pet shop room.
+							CairngormEventDispatcher.getInstance().dispatchEvent(new RoomNavigateEvent(RoomNavigateEvent.ENTER_ROOM, Constants.ROOM_ID_PET_SHOP));
+						}
+					}
+					return;
+				}
+				//case 4: if they are an MVP own a pet, but don't have it leashed, explain how to go back to home turf
+				else if (!userAvatar.isPetLeashed())
+				{
+					LoggingUtil.sendClickLogging(LoggingUtil.PET_BUTTON_IN_TURF);
+					trace("Pet click Case4: if they are an MVP own a pet, but don't have it leashed, explain how to go back to home turf.");
+					SdgAlertChrome.show("Click on your pet to play or put them on a leash and take them around town.","Your pet is at home!");
+					return;
+				}
+				//case 5: if they are an mvp and have a pet and that pet is leashed, show the pet action dialog
+				else
+				{
+					// Success, show the emotes dialog now for the pet.
+					trace("Pet click Case5: if they are an mvp and have a pet and that pet is leashed, show the pet action dialog.");
+					//var showAtPoint:Point = _consoleAbstract.localToGlobal(new Point(_consoleAbstract.petActionButton.x + _consoleAbstract.petActionButton.width/2, _consoleAbstract.petActionButton.y));
+					//MainUtil.showDialog(PetActionDialog, {startPoint:showAtPoint, columns:4,fromHudClick:true}, false, false);
+					//Picked up by RoomUIController to show the pet menu over the actual leashed pet.
+					this.dispatchEvent(new Event('show pet menu'));
+					return;
+				}
+			}
+			private function onEmoteClick(e:Event):void
+			{
+				// Make sure the user is registered.
+				var userAvatar:Avatar = ModelLocator.getInstance().avatar;
+				if (userAvatar.membershipStatus == MembershipStatus.GUEST)
+				{
+					MainUtil.showDialog(SaveYourGameDialog);
+					return;
+				}
+				
+				// Show the emote dialog.
+				MainUtil.showDialog(EmoteDialog, {button:_consoleAbstract.emoteButton, columns:4, vendorId:0}, false, false);
+				LoggingUtil.sendClickLogging(LoggingUtil.CONSOLE_EMOTES_BUTTON);
+			}
+			private function onBadgeActionClick(e:Event):void
+			{
+				LoggingUtil.sendClickLogging(LoggingUtil.HUD_BADGE_BUTTON_CLICK);
+				
+				// Make sure the user is registered.
+				var userAvatar:Avatar = ModelLocator.getInstance().avatar;
+				if (userAvatar.membershipStatus == MembershipStatus.GUEST)
+				{
+					MainUtil.showDialog(SaveYourGameDialog);
+					return;
+				}
+				
+				PDAController.getInstance().showPDA();
+				PDAController.getInstance().showBadgeList();
+			}
+			private function onFullScreenClick(e:Event):void
+			{
+				LoggingUtil.sendClickLogging(LoggingUtil.HUD_FULL_SCREEN_BUTTON_CLICK);
+				
+				// Make sure the user is registered.
+				var userAvatar:Avatar = ModelLocator.getInstance().avatar;
+				if (userAvatar.membershipStatus == MembershipStatus.GUEST)
+				{
+					MainUtil.showDialog(SaveYourGameDialog);
+					return;
+				}
+
+				// Make sure we currently allow full screen.
+				if (!_ALLOW_FULL_SCREEN)
+				{
+					// Don't allow full screen.
+					// Message user.
+					SdgAlertChrome.show('Full screen is currently disabled.', 'Time Out');
+					return;
+				}
+				
+				// Toggle full screen.
+				var stage:Stage = Application.application.stage;
+				stage.displayState = (stage.displayState == StageDisplayState.NORMAL) ? StageDisplayState.FULL_SCREEN : StageDisplayState.NORMAL;
+				stage.scaleMode = (stage.displayState == StageDisplayState.NORMAL) ? StageScaleMode.NO_BORDER : StageScaleMode.SHOW_ALL;
+				stage.align = (stage.displayState == StageDisplayState.NORMAL) ? StageAlign.TOP_LEFT : StageAlign.TOP;
+			}
+			private function onAudioClick(e:Event):void
+			{
+				// Toggle audio.
+				var isOn:Boolean = !ModelLocator.getInstance().audio.getAudio();
+				audioEnabled = isOn;
+				ModelLocator.getInstance().audio.setAudio(isOn);
+				
+				LoggingUtil.sendClickLogging(LoggingUtil.HUD_SFX_BUTTON_CLICK);
+			}
+			
+			private function onHudEvent(e:HudEvent):void
+			{
+				if (e.eventType == HudEvent.CHAT_MESSAGE)
+				{
+					// Log the chat.
+					var params:Object = e.params;
+					_chatLogPanel.logChat(params.avatar, params.message);
+				}
+				else if (e.eventType == HudEvent.ROOM_CHANGE)
+				{
+					// Clear the chat log.
+					_chatLogPanel.clear();
+				}
+			}
+			
+			private function onChatTextFocus(e:FocusEvent):void
+			{
+				// If initial text, then clear
+				if (_initialText)
+				{
+					_initialText = false;
+					_chatInput.text = '';
+				}
+			}
+			
+			private function onChatKeyDown(e:KeyboardEvent):void
+			{
+				var keyCode:uint = e.keyCode;
+				
+				// on key input make the text white again
+				_chatInput.setTextFormat(_validTextFormat);
+				
+				if (keyCode == 13)
+				{
+					// Enter was pressed.
+					// Validate and send the chat text.
+					validateChatText(true);
+				}
+			}
+			
+			private function onChatTextInput(event:TextEvent):void
+			{
+				// if the letter is non-alphanumberic and is not ['!?, ], filter it out
+				//if (event.text.search("[a-zA-Z0-9'!?, ]") == -1)
+				//	event.preventDefault();
+				// if it is a space
+				// caretIndex - 1 for normal double spaces
+				// caretIndex for editing text
+				if (event.text.search(" ") != -1)
+				{
+					if (_chatInput.text == null || _chatInput.text.charAt(_chatInput.caretIndex - 1) == " " || _chatInput.text.charAt(_chatInput.caretIndex) == " ")
+						event.preventDefault();
+				}
+				else if (event.text.search("'") != -1)
+				{
+					if (_chatInput.text == null || _chatInput.text.charAt(_chatInput.caretIndex - 1) == "'" || _chatInput.text.charAt(_chatInput.caretIndex) == "'")
+						event.preventDefault();
+				}
+				else if (event.text.search("!") != -1)
+				{
+					if (_chatInput.text == null || _chatInput.text.charAt(_chatInput.caretIndex - 1) == "!" || _chatInput.text.charAt(_chatInput.caretIndex) == "!")
+						event.preventDefault();
+				}
+				else if (event.text.search(/\?/) != -1)
+				{
+					if (_chatInput.text == null || _chatInput.text.charAt(_chatInput.caretIndex - 1) == "?" || _chatInput.text.charAt(_chatInput.caretIndex) == "?")
+						event.preventDefault();
+				}
+				else if (event.text.search(",") != -1)
+				{
+					if (_chatInput.text == null || _chatInput.text.charAt(_chatInput.caretIndex - 1) == "," || _chatInput.text.charAt(_chatInput.caretIndex) == ",")
+						event.preventDefault();
+				}
+			}
+			
+			private function onFullScreen(e:FullScreenEvent):void
+			{		
+				if (this._openChatServer)
+				{
+					// Enabled/disable chat according to full screen.
+					_chatEnabled = (!e.fullScreen);
+					_chatInput.text = (_chatEnabled) ? 'Click Here to Chat' : 'Click Chat button to chat';
+					//_chatInput.text = (_chatEnabled) ? '' : 'Chat disabled in full screen';
+					
+					if (_chatEnabled)
+					{
+						_chatInput.text = "Click Here to Chat";
+						_chatInput.type = TextFieldType.INPUT;
+						_initialText = true;
+						setFocus();
+						_chatInput.addEventListener(FocusEvent.FOCUS_IN, onChatTextFocus);
+					}
+					else
+					{
+						_chatInput.text = "Click Chat button to chat";
+						_chatInput.type = TextFieldType.DYNAMIC;
+						_chatInput.removeEventListener(FocusEvent.FOCUS_IN, onChatTextFocus);
+					}
+				
+					_consoleAbstract.setSafeChat(e.fullScreen);
+				}
+			}
+			
+			private function onWorldMapClick(e:Event):void
+			{
+				dispatchEvent(new RoomManagerEvent(RoomManagerEvent.REQUEST_FOR_WORLD_MAP));
+				
+				LoggingUtil.sendClickLogging(LoggingUtil.HUD_WORLD_MAP_BUTTON_CLICK);
+			}
+			
+			private function onChatLogClick(e:Event):void
+			{
+				// Toggle Chat Log and Visibility
+				_chatLogPanel.toggleFromConsole();
+			}
+			
+			private function onMusicClick(e:Event):void
+			{
+				dispatchEvent(new Event("toggleMusic"));
+				
+				LoggingUtil.sendClickLogging(LoggingUtil.HUD_MUSIC_BUTTON_CLICK);
+			}
+			
+			private function onShopClick(e:Event):void
+			{
+				LoggingUtil.sendClickLogging(LoggingUtil.HUD_SHOP_BUTTON_CLICK);
+				
+				// Make sure the user is registered.
+				var userAvatar:Avatar = ModelLocator.getInstance().avatar;
+				if (userAvatar.membershipStatus == MembershipStatus.GUEST)
+				{
+					MainUtil.showDialog(SaveYourGameDialog);
+					return;
+				}
+				var roomStoreId:uint = RoomManager.getInstance().currentRoom.storeId;
+				var storeId:uint = (roomStoreId > 0) ? roomStoreId : StoreConstants.STORE_ID_RIVERWALK;
+				var params:Object = new Object();
+				params.storeId = storeId;
+				AASModuleLoader.openStoreModule(params);
+			}
+			
+			private function onPDAClick(e:Event):void
+			{
+				/*
+				// Make sure the user is registered.
+				var userAvatar:Avatar = ModelLocator.getInstance().avatar;
+				if (userAvatar.membershipStatus == MembershipStatus.GUEST)
+				{
+					MainUtil.showDialog(SaveYourGameDialog);
+					return;
+				}
+				*/
+				
+				if (_pda != null)
+				{
+					_pda.showMainMenu();
+					_pda.showPDA();
+					
+				}
+				LoggingUtil.sendClickLogging(LoggingUtil.HUD_PDA_BUTTON_CLICK);
+			}
+			
+		]]>
+	</mx:Script>
+	
+</BoxContainer>

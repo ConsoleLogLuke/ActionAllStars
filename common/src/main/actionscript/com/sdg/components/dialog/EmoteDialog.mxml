@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas 
+	xmlns:mx="http://www.adobe.com/2006/mxml" 
+	xmlns:sdgcontrols="com.sdg.components.controls.*"
+	implements="com.sdg.components.dialog.ISdgDialog"
+	mouseDownOutside="close()" rollOut="closeTimer.start()" rollOver="closeTimer.reset()" creationComplete="onCreationComplete()">
+	
+	<mx:Script>
+	
+		<![CDATA[
+			import mx.controls.Image;
+			import com.sdg.net.Environment;
+			import com.sdg.net.socket.SocketClient;
+			import com.sdg.utils.MainUtil;
+			import mx.events.ResizeEvent;
+			import com.sdg.model.ModelLocator;
+			import com.sdg.model.Emote;
+			import mx.controls.Button;
+			import com.sdg.control.room.RoomManager;
+			import com.sdg.utils.EventUtil;
+			
+			import flash.events.TimerEvent;
+			import flash.utils.Timer;
+			
+			import mx.events.FlexMouseEvent;		
+			import mx.managers.PopUpManager;
+			
+			private var closeTimer:Timer = new Timer(2000, 1);
+			private var _button:DisplayObject;
+			private var _columns:int;
+			private var _vendorId:int;
+			private var _closeOnEmoting:Boolean = false;
+			private var _showEmoteBubble:Boolean = true;
+	        
+			public function init(params:Object):void
+		    {
+		    	_button = params.button as DisplayObject;
+	    		_columns = params.columns;
+	    		_vendorId = params.vendorId;
+	    		
+	    		if (params.bubbleBorderColor)
+	    			bubble.setStyle("bubbleBorderColor", params.bubbleBorderColor);
+	    		if (params.bubbleBackgroundColor)
+	    			bubble.setStyle("bubbleBackgroundColor", params.bubbleBackgroundColor);
+	    		if (params.text)
+	    			bubble.text = params.text;	
+	    		if (params.closeOnEmoting)
+	    			_closeOnEmoting = params.closeOnEmoting;	
+	    		if (params.showEmoteBubble)
+	    			_showEmoteBubble = params.showEmoteBubble;	
+		    		
+		    	closeTimer.addEventListener(TimerEvent.TIMER_COMPLETE, EventUtil.createEventInvoker(close));
+		    }
+		    
+   		    public function close():void
+	        {	
+            	PopUpManager.removePopUp(this);
+            	closeTimer.reset();
+            	dispatchEvent(new Event(Event.CLOSE));
+            }
+            
+            private function onCreationComplete():void
+            {
+            	bubble.addEventListener(ResizeEvent.RESIZE, onBubbleResize);
+        		bubble.columns = _columns;
+        		
+            	// the the number of button rows we'll need
+            	var emoteCount:int = 0;
+				for each (var emote:Emote in ModelLocator.getInstance().emoteList)
+				{
+					if (emote.vendorId == _vendorId)
+						++emoteCount;
+				}
+        		bubble.rows = (emoteCount + _columns - 1) / _columns;
+        		
+				// add the buttons
+				var noButtons:Boolean = true;
+				for each (emote in ModelLocator.getInstance().emoteList)
+				{
+					if (emote.vendorId == _vendorId)
+					{
+						bubble.addButton(emote.emoteIconUrl, doEmote, emote);
+						noButtons = false;
+					}
+				}
+				
+				if (noButtons)
+					bubble.textOnly = true;
+            }
+            
+            private function onBubbleResize(event:Event):void
+            {
+				// position the dialog above the button
+				var pointButton:Point = _button.parent.localToGlobal(new Point(_button.x + _button.width / 2, _button.y));
+				this.x = pointButton.x - bubble.width / 2;
+				this.y = pointButton.y - bubble.height;
+            }
+
+            protected function doEmote(event:Event):void
+            {
+            	var emote:Emote = event.currentTarget.data as Emote;
+            	
+            	// show the emote
+				RoomManager.getInstance().userController.emote(Environment.getApplicationUrl() + emote.emoteIconUrl, null, false, 44, 44);
+				
+				if (_closeOnEmoting)
+					close();
+            }
+
+		]]>
+		
+	</mx:Script>
+	<sdgcontrols:ButtonsBubble id="bubble" buttonWidth="44" buttonHeight="44" />
+</mx:Canvas>

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas
+	xmlns:mx="http://www.adobe.com/2006/mxml"
+    xmlns:sdgcontrols="com.sdg.components.controls.*"
+    xmlns:business="com.sdg.business.*" 
+	implements="com.sdg.components.dialog.ISdgDialog"
+	horizontalScrollPolicy="off"
+	verticalScrollPolicy="off"
+	>
+		<mx:Script>
+		<![CDATA[
+			import com.sdg.net.Environment;
+			import mx.controls.Image;
+			import mx.managers.PopUpManager;
+			import com.sdg.model.ModelLocator;
+			import com.sdg.model.Avatar;
+
+			private var _roomId:String;
+			private var _avatar:Avatar;
+			
+			public function init(params:Object):void
+			{
+				_roomId = (params != null && params.roomId != null) ? params.roomId : "public_120";
+				_avatar = ModelLocator.getInstance().avatar;
+				trace("room id = " + _roomId);
+			}
+
+            public function close():void
+            {
+            	PopUpManager.removePopUp(this);
+            } 
+            
+            private function closeSwf(e:Event):void
+            {
+            	close();
+            }
+            
+            public function componentSwfLoaded(event:Event):void 
+			{   
+			
+				try
+				{
+					event.currentTarget.content.init("TradeLobby", _avatar, _roomId)
+					event.currentTarget.content.addEventListener('close', closeSwf);
+				}
+				catch(e:Error)
+				{
+					trace("error " + e.message);
+				}
+				
+			}  
+
+		]]>
+	</mx:Script>
+
+	<mx:Image source="assets/swfs/TradingCardGame.swf" complete="componentSwfLoaded(event)"  />
+
+</mx:Canvas>

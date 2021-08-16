@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml"
+	xmlns:sdgcontrols="com.sdg.components.controls.*"
+	xmlns:pda="com.sdg.view.pda.*"
+	implements="com.sdg.view.pda.interfaces.IPDASidePanel"
+	width="346" height="525">
+	
+	<pda:SidePanelBackingBadges width="100%" height="100%" cornerRadius="10" />
+	
+	<sdgcontrols:BadgeInfoDisplay id="badgeInfo" verticalCenter="{SidePanelBacking.HEADER_HEIGHT/2 - SidePanelBacking.FOOTER_HEIGHT/2}"
+		horizontalCenter="0" />
+	
+	<mx:Script>
+		<![CDATA[
+			import com.sdg.model.Badge;
+			import com.sdg.model.IPreviewItem;
+			import com.sdg.control.PDAController;
+			import com.sdg.graphics.customShapes.RoundRectComplex;
+			
+			private var _controller:PDAController;
+			private var _isInitialized:Boolean = false;
+			
+			[Bindable]
+			private var _primaryColor:uint = 0x1B1B1B;
+			
+			[Bindable]
+			private var _secondaryColor:uint = 0x5994D5;
+			
+			public function init(controller:PDAController = null):void
+			{
+				this.controller = controller;
+				_isInitialized = true;
+			}
+			
+			public function close():void
+			{
+			}
+			
+			public function refresh():void
+			{
+			}
+			
+			public function set badge(value:Badge):void
+			{
+				badgeInfo.badge = value;
+			}
+			
+			public function set controller(value:PDAController):void
+			{
+				_controller = value;
+			}
+			
+			public function get isInitialized():Boolean
+			{
+				return _isInitialized;
+			}
+			
+			public function set primaryColor(value:uint):void
+			{
+				_primaryColor = value;
+			}
+			
+			public function set secondaryColor(value:uint):void
+			{
+				_secondaryColor = value;
+			}
+		]]>
+	</mx:Script>
+</mx:Canvas>

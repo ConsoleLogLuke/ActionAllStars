@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml"
+     borderSkin="com.sdg.components.skins.TitlePlateSkin" creationComplete="init()">
+
+	<mx:Script>
+		<![CDATA[
+			import mx.controls.Image;
+
+			[Bindable]
+			public var title:String = '';
+			[Bindable]
+			public var fontStyle:String = 'titlePlate';
+			[Bindable]
+			public var rightIcon:Class;
+			[Bindable]
+			public var leftIcon:Class;
+			/*
+			[Embed(source="images/iconTickets.png")]
+            private var _ticketIcon:Class;
+            */
+			private function init():void
+			{
+				if(leftIcon != null)
+				{
+					leftIconId.visible = true;
+					leftIconId.source = leftIcon;
+				}
+
+				if(rightIcon != null)
+				{
+					rightIconId.visible = true;
+					rightIconId.source = rightIcon;
+				}
+			}
+
+		]]>
+    </mx:Script>
+    <!--
+    <mx:HBox verticalAlign="middle" horizontalCenter="0">
+            <mx:Image id="leftIconId" includeInLayout="false" horizontalAlign="left" />
+    	   	<mx:Label styleName="{fontStyle}" id="titleHeader" text="{title}" horizontalCenter="0" verticalCenter="0" />
+            <mx:Image id="rightIconId" source="{_ticketIcon}" horizontalAlign="right" />
+    </mx:HBox>
+	-->
+	<!--<mx:Grid width="100%">
+		<mx:GridRow width="100%">
+			<mx:GridItem width="60" paddingRight="10" paddingLeft="10" height="100%" verticalAlign="middle" verticalScrollPolicy="off" horizontalScrollPolicy="off">
+				<mx:Image visible="false" id="leftIconId" source="{leftIcon}" horizontalAlign="right"  verticalAlign="middle" />
+			</mx:GridItem>
+			<mx:GridItem height="100%" verticalAlign="middle" horizontalAlign="center">
+				<mx:Label styleName="titlePlate" id="titleHeader" text="{title}"/>
+			</mx:GridItem>
+			<mx:GridItem width="60" paddingRight="10" paddingLeft="10" height="100%" horizontalAlign="right" verticalAlign="middle" verticalScrollPolicy="off" horizontalScrollPolicy="off">
+				<mx:Image visible="false" id="rightIconId" source="{rightIcon}" horizontalAlign="right"  verticalAlign="middle" />
+			</mx:GridItem>
+		</mx:GridRow>
+	</mx:Grid>-->
+	<mx:Image visible="false" id="leftIconId" source="{leftIcon}" verticalCenter="0" left="0"/>
+	<mx:Label styleName="titlePlate" id="titleHeader" text="{title}" horizontalCenter="0" verticalCenter="0"/>
+	<mx:Image visible="false" id="rightIconId" source="{rightIcon}" verticalCenter="0" right="10"/>
+</mx:Canvas>

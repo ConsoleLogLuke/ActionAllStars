@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" xmlns:pda="com.sdg.view.pda.*" dataChange="onDataChange()" verticalScrollPolicy="off" horizontalScrollPolicy="off">
+	<mx:Script>
+		<![CDATA[
+			import com.sdg.view.pda.MainMenuButton;
+			
+			private var button:MainMenuButton;
+			
+			private function onDataChange():void
+			{
+				if (data == button) return;
+				
+				if (button)
+					this.removeChild(button);
+				
+				button = data as MainMenuButton;
+				
+				if (button)
+				{
+					button.setStyle("horizontalCenter", 0);
+					this.addChildAt(button, 0);
+				}
+			}
+		]]>
+	</mx:Script>
+	<mx:Text y="{data.y + data.height}" horizontalCenter="0" text="{data.labelText}" color="#ffffff" fontSize="10" fontThickness="150"
+		width="{width}" selectable="false" paddingBottom="0" paddingTop="0" paddingLeft="0" paddingRight="0"
+		filters="{[new GlowFilter(0x000000, 1, 4, 4, 10)]}"/>
+</mx:Canvas>

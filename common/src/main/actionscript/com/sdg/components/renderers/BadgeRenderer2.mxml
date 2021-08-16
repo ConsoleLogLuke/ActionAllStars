@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="287" height="70" borderThickness="1" borderColor="0x00aa00">
+	<mx:Script>
+		<![CDATA[
+			import com.sdg.model.ModelLocator;
+			import com.sdg.components.controls.BadgeShield;
+			import com.sdg.manager.BadgeManager;
+			import com.sdg.model.BadgeLevelCollection;
+			import com.sdg.model.BadgeLevel;
+			import com.sdg.model.Badge;
+			import com.sdg.utils.EmbeddedImages;
+			import com.sdg.control.PDAController;
+			import com.sdg.utils.Constants;
+			import com.sdg.model.PartyBuddy;
+			import com.sdg.events.RoomNavigateEvent;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			import com.sdg.logging.LoggingUtil;
+			import com.sdg.components.controls.SdgAlertChrome;
+			import com.sdg.control.room.RoomManager;
+			import com.sdg.model.Buddy;
+			import flash.utils.getDefinitionByName;
+			
+			protected const LIST_GAP:Number = 2;
+			protected var _state:String;
+			private var _badgeShield:BadgeShield;
+			private var _badge:Badge = null;
+			private var _levels:BadgeLevelCollection = null;
+			//private var _highestLevel:BadgeLevel = null;
+			//private var _highestLevelIndex:int;
+			
+			private var _shields:SmallShields = new SmallShields();
+			
+			private var _glowFilterArray:Array = [new GlowFilter(0x000000, 1, 4, 4, 10)];
+			private var _roomId:String;
+			
+			override public function get currentState():String
+			{
+				return _state;
+			}
+			
+			override public function set currentState(value:String):void
+			{
+				_state = value;
+				refresh();
+			}
+			
+			private function refresh():void
+			{	
+				_badge = data as Badge;
+				if (_badge == null)
+				{
+					return;
+				}
+				
+				// RESET ALL BADGE DATA
+				//badgeNameLabel.text = _badge.name.toUpperCase();
+				badgeNameLabel.text = _badge.name;
+				_levels = _badge.levels;
+				for (var y:int = _levels.length - 1; y >= 0; y--)
+				{
+					var level:BadgeLevel = _levels.getAt(y);
+				}
+				
+				var highestLevel:BadgeLevel;
+				var highestLevelIndex:int;
+				var hasRank:Boolean = false;
+				
+				for (var i:int = _levels.length - 1; i >= 0; i--)
+				{
+					var level:BadgeLevel = _levels.getAt(i);
+					if (BadgeManager.DoesAvatarOwnBadgeLevel(ModelLocator.getInstance().avatar.avatarId, _badge.id, level.id))
+					{
+						highestLevel = level;
+						highestLevelIndex = i;
+						hasRank = true;
+						break;
+					}
+				}
+				
+				// Set Shields Icon
+				if (hasRank)
+					setShields(_levels.length,highestLevelIndex+1);
+				else
+					setShields(_levels.length,0);
+			
+				if (highestLevel == null)
+				{
+					badgeIcon.alpha = .3;
+					shieldsImg.alpha = .3;
+					badgeNameLabel.alpha = .3;
+					badgeDescriptionLabel.alpha = .3;
+					
+					highestLevelIndex = 0;
+					highestLevel = _levels.getAt(highestLevelIndex);
+				}
+				else
+				{
+					badgeIcon.alpha = 1;
+					shieldsImg.alpha = 1;
+					badgeNameLabel.alpha = 1;
+					badgeDescriptionLabel.alpha = 1;
+				}
+				
+				badgeDescriptionLabel.text = highestLevel.description;
+				
+				_badgeShield = new BadgeShield();
+				//_badgeShield.level = 4;
+				_badgeShield.level = highestLevelIndex;
+				//trace("===============INDEX: "+highestLevelIndex);
+				_badgeShield.badgeId = _badge.id;
+				_badgeShield.addEventListener("badge_completed", onBadgeCompleted);
+				_badgeShield.badgeWidth = 54;
+				_badgeShield.badgeHeight = 54;
+				
+				function onBadgeCompleted(event:Event):void
+				{
+					if (_badgeShield != event.currentTarget) return;
+					
+					badgeIcon.width = _badgeShield.width;
+					badgeIcon.height = _badgeShield.height;
+					
+					badgeIcon.source = _badgeShield;
+				}
+				
+				graphics.clear();
+				
+				// determine color
+				var backingColor:uint = 0x454546;
+				var labelColor:uint = 0xfec201;
+				
+				if (_state == "selected" || _state == "highlighted")
+				{
+					backingColor = 0xffffff;
+				}
+				else if (hasRank)  //online
+				{
+					backingColor = 0xfec201;
+				}
+				else //offline
+				{
+					labelColor = 0x979797;
+				}
+				
+				
+				// update backing
+				var gradientBoxMatrix:Matrix = new Matrix();
+				gradientBoxMatrix.createGradientBox(width - LIST_GAP, height - LIST_GAP);
+				graphics.beginGradientFill(GradientType.LINEAR, [backingColor, backingColor], [1, 0], [0, 255], gradientBoxMatrix);
+				graphics.drawRoundRectComplex(LIST_GAP, LIST_GAP, width - LIST_GAP, height - LIST_GAP, 10, 10, 10, 10);
+				
+				shieldsImg.source = _shields;	
+			}
+			
+			private function setShields(totalShields:int,filledShields:int):void
+			{
+				var shieldsMC:MovieClip = _shields as MovieClip;
+				
+				if (totalShields == 5)
+				{
+					switch (filledShields)
+					{
+						case 1:
+							shieldsMC.gotoAndStop(2);
+							return;
+						case 2:
+							shieldsMC.gotoAndStop(3);
+							return;
+						case 3:
+							shieldsMC.gotoAndStop(4);
+							return;
+						case 4:
+							shieldsMC.gotoAndStop(5);
+							return;
+						case 5:
+							shieldsMC.gotoAndStop(6);
+							return;
+						default:
+							shieldsMC.gotoAndStop(1);
+							return;
+					}
+				}
+				else if (totalShields == 3)
+				{
+					switch (filledShields)
+					{
+						case 1:
+							shieldsMC.gotoAndStop(10);
+							return;
+						case 2:
+							shieldsMC.gotoAndStop(11);
+							return;
+						case 3:
+							shieldsMC.gotoAndStop(12);
+							return;
+						default:
+							shieldsMC.gotoAndStop(9);
+							return;
+					}
+				}
+				else
+				{
+					switch (filledShields)
+					{
+						case 1:
+							shieldsMC.gotoAndStop(8);
+							return;
+						default:
+							shieldsMC.gotoAndStop(7);
+							return;
+					}
+				}
+				
+			}
+			
+		]]>
+	</mx:Script>
+	
+	<mx:Canvas filters="{_glowFilterArray}" x="8" verticalCenter="0" borderThickness="1" borderColor="0x00aa00">
+		<mx:Image id="badgeIcon"/>
+	</mx:Canvas>
+	
+	<mx:Canvas x="205" y="7" width="75">
+		<mx:Image id="shieldsImg" x="74" />
+	</mx:Canvas>
+
+	<mx:Label id="badgeNameLabel" paddingTop="0" paddingBottom="0" x="60" y="22" fontSize="16" 
+		fontFamily="EuroStyle" fontWeight="bold" textAlign="left" filters="{[new GlowFilter(0x000000, 1, 4, 4, 10)]}" />
+	<mx:Label id="badgeDescriptionLabel" paddingTop="0" paddingBottom="0" x="60" y="42" 
+		fontSize="12" fontFamily="EuroStyle" width="210" fontWeight="bold"  textAlign="left" />
+		
+</mx:Canvas>
+
+

@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" implements="com.sdg.view.pda.interfaces.IPDAButton" mouseChildren="false" buttonMode="true"
+	mouseOver="{if (_mouseOverSound != null) _mouseOverSound.play(); highlighted = true}" mouseOut="{highlighted = false}"
+	verticalScrollPolicy="off" horizontalScrollPolicy="off" width="90" height="78"
+	click="{if (_clickSound != null) _clickSound.play()}">
+	<mx:Image id="button" source="{_showButton ? 'assets/swfs/pda/MainMenuButton.swf' : null}" init="{setImageSelection()}" visible="{_showButton}" includeInLayout="{_showButton}"
+		horizontalCenter="0" verticalCenter="0" horizontalAlign="center" verticalAlign="middle" width="100%" height="100%"/>
+	<mx:Image id="buttonIcon" source="{_toggleOn ? iconSource : iconSourceToggleOff}" init="{setIconSelection()}" horizontalCenter="0" verticalCenter="0"
+		horizontalAlign="center" verticalAlign="middle" width="100%" height="100%"/>
+	<mx:Script>
+		<![CDATA[
+			import com.sdg.swf.SWFContainer;
+			import mx.controls.SWFLoader;
+			[Bindable]
+			public var iconSource:String;
+			[Bindable]
+			public var iconSourceToggleOff:String;
+			
+			private var _selected:Boolean = false;
+			private var _callBack:Function;
+			private var _labelText:String;
+			private var _mouseOverSound:Sound;
+			private var _clickSound:Sound;
+			
+			[Bindable]
+			private var _showButton:Boolean = true;
+			
+			[Bindable]
+			private var _toggleOn:Boolean = true;
+			
+			private var _glowTrigger:Boolean = false;
+			
+			private var _params:Object;
+			
+			public function set glowTrigger(value:Boolean):void
+			{
+				_glowTrigger = value;
+				try
+				{
+					var buttonImage:Object = Object(button);
+					buttonImage.content.pulse = value;
+				}
+				catch(e:Error) {}
+			}
+			
+			private function set highlighted(value:Boolean):void
+			{
+				try
+				{
+					var buttonImage:Object = Object(button);
+					buttonImage.content.rollOver = value;
+				}
+				catch(e:Error) {}
+				
+				try
+				{
+					var iconImage:Object = Object(buttonIcon);
+					iconImage.content.rollOver = value;
+				}
+				catch(e:Error) {}
+			}
+			
+			public function set showButton(value:Boolean):void
+			{
+				_showButton = value;
+			}
+			
+			public function set labelText(value:String):void
+			{
+				_labelText = value;
+			}
+			
+			public function get labelText():String
+			{
+				return _labelText;
+			}
+			
+			public function set mouseOverSound(value:Sound):void
+			{
+				_mouseOverSound = value;
+			}
+			
+			public function set clickSound(value:Sound):void
+			{
+				_clickSound = value;
+			}
+						
+			private function setIconSelection():void
+			{
+				try
+				{
+					var swf:Object = Object(buttonIcon);
+					swf.content.selected = _selected;
+				}
+				catch(e:Error) {}
+			}
+			
+			private function setImageSelection():void
+			{
+				try
+				{
+					var swf:Object = Object(button);
+					swf.content.selected = _selected;
+					swf.content.pulse = _glowTrigger;
+				}
+				catch(e:Error) {}
+			}
+			
+			public function get params():Object
+			{
+				return _params;
+			}
+			
+			public function set params(value:Object):void
+			{
+				_params = value;
+			}
+			
+			[Bindable]
+			public function set selected(value:Boolean):void
+			{
+				_selected = value;
+				setImageSelection();
+				setIconSelection();
+			}
+			
+			public function get selected():Boolean
+			{
+				return _selected;
+			}
+			
+			public function set callBack(value:Function):void
+			{
+				_callBack = value;
+			}
+			
+			public function get callBack():Function
+			{
+				return _callBack;
+			}
+			
+			public function set toggleOn(value:Boolean):void
+			{
+				_toggleOn = value;
+			}
+			
+			public function get toggleOn():Boolean
+			{
+				return _toggleOn;
+			}
+			
+			public function get greenMultiply():Number
+			{
+				return transform.colorTransform.greenMultiplier;
+			}
+			public function set greenMultiply(value:Number):void
+			{
+				var crntTr:ColorTransform = transform.colorTransform;
+				var colorTransform:ColorTransform = new ColorTransform(crntTr.redMultiplier, value, crntTr.blueMultiplier, crntTr.alphaMultiplier, crntTr.redOffset, crntTr.greenOffset, crntTr.blueOffset, crntTr.alphaOffset);
+				transform.colorTransform = colorTransform;
+			}
+		]]>
+	</mx:Script>
+</mx:Canvas>

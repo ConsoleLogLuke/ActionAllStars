@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="287" height="53">
+	<mx:Script>
+		<![CDATA[
+			import com.sdg.utils.EmbeddedImages;
+			import com.sdg.control.PDAController;
+			import com.sdg.utils.Constants;
+			import com.sdg.model.PartyBuddy;
+			import com.sdg.events.RoomNavigateEvent;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			import com.sdg.logging.LoggingUtil;
+			import com.sdg.components.controls.SdgAlertChrome;
+			import com.sdg.control.room.RoomManager;
+			import com.sdg.model.Buddy;
+			import flash.utils.getDefinitionByName;
+			
+			protected const LIST_GAP:Number = 2;
+			protected var _state:String;
+			private var _glowFilterArray:Array = [new GlowFilter(0x000000, 1, 4, 4, 10)];
+			private var _roomId:String;
+			private var _genderTransform:ColorTransform = new ColorTransform();
+			private	var _starTransform:ColorTransform = new ColorTransform();
+			
+			override public function get currentState():String
+			{
+				return _state;
+			}
+			
+			override public function set currentState(value:String):void
+			{
+				_state = value;
+				refresh();
+			}
+			
+			private function refresh():void
+			{
+				var buddy:Buddy = data as Buddy;
+				if (buddy == null) return;
+				
+				trace("state " + _state);
+				
+				graphics.clear();
+				
+				// determine gender icon
+				var icon:Object;
+				if (buddy.gender == 1)
+					icon = EmbeddedImages.boyIcon;
+				else
+					icon = EmbeddedImages.girlIcon;
+				
+				// update gender icon
+				genderIcon.source = icon;
+				
+				// update name
+				nameLabel.text = buddy.name;
+				
+				// determine color
+				var backingColor:uint = 0x454546;
+				var labelColor:uint = 0xffffff;
+				
+				if (_state == "selected" || _state == "highlighted")
+				{
+					backingColor = 0xffffff;
+				}
+				else if (buddy.presence == Constants.PRESENCE_ONLINE)  //online
+				{
+					backingColor = 0xfec201;
+					_genderTransform = new ColorTransform();
+					_starTransform = new ColorTransform();
+				}
+				else //offline
+				{
+					labelColor = 0x979797;
+					_genderTransform.color = 0x666666;
+					_starTransform.color = 0x989898;
+				}
+				
+				// update backing
+				var gradientBoxMatrix:Matrix = new Matrix();
+				gradientBoxMatrix.createGradientBox(width - LIST_GAP, height - LIST_GAP);
+				graphics.beginGradientFill(GradientType.LINEAR, [backingColor, backingColor], [1, 0], [0, 255], gradientBoxMatrix);
+				graphics.drawRoundRectComplex(LIST_GAP, LIST_GAP, width - LIST_GAP, height - LIST_GAP, 10, 10, 10, 10);
+				
+				// update name label color
+				nameLabel.setStyle("color", labelColor);
+				
+				// update gender icon color
+				genderIcon.transform.colorTransform = _genderTransform;
+				
+				var partyBuddy:PartyBuddy = buddy as PartyBuddy;
+				if (partyBuddy != null)
+				{
+					infoLabel.text = partyBuddy.partyName;
+					infoLabel.x = 115;
+					infoLabel.visible = true;
+					
+					guestLabel.text = partyBuddy.numGuest.toString();
+					guestLabel.visible = true;
+					guestIcon.visible = true;
+					
+					_roomId = 'private_' + buddy.avatarId + '_1';
+					joinArrow.visible = true;
+					stars.visible = false;
+				}
+				else
+				{
+					// show stars
+					stars.visible = true;
+					for (var i:int = 0; i < 5; i++)
+					{
+						this["star" + i].visible = i < buddy.level;
+						this["star" + i].transform.colorTransform = _starTransform;
+					}
+					
+					infoLabel.text = buddy.roomName;
+					infoLabel.x = 140;
+					_roomId = buddy.roomId;
+					
+					guestLabel.visible = false;
+					guestIcon.visible = false;
+					
+					joinArrow.visible = infoLabel.visible = buddy.presence == Constants.PRESENCE_ONLINE && infoLabel.text.length > 0;
+				}
+				
+				var pMode:int = buddy.partyMode;
+				if (pMode > Constants.PARTY_MODE_OFF && pMode < Constants.TURF_ACCESS_PRIVATE)
+				{
+					balloon.visible = true;
+					balloon.source = EmbeddedImages["balloon" + buddy.partyBalloon];
+				}
+				else
+				{
+					balloon.visible = false;
+				}
+			}
+			
+			private function goToRoom(roomId:String):void
+			{
+				RoomManager.getInstance().teleportToRoom(roomId);
+				// Hide PDA.
+				PDAController.getInstance().hidePDA();
+			}
+			
+			private function onJoinClick(event:MouseEvent):void
+			{
+				goToRoom(_roomId);
+			}
+		]]>
+	</mx:Script>
+	<mx:Canvas filters="{_glowFilterArray}" x="8" verticalCenter="0">
+		<mx:Image id="genderIcon"/>
+	</mx:Canvas>
+	
+	<mx:Image id="balloon"/>
+	
+	<mx:Label id="nameLabel" fontFamily="EuroStyle" fontWeight="bold" fontSize="17" x="55" y="3" filters="{_glowFilterArray}"/>
+	<mx:HBox id="stars" x="55" y="29" horizontalGap="0">
+		<mx:Image id="star0" source="{EmbeddedImages.starIcon}"/>
+		<mx:Image id="star1" source="{EmbeddedImages.starIcon}"/>
+		<mx:Image id="star2" source="{EmbeddedImages.starIcon}"/>
+		<mx:Image id="star3" source="{EmbeddedImages.starIcon}"/>
+		<mx:Image id="star4" source="{EmbeddedImages.starIcon}"/>
+	</mx:HBox>
+	
+	<mx:Label id="infoLabel" fontFamily="EuroStyle" color="0xffffff" fontWeight="bold" fontSize="12" y="30" width="140" textAlign="left"/>
+	
+	<mx:Label id="guestLabel" fontFamily="EuroStyle" color="0xffffff" fontWeight="bold" fontSize="15" right="215" y="27" textAlign="right"/>
+	<mx:Image id="guestIcon" source="{EmbeddedImages.guestIcon}" x="78" y="27"/>
+	
+	<mx:Image id="joinArrow" source="{EmbeddedImages.joinIcon}" right="5" verticalCenter="-8" buttonMode="true" click="onJoinClick(event)"/>
+	
+</mx:Canvas>

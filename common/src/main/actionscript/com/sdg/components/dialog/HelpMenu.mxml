@@ -1,0 +1,338 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas
+	xmlns:mx="http://www.adobe.com/2006/mxml"
+	xmlns:sdgcontrols="com.sdg.components.controls.*"
+	horizontalScrollPolicy="off" verticalScrollPolicy="off"
+	implements="com.sdg.components.dialog.ISdgDialog">
+	
+	<mx:Script>
+		<![CDATA[
+			import mx.events.ScrollEvent;
+			import mx.managers.PopUpManager;
+			
+			public function init(params:Object):void
+			{
+				if (index1.data == null)
+					index1.data = new Object();
+				index1.data.target = help1;
+				
+				if (index2.data == null)
+					index2.data = new Object();
+				index2.data.target = help2;
+				
+				if (index3.data == null)
+					index3.data = new Object();
+				index3.data.target = help3;
+				
+				if (index4.data == null)
+					index4.data = new Object();
+				index4.data.target = help4;
+				
+				if (index5.data == null)
+					index5.data = new Object();
+				index5.data.target = help5;
+				
+				if (index6.data == null)
+					index6.data = new Object();
+				index6.data.target = help6;
+				
+				if (index7.data == null)
+					index7.data = new Object();
+				index7.data.target = help7;
+				
+				if (index8.data == null)
+					index8.data = new Object();
+				index8.data.target = help8;
+				
+				if (index9.data == null)
+					index9.data = new Object();
+				index9.data.target = help9;
+				
+				if (index10.data == null)
+					index10.data = new Object();
+				index10.data.target = help10;
+			}
+			public function close():void
+			{
+				PopUpManager.removePopUp(this);
+			}
+			private function scroll(scrollBar:VScrollBar):void
+			{
+				var window:VBox = index;
+				if (scrollBar == helpScroll)
+					window = help;
+				window.y = -scrollBar.scrollPosition;
+			}
+			private function showIndexScroll():void
+			{
+				if (index.height > indexCanvas.height)
+				{
+					indexScroll.maxScrollPosition = index.height - indexCanvas.height;
+					indexScrollBox.includeInLayout = true;
+					indexScrollBox.visible = true;
+				}
+			}
+			
+			private function showHelpScroll():void
+			{
+				if (help.height > helpCanvas.height)
+				{
+					helpScroll.maxScrollPosition = help.height - helpCanvas.height;
+					helpScrollBox.includeInLayout = true;
+					helpScrollBox.visible = true;
+				}
+				scrollToLoc(helpScroll, help1.y);
+			}
+			private function showUnderline(e:MouseEvent):void
+			{
+				Text(e.currentTarget).setStyle("textDecoration", "underline");
+			}
+			
+			private function hideUnderline(e:MouseEvent):void
+			{
+				Text(e.currentTarget).setStyle("textDecoration", "none");
+			}
+			private function goToAnchor(e:MouseEvent):void
+			{
+				helpScroll.scrollPosition = Text(e.currentTarget).data.target.y;
+				scroll(helpScroll);				
+			}
+			private function scrollToLoc(scrollBar:VScrollBar, position:int):void
+			{
+				scrollBar.scrollPosition = position;
+				scroll(scrollBar);
+			}
+		]]>
+	</mx:Script>
+	<mx:Style>
+		TitlePanel.help
+		{
+			backgroundColor:#484848;
+			borderColor: #8c8c8c;
+			highlightAlphas: 0, .9, .9, .5;
+		}
+		Text.indexText
+		{
+			color: #194b88;
+			fontSize: 16;
+			fontWeight: normal;
+		}
+		Text.helpText
+		{
+			color: #194b88;
+			fontSize: 14;
+			fontWeight: normal;
+		}
+	</mx:Style>
+	
+	<sdgcontrols:TitlePanel title="ACTION ALLSTARS HELP" styleName="help" width="788" height="457" showCloseButton="true" close="close()">
+		<sdgcontrols:TitlePlate title="FREQUENTLY ASKED QUESTIONS" styleName="red" width="100%" height="26"/>
+		<mx:HBox width="100%">
+			<mx:HBox
+				width="284" height="354"
+				paddingBottom="10" paddingTop="10"
+				borderColor="#7ca4da" borderStyle="solid" horizontalAlign="center">
+				<mx:VBox
+					width="237" height="330"
+					paddingLeft="10" paddingRight="10" paddingBottom="10" paddingTop="10"
+					borderColor="#7b7b7b" borderStyle="solid">
+					
+					<mx:Canvas
+						id="indexCanvas"
+						width="100%" height="100%"
+						verticalScrollPolicy="off" horizontalScrollPolicy="off">
+						
+						<mx:VBox id="index" width="100%" creationComplete="showIndexScroll()">
+							<mx:Text id="index1"
+								width="100%"
+								styleName="indexText"
+								mouseOver="showUnderline(event)" mouseOut="hideUnderline(event)"
+								selectable="false" click="goToAnchor(event)"
+								text="How do I start?"/>
+							<mx:Text id="index2"
+								width="100%"
+								styleName="indexText"
+								mouseOver="showUnderline(event)" mouseOut="hideUnderline(event)"
+								selectable="false" click="goToAnchor(event)"
+								text="How do I play?"/>
+							<mx:Text id="index3"
+								width="100%"
+								styleName="indexText"
+								mouseOver="showUnderline(event)" mouseOut="hideUnderline(event)"
+								selectable="false" click="goToAnchor(event)"
+								text="What are Tokens?"/>
+							<mx:Text id="index4"
+								width="100%"
+								styleName="indexText"
+								mouseOver="showUnderline(event)" mouseOut="hideUnderline(event)"
+								selectable="false" click="goToAnchor(event)"
+								text="What is My Turf and where is it?"/>
+							<mx:Text id="index5"
+								width="100%"
+								styleName="indexText"
+								mouseOver="showUnderline(event)" mouseOut="hideUnderline(event)"
+								selectable="false" click="goToAnchor(event)"
+								text="What are Levels?"/>
+							<mx:Text id="index6"
+								width="100%"
+								styleName="indexText"
+								mouseOver="showUnderline(event)" mouseOut="hideUnderline(event)"
+								selectable="false" click="goToAnchor(event)"
+								text="What is a Challenge?"/>
+							<mx:Text id="index8"
+								width="100%"
+								styleName="indexText"
+								mouseOver="showUnderline(event)" mouseOut="hideUnderline(event)"
+								selectable="false" click="goToAnchor(event)"
+								text="What are Trading Cards?"/>
+							<mx:Text id="index7"
+								width="100%"
+								styleName="indexText"
+								mouseOver="showUnderline(event)" mouseOut="hideUnderline(event)"
+								selectable="false" click="goToAnchor(event)"
+								text="Why can't I buy anything?"/>
+							<mx:Text id="index9"
+								width="100%"
+								styleName="indexText"
+								mouseOver="showUnderline(event)" mouseOut="hideUnderline(event)"
+								selectable="false" click="goToAnchor(event)"
+								text="Someone is bothering Me..."/>
+							<mx:Text id="index10"
+								width="100%"
+								styleName="indexText"
+								mouseOver="showUnderline(event)" mouseOut="hideUnderline(event)"
+								selectable="false" click="goToAnchor(event)"
+								text="Why won't this work?"/>
+						</mx:VBox>
+					</mx:Canvas>
+				</mx:VBox>
+				<mx:VBox id="indexScrollBox" height="100%" includeInLayout="false" visible="false">
+					<mx:Button width="{indexScroll.width}" height="{indexScroll.width}" label="T" click="scrollToLoc(indexScroll, 0)"/>
+					<mx:VScrollBar id="indexScroll" height="100%" scroll="scroll(indexScroll)"/>
+					<mx:Button width="{indexScroll.width}" height="{indexScroll.width}" label="B" click="scrollToLoc(indexScroll, indexScroll.maxScrollPosition)"/>
+				</mx:VBox>
+			</mx:HBox>
+			
+			<mx:HBox
+				width="448" height="354"
+				paddingBottom="10" paddingTop="10"
+				borderColor="#7ca4da" borderStyle="solid" horizontalAlign="center">
+				<mx:VBox
+					width="397" height="330"
+					paddingLeft="10" paddingRight="10" paddingBottom="10" paddingTop="10"
+					borderColor="#7b7b7b" borderStyle="solid">
+					
+					<mx:Canvas
+						id="helpCanvas"
+						width="100%" height="100%"
+						verticalScrollPolicy="off" horizontalScrollPolicy="off">
+						
+						<mx:VBox id="help" width="100%" creationComplete="showHelpScroll()">
+							<mx:Text id="help1" width="100%" styleName="helpText">
+								<mx:htmlText>
+									<![CDATA[<b>How do I start?</b><br>
+<p>Roam around the <b>Action AllStars</b> world. See the sites, click on things you see in the world, and say hi to others. Do not be afraid to ask for help, either. Exploration is half the fun!</p>
+<p>The <b>Map</b> in the lower left corner will show you the entire Action AllStars landscape. Scroll your cursor across the <i>Map</i> to see the various places you can click on and visit.</p>
+									]]>
+								</mx:htmlText>
+							</mx:Text>
+							<mx:Text id="help2" width="100%" styleName="helpText">
+								<mx:htmlText>
+									<![CDATA[<b>How do I play?</b><br>
+<p>There are <b>Games</b> located all across the Action AllStar world. If you want to play BIG LEAGUE BITES, for example, you will need to go to the concession stand in <b>Baller’s Hall</b> (the basketball area of Action AllStars) and click on the sign that says Big League Bites. Keep an eye out for special <b>Events</b>, such as parties, tournaments, holiday celebrations, and competitions.</p>
+<p>The tool bar located at the bottom of the screen can help you find more ways to interact with the world. If you want to <b>Chat</b>, do a <b>Trick</b>, <b>Emote</b>, visit your <b>Home Turf</b>, or even <b>Report</b> someone, you can find a button on the tool bar that will help. To make someone your <b>Buddy</b>, click on their <b>Athlete</b> in the Action AllStars world. When their <b>Athlete Card</b> opens, choose the smiley face button and you will send a <b>Buddy</b> invitation.</p>
+									]]>
+								</mx:htmlText>
+							</mx:Text>
+							<mx:Text id="help3" width="100%" styleName="helpText">
+								<mx:htmlText>
+									<![CDATA[<b>What are Tokens?</b><br>
+<p><b>Tokens</b> are our currency here in Action AllStars. You earn <i>Tokens</i> by playing games.</p>
+									]]>
+								</mx:htmlText>
+							</mx:Text>
+							<mx:Text id="help4" width="100%" styleName="helpText">
+								<mx:htmlText>
+									<![CDATA[<b>What is My Turf and where is it?</b><br>
+<p><b>Home Turf</b> is your very own place in Action AllStars. You can find hundreds of items to put in <i>Home Turf</i> at the <b>Stores</b> around the world.</p>
+
+<p>You can find <i>Home Turf</i> in two places:</p>
+1. On the  <b>Map</b> 
+2. On the <b>Tool Bar</b>
+									]]>
+								</mx:htmlText>
+							</mx:Text>
+							<mx:Text id="help5" width="100%" styleName="helpText">
+								<mx:htmlText>
+									<![CDATA[<b>What are Levels?</b><br>
+<p>The more you practice, the more you play, the better you get! Play hard in Action AllStars you go up a <b>Level</b>. There are 5 levels in Action AllStars, so it isn’t an easy task! When you <i>Level</i> up, you gain new abilities, as well as a new set of <b>Trading Cards</b>. Different <i>Levels</i> also allow you to compete in various <b>Challenges</b> throughout the Action AllStar world.</p>
+<p>Levels:</p>
+<p>Level 1: Amateur*
+Level 2: Rookie
+Level 3: Pro
+Level 4: Veteran
+Level 5: All Star</p>
+<p>* Only <u><b>Subscription Members</b></u> can go higher than <i>Level&nbsp;1:</i><b>Amateur</b>.</p>
+									]]>
+								</mx:htmlText>
+							</mx:Text>
+							<mx:Text id="help6" width="100%" styleName="helpText">
+								<mx:htmlText>
+									<![CDATA[<b>What is a Challenge?</b><br>
+<p>When you select a <b>Game</b> to play in Action AllStars you're given a list of <i>Challenges</i> before the <i>Game</i> starts. There is a different <i>Challenge</i> for each Action AllStars <b>Level</b>. You have the choice to accept the Challenge for your <i>Level</i>, or skip the <i>Challenge</i> and practice for fun. The higher the <i>Level</i> you are the more <i>Challenges</i> you may choose from.</p>
+									]]>
+								</mx:htmlText>
+							</mx:Text>
+							<mx:Text id="help8" width="100%" styleName="helpText">
+								<mx:htmlText>
+									<![CDATA[<b>What are Trading Cards?</b><br>
+<p>Whenever you are awarded a new <b>Level</b> in Action AllStars you are given a pack of <b>Trading Cards</b> to share with your friends.  There are ONLY 10 <i>Trading Cards</i> per pack, so they are in limited supply! It's up to you if you want to give or receive a <i>Trading Card</i>, so share wisely!</p>
+<p>TIP: Keep and eye out! Your <i>Trading Card</i> may have a <b>Puzzle Piece</b> on it. Collect all of the puzzle pieces to earn new cool items or trade with other <b>Athletes</b> at the <b>Trading Tables</b> located in the Action AllStars <b>Stores</b> to complete a collection.</p>
+<p>When your <b>Athlete</b> earns a new <i>Level</i>, you get to create a WHOLE NEW set of <i>Trading Cards</i>! Plus, you are given a new pack of 10!  If you wish to purchase additional <i>Trading Cards</i>, you may do so at <b>Trading Card Kiosks</b> located throughout the Action AllStars world*.</p>
+<p>*Only <u><b>Subscription Members</b></u> can purchase additional <i>Trading Cards</i> from <i>Trading Card Kiosks</i>.</p>
+									]]>
+								</mx:htmlText>
+							</mx:Text>
+
+							<mx:Text id="help7" width="100%" styleName="helpText">
+								<mx:htmlText>
+									<![CDATA[<b>Why can’t I buy anything?</b><br>
+<p>You need to have a <u><b>Subscription Membership</b></u> to buy things like gear, clothing, furniture, equipment, and trading cards.</p>
+<p>But never fear! There are many times during <b>Events</b> in Action AllStars when everyone will get a chance to score some <b>Freebies</b>, <b>Badges</b>, and other cool stuff.</p>
+									]]>
+								</mx:htmlText>
+							</mx:Text>
+							<mx:Text id="help9" width="100%" styleName="helpText">
+								<mx:htmlText>
+									<![CDATA[<b>Someone is bothering Me…</b><br>
+<p>Yikes. Okay – there several things you can do to stop other <b>Athletes</b> from bothering you.</p>
+<p>Open his/her <b>Athlete Card</b> and click the button with the <b>Whistle</b>. This is the <b>Report</b> button. Answer the questions as best you can. You only need to <i>Report</i> once and a <b>Mod</b> (member of the Action AllStar staff trained to help you) will be on the job.</p>
+<p>On the tool bar there is a button with a <b>Whistle</b> on it. This is the Report button. Answer the questions as best you can. When you are finished, a <b>Mod</b> will notified immediately.</p>
+<p>If none of these things work, try changing your location in Action AllStars, or even log into a different <b>Server</b>.</p>
+									]]>
+								</mx:htmlText>
+							</mx:Text>
+							<mx:Text id="help10" width="100%" styleName="helpText">
+								<mx:htmlText>
+									<![CDATA[<b>Why won’t this work?</b><br>
+<p>Yikes. There are three reasons we can think of to explain why Action AllStars is not working properly on your computer.</p>
+<li> Firewall – Some firewalls prevent you from visiting Action AllStars. It might be wise to change your Firewall setting so that Action AllStars is available.  We suggest that you ask a parent first before changing any settings.</li>
+<li> Disable Pop Up Blocker – Action AllStars appears in what we call a “pop up”. This means that a secondary browser opens to show the world and it literally POPS UP from the page you were viewing. Many browsers have automatic settings that BLOCK pop ups (aka, a Pop Up Blocker). You may need to change the settings on your browser so that it disables the pop up blocker. Again, check with your parents before you disable any pop ups.</li>
+<li> Updating Applications – You might be having trouble seeing Action AllStars because you need to update your browser or Flash.</li>
+<li> If this doesn’t help, please send an email to help@actioinallstars.com explaining exactly what problems you are encountering. We’ll do our best to help you.</li>
+<li> Please give us at least 24 hours to resolve the issue.</li>
+									]]>
+								</mx:htmlText>
+							</mx:Text>						
+						</mx:VBox>
+					</mx:Canvas>
+				</mx:VBox>
+				<mx:VBox id="helpScrollBox" height="100%" includeInLayout="false" visible="false">
+					<mx:Button width="{helpScroll.width}" height="{helpScroll.width}" label="T" click="scrollToLoc(helpScroll, 0)"/>
+					<mx:VScrollBar id="helpScroll" height="100%" scroll="scroll(helpScroll)"/>
+					<mx:Button width="{helpScroll.width}" height="{helpScroll.width}" label="B" click="scrollToLoc(helpScroll, helpScroll.maxScrollPosition)"/>
+				</mx:VBox>
+			</mx:HBox>
+		</mx:HBox>
+	</sdgcontrols:TitlePanel>
+</mx:Canvas>

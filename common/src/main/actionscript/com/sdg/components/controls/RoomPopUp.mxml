@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="utf-8"?>
+<controls:BoxContainer xmlns:mx="http://www.adobe.com/2006/mxml" xmlns:controls="com.sdg.components.controls.*"
+	direction="horizontal" dropShadowEnabled="false" alpha="0" creationPolicy="all" mouseEnabled="false"
+	addedToStage="addedToStageHandler()" creationComplete="init()">
+	
+	<mx:Metadata>
+		[Style(name="placement", type="String", inherit="no")]
+	</mx:Metadata>
+	
+	<mx:Script>
+		<![CDATA[
+			import mx.events.FlexEvent;
+			import com.sdg.display.IRoomItemDisplay;
+			
+			import flash.geom.Rectangle;
+			
+			public static var PLACEMENT_BOTTOM:String = "bottom";
+			public static var PLACEMENT_CENTER:String = "center";
+			public static var PLACEMENT_TOP:String = "top";
+			public static var PLACEMENT_SIDE:String = "side";
+			public static var MARGIN:Number = 10;
+			
+			protected var imageRect:Rectangle;
+			protected var parentWidth:uint;
+			
+			private var _placement:String;
+			private var _display:IRoomItemDisplay;
+			
+			public function get display():IRoomItemDisplay
+			{
+				return _display;
+			}
+			
+			public function set display(value:IRoomItemDisplay):void
+			{
+				if (value != _display)
+				{
+					if (_display) _display.removeEventListener(Event.REMOVED, displayRemovedHandler);
+					
+					_display = value;
+					
+					if (_display)
+					{
+						_display.addEventListener(Event.REMOVED, displayRemovedHandler);
+						addEventListener(Event.ENTER_FRAME, updatePosition);
+						updatePosition();
+						show();
+					}
+					else
+					{
+						removeEventListener(Event.ENTER_FRAME, updatePosition);
+						hide();
+					}
+				}
+			}
+			
+			protected function init():void
+			{
+				if (_display)
+				{
+					updatePosition();
+					fadeIn.play();
+				}
+			}
+			
+			override public function styleChanged(styleProp:String):void
+			{
+				super.styleChanged(styleProp);
+				
+				if (styleProp == "placement" || styleProp == null)
+				{
+					_placement = getStyle("placement");
+				}
+			}
+			
+			public function show():void
+			{
+				dispatchEvent(new FlexEvent(FlexEvent.SHOW));
+				if (!fadeIn.isPlaying) fadeIn.play();
+			}
+			
+			public function hide():void
+			{
+				if (!fadeOut.isPlaying) fadeOut.play();
+			}
+			
+			public function remove():void
+			{
+				try { parent.removeChild(this); } catch (e:Error) {}
+			}
+			
+			protected function addedToStageHandler():void
+			{
+				parentWidth = parent.width;
+				
+				if (_display)
+				{
+					updatePosition();
+					fadeIn.play();
+				}
+			}
+			
+			protected function updatePosition(event:Event = null):void
+			{
+				imageRect = _display.getImageRect();
+				
+				var x:Number, y:Number;
+				
+				if (_placement == PLACEMENT_SIDE)
+				{
+					if (display.x + imageRect.x + imageRect.width  + width + MARGIN > parentWidth)
+						x = imageRect.x - width - MARGIN;
+					else
+						x = imageRect.right + MARGIN;
+						
+					y = imageRect.y + imageRect.height * .5 - height * .5;
+				}
+				else if (_placement == PLACEMENT_CENTER)
+				{
+					x = imageRect.x + imageRect.width * .5 - width * .5;
+					y = imageRect.y + imageRect.height * .5 - height * .5;
+				}
+				else
+				{
+					if (_placement == PLACEMENT_TOP)
+						y = imageRect.y - MARGIN;
+					else
+						y = imageRect.bottom + MARGIN;
+					
+					x = imageRect.x + imageRect.width * .5 - width * .5;
+				}
+				
+				this.x = x + _display.x;
+				this.y = y + _display.y;
+			}
+			
+			protected function displayRemovedHandler(event:Event):void
+			{
+				remove();
+			}
+		]]>
+	</mx:Script>
+	
+	<!-- effects -->
+	<mx:Fade id="fadeIn" target="{this}" alphaFrom="{this.alpha}" alphaTo="1" duration="300" effectStart="fadeOut.stop()"/>
+	<mx:Fade id="fadeOut" target="{this}" alphaTo="0" duration="300" effectStart="fadeIn.stop()" effectEnd="remove()"/>
+	
+</controls:BoxContainer>

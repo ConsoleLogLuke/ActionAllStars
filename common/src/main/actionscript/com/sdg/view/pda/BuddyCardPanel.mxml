@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" xmlns:controls="com.sdg.components.controls.*"
+	implements="com.sdg.view.pda.interfaces.IPDAMainPanel, com.sdg.model.ISetAvatar" width="340" height="520" xmlns:pda="com.sdg.view.pda.*" creationComplete="init()">
+	
+	<mx:Script>
+		<![CDATA[
+			import com.sdg.view.avatarcard.AvatarInfoPanel;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			import com.sdg.events.AvatarApparelEvent;
+			import com.sdg.view.avatarcard.AvatarCardTwoSide;
+			import com.sdg.control.room.RoomManager;
+			import com.sdg.control.room.itemClasses.AvatarController;
+			import com.sdg.model.Avatar;
+			import com.sdg.control.PDAController;
+			import com.sdg.view.pda.interfaces.IPDASidePanel;
+			
+			public static const AVATAR_SET:String = 'avatar set';
+			private static const CARD_WIDTH:Number = 300;
+			private static const CARD_HEIGHT:Number = 430;
+			
+			[Bindable]
+			private var _controller:PDAController;
+			private var _isInitialized:Boolean = false;
+			
+			private var _avatar:Avatar;
+			
+			////////////////////
+			// PUBLIC FUNCTIONS
+			////////////////////
+			
+			public function init(controller:PDAController = null):void
+			{
+				_controller = controller;
+				_isInitialized = true;
+				
+				refresh();
+			}
+			
+			public function refresh():void
+			{
+				// show the invite button if we are in inviteMode
+				var isInRoom:Boolean = RoomManager.getInstance().currentRoom.getAvatarById(_avatar.avatarId) != null;
+				var userController:AvatarController = RoomManager.getInstance().userController;
+			}
+			
+			public function close():void
+			{
+				// Handle clean up.
+			}
+			
+			////////////////////
+			// GET/SET METHODS
+			////////////////////
+			
+			public function set avatar(value:Avatar):void
+			{
+				if (value == _avatar) return;
+				_avatar = value;
+				
+				// Add a new avatar info panel.
+				var avatarInfoPanel:AvatarInfoPanel = new AvatarInfoPanel(340, 520);
+				rawChildren.addChild(avatarInfoPanel);
+				
+				// Get avatar apparel.
+				CairngormEventDispatcher.getInstance().addEventListener(AvatarApparelEvent.AVATAR_APPAREL_COMPLETED, onApparelComplete);
+				CairngormEventDispatcher.getInstance().dispatchEvent(new AvatarApparelEvent(_avatar));
+				
+				// Dispatch avatar set event.
+				dispatchEvent(new Event(AVATAR_SET));
+				
+				function onApparelComplete(e:AvatarApparelEvent):void
+				{
+					// Remove event listener.
+					CairngormEventDispatcher.getInstance().removeEventListener(AvatarApparelEvent.AVATAR_APPAREL_COMPLETED, onApparelComplete);
+					
+					// Remove previous card.
+					
+					
+					// Set new card.
+					
+				}
+			}
+			
+			public function get avatar():Avatar
+			{
+				return _avatar;
+			}
+			
+			public function get sidePanel():IPDASidePanel
+			{
+				return null;
+			}
+			
+			public function set controller(value:PDAController):void
+			{
+				_controller = value;
+			}
+			
+			public function get isInitialized():Boolean
+			{
+				return _isInitialized;
+			}
+			
+			public function get panelName():String
+			{
+				return null;
+			}
+		]]>
+	</mx:Script>
+</mx:Canvas>

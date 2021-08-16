@@ -1,0 +1,215 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas
+	xmlns:mx="http://www.adobe.com/2006/mxml"
+    xmlns:sdgcontrols="com.sdg.components.controls.*"
+	horizontalScrollPolicy="off"
+	verticalScrollPolicy="off" implements="com.sdg.components.dialog.ISdgDialog">
+
+	<mx:Script>
+		<![CDATA[
+			import mx.rpc.events.ResultEvent;
+			import mx.collections.ArrayCollection;
+			import mx.controls.RichTextEditor;
+			import mx.core.Container;
+			import mx.managers.PopUpManager;
+			import com.sdg.events.ModeratorSaveReportEvent;
+			import com.sdg.model.ModelLocator;
+			import com.sdg.control.room.RoomManager;
+			import com.sdg.model.Server;
+
+	        // reportTypeId constants
+			private const BAD_WORDS_SCENE:uint = 2;
+			private const PERSONAL_INFO_SCENE:uint = 3;
+			private const RUDE_SCENE:uint = 6;
+			private const BROKEN_SCENE:uint = 8;
+
+			private var _primaryReason:String;
+			private var _reportTypeId:uint;
+
+
+			public function init(params:Object):void
+			{
+				stage.focus = this;
+				addEventListener(KeyboardEvent.KEY_DOWN, onKeyDown);
+			}
+
+			private function onKeyDown(event:KeyboardEvent):void
+			{
+//				if (event.shiftKey)
+//				{
+//					if (event.keyCode == Keyboard.F5)
+//					{
+//						trace("go faster");
+//						RoomManager.getInstance().userController.walkSpeedMultiplier += .5;
+//					}
+//					else if (event.keyCode == Keyboard.F6)
+//					{
+//						trace("go slower");
+//						RoomManager.getInstance().userController.walkSpeedMultiplier -= .5;
+//
+//						// set the lowest walk speed to 1/2 speed here
+//						if (RoomManager.getInstance().userController.walkSpeedMultiplier <= .5)
+//							RoomManager.getInstance().userController.walkSpeedMultiplier = .5;
+//					}
+//					else if (event.keyCode == Keyboard.HOME)
+//					{
+//						// normal speed
+//						trace("normal speed");
+//						RoomManager.getInstance().userController.walkSpeedMultiplier = 1;
+//					}
+//				}
+			}
+
+            public function close():void
+            {
+            	removeEventListener(KeyboardEvent.KEY_DOWN, onKeyDown);
+
+            	PopUpManager.removePopUp(this);
+            }
+
+            private function goTo(id:Container):void
+			{
+				steps.selectedChild = id;
+			}
+
+            private function selectPrimaryReason(reportTypeId:uint, reason:String, id:Container):void
+            {
+            	_primaryReason = reason;
+            	_reportTypeId = reportTypeId;
+            	goTo(id);
+            }
+            private function showUnderline(e:MouseEvent):void
+            {
+            	Text(e.currentTarget).styleName = "redLinkUnderline";
+            }
+
+            private function removeUnderline(e:MouseEvent):void
+            {
+            	Text(e.currentTarget).styleName = "redLinkNone";
+            }
+
+            private function send():void
+            {
+            	if (ModelLocator.getInstance().avatar.membershipStatus != 3 && Server.getCurrent().chatMode != 2)
+            	{
+            		var params:Object = {
+		             	reportTypeId:_reportTypeId,
+		             	reporterId:ModelLocator.getInstance().avatar.avatarId,
+		             	primaryReason:_primaryReason,
+		            	subReason:reportReason.text,
+		             	roomId:String(RoomManager.getInstance().currentRoomId),
+		            	serverId:String(Server.getCurrentId())
+	             	};
+	            	dispatchEvent(new ModeratorSaveReportEvent(params));
+	            }
+            	//close();
+            }
+
+
+		]]>
+	</mx:Script>
+	<!--
+	<business:Services/>
+	<mx:Style source="styles/style.css"/>
+	-->
+	<mx:Style>
+		Text.redLinkUnderline
+		{
+			color:#881e1e;
+			textDecoration:underline;
+		}
+		Text.redLinkNone
+		{
+			color:#881e1e;
+			textDecoration:none;
+		}
+		Text.standardText
+		{
+			color:#000000;
+		}
+	</mx:Style>
+
+
+	<sdgcontrols:TitlePanel title="Report Scene" id="titleBox" width="426" height="350" showCloseButton="true" close="close()" helpId="2114">
+		<sdgcontrols:BoxContainer styleName="white" width="100%" height="100%" verticalGap="30" verticalScrollPolicy="off" horizontalScrollPolicy="off">
+			<mx:ViewStack id="steps" width="100%" height="100%">
+				<mx:VBox id="confirmation" horizontalAlign="center" height="100%" verticalGap="60">
+					<mx:Text styleName="redLinkNone" width="100%" horizontalCenter="0" textAlign="center">
+						<mx:text>Do you wish to report the
+scene to the Moderators?</mx:text>
+					</mx:Text>
+					<mx:HBox verticalAlign="bottom">
+						<mx:Button styleName="blue" label="No" buttonMode="true" click="close()"/>
+
+						<mx:Button styleName="orange" label="Yes" buttonMode="true" click="goTo(primaryReasons)"/>
+					</mx:HBox>
+				</mx:VBox>
+
+				<mx:VBox id="primaryReasons" width="100%" horizontalAlign="center" verticalGap="15">
+					<mx:Text styleName="redLinkNone" fontWeight="bold" text="What is your reason for reporting?"  width="100%" textAlign="center"/>
+					<mx:Grid width="80%">
+						<mx:GridRow width="100%" height="100%" click="selectPrimaryReason(PERSONAL_INFO_SCENE, r1.text, description)">
+							<mx:GridItem height="100%">
+								<mx:Button styleName="darkRed" label="A" buttonMode="true" />
+							</mx:GridItem>
+							<mx:GridItem width="100%" height="100%" verticalAlign="middle">
+								<mx:Text id="r1" mouseOver="showUnderline(event)" mouseOut="removeUnderline(event)" selectable="false" styleName="redLinkNone" text="Personal Information" useHandCursor="true"/>
+							</mx:GridItem>
+						</mx:GridRow>
+						<mx:GridRow width="100%" height="100%" click="selectPrimaryReason(BAD_WORDS_SCENE, r2.text, description)">
+							<mx:GridItem height="100%">
+								<mx:Button styleName="darkRed" label="B" buttonMode="true"/>
+							</mx:GridItem>
+							<mx:GridItem width="100%" height="100%" verticalAlign="middle">
+								<mx:Text id="r2" mouseOver="showUnderline(event)" mouseOut="removeUnderline(event)" selectable="false" styleName="redLinkNone" text="Bad Words"  useHandCursor="true"/>
+							</mx:GridItem>
+						</mx:GridRow>
+						<mx:GridRow width="100%" height="100%" click="selectPrimaryReason(RUDE_SCENE, r3.text, description)">
+							<mx:GridItem height="100%">
+								<mx:Button styleName="darkRed" label="C" buttonMode="true"/>
+							</mx:GridItem>
+							<mx:GridItem width="100%" height="100%" verticalAlign="middle">
+								<mx:Text id="r3" mouseOver="showUnderline(event)" mouseOut="removeUnderline(event)" selectable="false" styleName="redLinkNone" text="Rude Behavior"  useHandCursor="true"/>
+							</mx:GridItem>
+						</mx:GridRow>
+						<mx:GridRow width="100%" height="100%" click="selectPrimaryReason(BROKEN_SCENE, r4.text,description)">
+							<mx:GridItem height="100%">
+								<mx:Button styleName="darkRed" label="D" buttonMode="true" />
+							</mx:GridItem>
+							<mx:GridItem width="100%" height="100%" verticalAlign="middle">
+								<mx:Text id="r4" mouseOver="showUnderline(event)" mouseOut="removeUnderline(event)" selectable="false" styleName="redLinkNone" text="Broken Item"  useHandCursor="true"/>
+							</mx:GridItem>
+						</mx:GridRow>
+					</mx:Grid>
+						<mx:Button label="BACK" buttonMode="true" click="goTo(confirmation)"/>
+				</mx:VBox>
+
+				<mx:VBox id="description" width="100%" horizontalAlign="center" verticalGap="15">
+					<mx:Text styleName="redLinkNone" fontWeight="bold" text="Please describe the situation you are reporting:"  width="100%" textAlign="center"/>
+					<mx:TextArea id="reportReason" width="70%" height="60%" borderColor="#881e1e" cornerRadius="4" styleName="standardText" maxChars="240">
+						<mx:htmlText></mx:htmlText>
+					</mx:TextArea>
+					<mx:Button label="Submit" click="send();goTo(complete)">
+
+					</mx:Button>
+				</mx:VBox>
+
+
+				<mx:VBox id="complete" horizontalAlign="center" height="100%" verticalAlign="top" verticalGap="50">
+
+					<mx:Text width="100%" textAlign="center" styleName="redLinkNone">
+						<mx:text><![CDATA[Your report has been sent to the Moderators.
+While the Moderators assess the situation,
+we suggest that you wander to another section
+in the world.
+
+Thanks for doing your part in keeping ACTION ALLSTARS the best place for everyone!]]></mx:text>
+					</mx:Text>
+
+					<mx:Button styleName="orange" label="OKAY" buttonMode="true" click="close()"/>
+
+				</mx:VBox>
+			</mx:ViewStack>
+		</sdgcontrols:BoxContainer>
+	</sdgcontrols:TitlePanel>
+</mx:Canvas>

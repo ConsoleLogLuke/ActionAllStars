@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="258" height="70"
+	cornerRadius="7" borderStyle="solid" borderThickness="2" borderColor="#769ebe" verticalScrollPolicy="off" horizontalScrollPolicy="off"
+	backgroundColor="#f3f8ff" mouseChildren="false">
+	<mx:Script>
+		<![CDATA[
+			[Embed(source='images/pickem/thumbUp.png')]
+			static private var thumbUp:Class;
+			[Embed(source='images/pickem/thumbDown.png')]
+			static private var thumbDown:Class;
+
+			public var question:String;
+			public var choice1:Object = null;
+			public var choice2:Object = null;
+
+			public function setParams(question:String, choice1:Object, choice2:Object):void
+			{
+				this.question = question;
+				image1.source = choice1.img;
+				image1.addEventListener(IOErrorEvent.IO_ERROR, onIOError);
+				text1.text = choice1.text;
+
+				image2.source = choice2.img;
+				image2.addEventListener(IOErrorEvent.IO_ERROR, onIOError);
+				text2.text = choice2.text;
+
+				this.choice1 = choice1;
+				this.choice2 = choice2;
+			}
+
+			private function onIOError(event:IOErrorEvent):void
+			{
+				event.currentTarget.removeEventListener(IOErrorEvent.IO_ERROR, onIOError);
+				Image(event.currentTarget).source = null;
+			}
+
+			public function get choice1Percent():int
+			{
+				return calcPercent(choice1.answerCount);
+			}
+
+			public function get choice2Percent():int
+			{
+				return calcPercent(choice2.answerCount);
+			}
+
+			private function calcPercent(count:int):int
+			{
+				var total:int = choice1.answerCount + choice2.answerCount;
+				if (total != 0)
+					return Math.round((count/total) * 100);
+				else
+					return 0;
+			}
+
+			public function setState(selected:int, correct:int):void
+			{
+				var selectionColor:String;
+
+				if (correct == 0)
+				{
+					this.setChildIndex(option1, this.getChildIndex(option1) - 1);
+					this.setChildIndex(option2, this.getChildIndex(option2) - 1);
+
+					if (selected != 0)
+					{
+						Canvas(this["option" + selected]).setStyle("backgroundColor", "#ffffff");
+						Canvas(this["option" + selected]).setStyle("backgroundAlpha", 1);
+						Canvas(this["option" + selected]).setStyle("borderColor", "#172d5f");
+						Canvas(this["option" + selected]).setStyle("borderThickness", 2);
+						Text(this["text" + selected]).setStyle("color", "#172d5f");
+					}
+				}
+				else
+				{
+					var bgColor:String;
+					var borderColor:String;
+
+					if (correct == selected || correct == -1)
+					{
+						thumb.source = thumbUp;
+						bgColor = "#40996d";
+						borderColor = "#376d57";
+						selectionColor = "#185537";
+					}
+					else
+					{
+						thumb.source = thumbDown;
+						bgColor = "#b23d65";
+						borderColor = "#99123c";
+						selectionColor = "#900e35";
+					}
+
+					this.setStyle("backgroundColor", bgColor);
+					this.setStyle("borderColor", borderColor);
+
+					option1.setStyle("backgroundColor", bgColor);
+					option1.setStyle("borderColor", borderColor);
+					option2.setStyle("backgroundColor", bgColor);
+					option2.setStyle("borderColor", borderColor);
+
+					vs.visible = false;
+					text1.setStyle("color", "#172d5f");
+					text2.setStyle("color", "#172d5f");
+
+					if (correct != -1)
+						markCorrect(correct);
+					else
+					{
+						markCorrect(1);
+						markCorrect(2);
+					}
+
+					if (selected != 0)
+					{
+						Canvas(this["option" + selected]).setStyle("backgroundColor", selectionColor);
+						Canvas(this["option" + selected]).setStyle("borderColor", "#ffffff");
+						Canvas(this["option" + selected]).setStyle("borderThickness", 2);
+					}
+				}
+			}
+
+			private function markCorrect(correct:int):void
+			{
+				this.setChildIndex(this["option"+ correct], this.getChildIndex(this["option"+ correct]) - 1);
+				Image(this["image" + correct]).filters = [new GlowFilter(0xffffff, .8, 10, 10)];
+				Text(this["text" + correct]).setStyle("color", "#ffffff");
+			}
+
+//			public function set selected(selection:int):void
+//			{
+//				if (selection == 0)
+//					return;
+//
+//				_selected = selection;
+//
+//				Canvas(this["option" + selection]).setStyle("backgroundColor", "#ffffff");
+//				Canvas(this["option" + selection]).setStyle("borderColor", "#172d5f");
+//				Canvas(this["option" + selection]).setStyle("borderThickness", 2);
+//			}
+//
+//			public function set answer(ans:int):void
+//			{
+//				if (ans == 0)
+//					return;
+//
+//				//film.visible = true;
+//				vs.visible = false;
+//				//this.setChildIndex(this["option" + ans], this.numChildren-2);
+//				//this.setStyle("backgroundColor", null);
+//
+//				//selectionBorder.setStyle("borderColor", "#ffffff");
+//
+//				if (_selected != 0)
+//					Canvas(this["option" + _selected]).setStyle("backgroundColor", null);
+//				//option1.setStyle("backgroundColor", null);
+//				//option2.setStyle("backgroundColor", null);
+//				//if (_selected != 0)
+//				//{
+//				//	Image(this["image" + _selected]).alpha = .8;
+//				//}
+//				//Canvas(this["film" + (_selected%2)+2]).visible = true;
+//
+//				if (ans == _selected)
+//				{
+//					thumb.source = thumbUp;
+//					this.setStyle("borderColor", "#004322");
+//					this.setStyle("backgroundColor", "#0c7d3f");
+//
+//					option1.setStyle("borderColor", "#004322");
+//					option2.setStyle("borderColor", "#004322");
+//
+//					//Canvas(this["film" + (_selected%2)+2]).setStyle("backgroundColor", "#0c7d3f");
+//				}
+//				else
+//				{
+//					thumb.source = thumbDown;
+//					this.setStyle("borderColor", "#5d041f");
+//					this.setStyle("backgroundColor", "#a10434");
+//
+//					option1.setStyle("borderColor", "#5d041f");
+//					option2.setStyle("borderColor", "#5d041f");
+//
+//					//Canvas(this["film" + (_selected%2)+2]).setStyle("backgroundColor", "#a10434");
+//				}
+//			}
+		]]>
+	</mx:Script>
+
+	<!--<mx:Style source="styles/style2.css" />-->
+	<mx:Style>
+		Text.vsStyle
+		{
+			fontFamily: GillSans;
+			fontSize: 13;
+			fontWeight: bold;
+			fontThickness: 200;
+			color: #113267;
+		}
+	</mx:Style>
+
+	<mx:Canvas width="100" height="58" x="5" verticalCenter="0">
+		<mx:Image id="image1" maxHeight="40" maxWidth="50" horizontalCenter="0" y="2"/>
+		<mx:Text id="text1" horizontalCenter="0" width="92" bottom="0" fontSize="11" color="#769ebe" textAlign="center"/>
+	</mx:Canvas>
+
+	<mx:Canvas id="option1" width="100" height="58" x="5" verticalCenter="0"
+		borderStyle="solid" cornerRadius="5" borderThickness="1" borderColor="#769ebe"
+		verticalScrollPolicy="off" horizontalScrollPolicy="off" backgroundAlpha=".75">
+	</mx:Canvas>
+
+	<mx:Canvas width="100" height="58" x="149" verticalCenter="0">
+		<mx:Image id="image2" maxHeight="40" maxWidth="50" horizontalCenter="0" y="2"/>
+		<mx:Text id="text2" horizontalCenter="0" width="92" bottom="0" fontSize="11" color="#769ebe" textAlign="center"/>
+	</mx:Canvas>
+
+	<mx:Canvas id="option2" width="100" height="58" x="149" verticalCenter="0"
+		borderStyle="solid" cornerRadius="5" borderThickness="1" borderColor="#769ebe"
+		verticalScrollPolicy="off" horizontalScrollPolicy="off" backgroundAlpha=".75">
+	</mx:Canvas>
+
+	<mx:Text id="vs" text="vs." styleName="vsStyle" horizontalCenter="0" verticalCenter="0"/>
+
+	<mx:Image id="thumb" horizontalCenter="0" verticalCenter="0"/>
+
+	<!--<mx:Canvas id="selectionBorder" width="90" height="58" visible="false" verticalCenter="0"
+		borderStyle="solid" borderThickness="2" borderColor="#172d5f" cornerRadius="5"/>-->
+</mx:Canvas>

@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="360" height="78">
+	<mx:Script>
+		<![CDATA[
+			import com.sdg.model.Server;
+			public static const MAX_NUM_USERS:uint = 400;
+
+			[Bindable]
+			protected var state:String;
+
+			override public function get currentState():String
+			{
+				return state;
+			}
+
+			override public function set currentState(value:String):void
+			{
+				state = value;
+			}
+		]]>
+	</mx:Script>
+	<mx:Style>
+		Canvas.default
+		{
+			borderColor: #1A8DB9;
+			backgroundColor: #126485;
+		}
+		Canvas.mouseOver
+		{
+			borderColor: #126485;
+			backgroundColor: #1A8DB9;
+		}
+		Canvas.disabled
+		{
+			borderColor: #4A6877;
+			backgroundColor: #5B8091;
+		}
+	</mx:Style>
+	<mx:Canvas id="serverButton" borderStyle="solid" borderThickness="3" cornerRadius="15" horizontalCenter="0" verticalCenter="0"
+		width="350" height="68" buttonMode="{data.numUsers &lt; MAX_NUM_USERS}" mouseChildren="false"	styleName="{data.numUsers &lt; MAX_NUM_USERS ? 'default' : 'disabled'}"
+		mouseOver="{serverButton.styleName = data.numUsers &lt; MAX_NUM_USERS ? 'mouseOver' : 'disabled'}"
+		mouseOut="{serverButton.styleName = data.numUsers &lt; MAX_NUM_USERS ? 'default' : 'disabled'}">
+
+		<mx:HBox verticalAlign="middle" verticalCenter="0" x="15" visible="{data.numUsers &lt; MAX_NUM_USERS}">
+			<mx:Label text="{data.name}" fontSize="13" selectable="false" mouseChildren="false" fontWeight="bold" color="#ffffff"
+				visible="{data.numUsers &lt; MAX_NUM_USERS}" filters="{[new GlowFilter(0x00CCFF, .5, 5, 5, 5, 20)]}" fontFamily="EuroStyle"/>
+			<mx:Image id="ultraSafe" source="@Embed('images/server/safeChatIcon.png')"
+				visible="{data.chatMode == Server.ULTRA_SAFE_CHAT}"/>
+		</mx:HBox>
+
+		<mx:HBox id="numUsersBox" verticalCenter="0" verticalAlign="middle"
+			horizontalGap="0" right="15" visible="{data.numUsers &lt; MAX_NUM_USERS}">
+
+			<mx:Image id="personIcon5" source="assets/swfs/registration/usersOnlineIcon.swf" filters="{[new GlowFilter(0x00CCFF, .3, 2, 2, 8, 30)]}"
+				visible="{data.numUsers &gt; 150 &amp;&amp; data.numUsers &lt; MAX_NUM_USERS}"/>
+			<mx:Image id="personIcon4" source="assets/swfs/registration/usersOnlineIcon.swf" filters="{[new GlowFilter(0x00CCFF, .3, 2, 2, 8, 30)]}"
+				visible="{data.numUsers &gt; 100 &amp;&amp; data.numUsers &lt; MAX_NUM_USERS}"/>
+			<mx:Image id="personIcon3" source="assets/swfs/registration/usersOnlineIcon.swf" filters="{[new GlowFilter(0x00CCFF, .3, 2, 2, 8, 30)]}"
+				visible="{data.numUsers &gt; 50 &amp;&amp; data.numUsers &lt; MAX_NUM_USERS}"/>
+			<mx:Image source="assets/swfs/registration/usersOnlineIcon.swf" filters="{[new GlowFilter(0x00CCFF, .3, 2, 2, 8, 30)]}"/>
+			<mx:Image source="assets/swfs/registration/usersOnlineIcon.swf" filters="{[new GlowFilter(0x00CCFF, .3, 2, 2, 8, 30)]}"/>
+		</mx:HBox>
+
+		<mx:Label text="SOLD OUT" horizontalCenter="0" verticalCenter="0" fontSize="30" fontWeight="bold" color="#4A6877"
+			visible="{!(data.numUsers &lt; MAX_NUM_USERS)}"/>
+	</mx:Canvas>
+</mx:Canvas>

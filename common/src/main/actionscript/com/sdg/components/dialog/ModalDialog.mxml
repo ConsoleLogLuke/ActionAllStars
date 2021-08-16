@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Box xmlns:mx="http://www.adobe.com/2006/mxml" width="925" height="665"
+	horizontalAlign="center" verticalAlign="middle" backgroundColor="#000000" backgroundAlpha=".6">
+
+	<mx:Script>
+		<![CDATA[
+		
+			import flash.display.Bitmap;
+			import mx.core.Application;
+			import mx.core.IFlexDisplayObject;
+			import mx.core.UIComponent;
+			import mx.managers.PopUpManager;
+			
+			import com.sdg.components.dialog.ISdgDialog;
+			
+			private var _childDialog:IFlexDisplayObject;
+			
+			public function init(params:Object):IFlexDisplayObject
+			{
+				// create the child dialog				
+				_childDialog = params.createdDialog;
+				
+				if (_childDialog == null)
+	            	_childDialog = PopUpManager.createPopUp(DisplayObject(Application.application), params.dialogClass, false);
+	            else
+      	        	PopUpManager.addPopUp(_childDialog, DisplayObject(Application.application), false);
+	            	
+            	PopUpManager.centerPopUp(_childDialog);
+            	
+            	// listen for the child dialog's close event
+            	_childDialog.addEventListener(Event.REMOVED, onChildRemoved);
+            	
+            	// listen for click events on the outside modal area (this dialog)
+            	this.addEventListener(MouseEvent.MOUSE_DOWN, onMouseDown);
+	                
+	            // initilize the child dialog
+	            var sdgDialog:ISdgDialog = _childDialog as ISdgDialog;
+	            if (sdgDialog != null)
+	            	sdgDialog.init(params.childParams);
+	            	
+	            return _childDialog;
+			}
+			
+			public function close():void
+			{
+				// close this (the parent) dialog
+				PopUpManager.removePopUp(this);
+			}
+			
+			private function onChildRemoved(e:Event):void
+			{
+				if (e.target == _childDialog)	
+					this.close();
+			}
+
+			private function onMouseDown(e:MouseEvent):void
+			{
+				var childDialogIndex:int = parent.getChildIndex(_childDialog as DisplayObject);
+				// this, the modal background, should be behind the childDialog
+				parent.setChildIndex(this, Math.max(1, childDialogIndex - 1));
+			}
+		]]>
+	</mx:Script>
+</mx:Box>

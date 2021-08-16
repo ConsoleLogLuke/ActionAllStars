@@ -1,0 +1,1 @@
+﻿package com.sdg.display{		import com.sdg.model.SdgItem;		public class CharacterSprite extends RoomItemSprite	{		public function CharacterSprite(item:SdgItem)		{			super(item);		}    }}

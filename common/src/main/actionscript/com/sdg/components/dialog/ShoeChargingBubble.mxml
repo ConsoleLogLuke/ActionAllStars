@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml"
+	xmlns:sdgcontrols="com.sdg.components.controls.*"
+	implements="com.sdg.components.dialog.ISdgDialog"
+	horizontalScrollPolicy="off" verticalScrollPolicy="off"
+	mouseDownOutside="close()" rollOut="closeTimer.start()" rollOver="closeTimer.reset()" creationComplete="onCreationComplete()" >
+	<mx:Script>
+		<![CDATA[
+			import com.sdg.model.Avatar;
+			import mx.core.Application;
+			import com.sdg.model.ModelLocator;
+			import com.sdg.utils.PreviewUtil;
+			import com.sdg.model.InventoryItem;
+			import com.sdg.control.room.RoomManager;
+			import com.sdg.control.room.itemClasses.AvatarController;
+			import mx.events.ResizeEvent;
+			import mx.managers.PopUpManager;
+			import com.sdg.utils.EventUtil;
+		
+			import flash.events.TimerEvent;
+			import flash.utils.Timer;
+			
+			public static const BUTTONS_NONE:int = 0;
+			public static const BUTTONS_OK_CANCEL:int = 1;
+			
+			private var closeTimer:Timer = new Timer(2000, 1);
+			private var _button:DisplayObject;
+			private var _buttonsType:int = BUTTONS_NONE;
+			private var _text:String = "";
+			private var _bubbleHeight:int = 88;
+			private var _bubbleWidth:int = 0;
+			private var _swfPath:String;
+			
+			public function init(params:Object):void
+		    {
+		    	_button = params.button as DisplayObject;
+		    	
+    			bubble.setStyle("bubbleBorderColor", 0x9F9F9F);
+    			bubble.setStyle("bubbleBackgroundColor", 0xECECEC);
+    			
+    			if (params.bubbleHeight)
+    				_bubbleHeight = params.bubbleHeight;
+    				
+    			
+    			if (params.swfPath)
+    			{
+	    			// just display a swf
+    				_swfPath = params.swfPath;
+    			}
+    			else 
+    			{	
+	    			if (params.buttonsType)
+	    				_buttonsType = params.buttonsType;
+	    				
+    				_text = params.text;
+	    			sizeBubble();
+	    		}	
+    			
+    			
+		    	closeTimer.addEventListener(TimerEvent.TIMER_COMPLETE, EventUtil.createEventInvoker(close));
+		    }
+
+   		    public function close():void
+	        {	
+            	PopUpManager.removePopUp(this);
+            	closeTimer.reset();
+            	dispatchEvent(new Event(Event.CLOSE));
+            }
+            
+            private function buyCharges(event:Event):void
+            { 
+            	// refill the the user's shoe charges to 20
+            	// get the shoes
+            	var avatar:Avatar = ModelLocator.getInstance().avatar;
+   				var shoes:InventoryItem = avatar.apparel[PreviewUtil.getLayerId(PreviewUtil.SHOES)] as InventoryItem;
+				if (!shoes || shoes.charges < 0 || shoes.charges == 20)
+					return;
+					
+				// calculate the cost	
+				var chargesNeeded:int = 20 - shoes.charges;
+				var cost:int = 25 * chargesNeeded;      
+				
+				// fill the shoes
+				shoes.charges = 20; 
+				Object(Application.application.mainLoader.child.speedShoesBtn.content).charges = shoes.charges;
+            	RoomManager.getInstance().userController.setItemCharges(shoes, cost);
+				avatar.currency -= cost;
+				
+				// close the dialog
+				close();
+            }
+            
+            private function sizeBubble():void
+            {
+            	bubble.addEventListener(ResizeEvent.RESIZE, onBubbleResize);
+           		bubble.text = _text;
+           		bubble.bubbleWidth = 220;
+           		bubble.bubbleHeight = _bubbleHeight
+            	if (_buttonsType == BUTTONS_OK_CANCEL)
+            	{
+            		bubble.rows = 1;
+            		bubble.columns = 2;
+            		
+		    		// the 'OK' button defaults to a 'buy' button since that is the only use at the time of this writing
+					bubble.addButton("assets/swfs/buyButton.swf", buyCharges);
+					
+					// the cancel button
+					bubble.addButton("assets/swfs/cancelButton.swf", function (event:Event):void {close();});
+            	}
+            	else if (_buttonsType == BUTTONS_NONE)
+            	{
+            		bubble.textOnly = true;
+            	}
+            }
+            
+            private function onCreationComplete():void
+            {
+            	if (_swfPath && _swfPath.length)
+            	{
+	            	bubble.addEventListener(ResizeEvent.RESIZE, onBubbleResize);
+	            	
+            		// just one big button
+            		bubble.columns = 1;
+            		bubble.rows = 1;
+            		bubble.padding = 0;
+            		bubble.buttonWidth = 192;
+            		bubble.buttonHeight = 95;
+            		bubble.addButton(_swfPath); 
+            	}
+            }
+            
+            private function onBubbleResize(event:Event):void
+            {
+				// position the dialog above the button
+				var pointButton:Point = _button.parent.localToGlobal(new Point(_button.x, _button.y));
+				this.x = pointButton.x + (_button.width / 2) - (bubble.width / 2);
+				this.y = pointButton.y - bubble.height;
+            }
+
+		]]>
+	</mx:Script>
+	<sdgcontrols:ButtonsBubble id="bubble" horizontalScrollPolicy="off" verticalScrollPolicy="off"
+ />
+</mx:Canvas>

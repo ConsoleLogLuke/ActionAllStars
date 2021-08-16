@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" 
+	xmlns:sdgcontrols="com.sdg.components.controls.*" 
+	horizontalScrollPolicy="off"  
+	verticalScrollPolicy="off" implements="com.sdg.components.dialog.ISdgDialog">	
+	<mx:Script>
+		import com.sdg.net.socket.SocketClient;
+		import mx.controls.Button;
+		import mx.core.Container;
+		//import com.sdg.control.RoomManager;
+		
+		import mx.events.FlexMouseEvent;		
+		import mx.managers.PopUpManager;
+		
+		import flash.events.MouseEvent;
+		import flash.events.Event;
+		
+		private var _es:SocketClient = null;
+		
+		/**
+		 * App to send debug messages to ElectroServer
+		 * Must turn DEBUG to true in RoomConsol.mxml for this to be active
+		 **/
+		public function init(params:Object):void
+		{
+			//trace("ESTEST FILE LOADING");
+			//addEventListener(FlexMouseEvent.MOUSE_DOWN_OUTSIDE, onMouseDownOutside);
+		}
+		
+		public function close():void
+        {
+        	PopUpManager.removePopUp(this);
+        }
+        
+        public function clearText():void
+        {
+        	plugin.text = null;
+			action.text = null;
+			payload.text = null;
+			receiverId.text = null;
+			senderId.text = null;
+			status.text = null;
+			roomId.text = null;
+			gameId.text = null;
+			friendTypeId.text = null;
+			achievementId.text = null;
+			buddyAvatarId.text = null;
+        }
+        
+        public function setParams():Object
+        {
+        	var params:Object = new Object();
+        	params.receiverAvatarId = uint(receiverId.text);
+			params.senderAvatarId = uint(senderId.text);
+			params.statusId = uint(status.text);
+			params.roomId = uint(roomId.text);
+			params.gameId = uint(gameId.text);
+			params.friendTypeId = uint(friendTypeId.text);
+			params.buddyAvatarId = uint(buddyAvatarId.text);
+			params.achievementId = uint(achievementId.text);
+			return params;
+        }
+		
+		public function sendMessage(event:MouseEvent):void
+		{
+			if(_es==null)
+			{
+				_es = SocketClient.getInstance();
+			}
+			var params:Object = setParams();
+			if(payload.text.length==0)
+			{
+				_es.sendPluginMessage(plugin.text,action.text,params);
+				trace("Using SendPluginMessage");
+			}
+			else
+			{
+				//don't know why I can't use _es here to send the message, but it errors when I use it
+				SocketClient.sendMessage(plugin.text,action.text,payload.text,params);
+				trace("Using SendMessage");
+			}
+			clearText();
+		}
+	</mx:Script>
+	
+	<sdgcontrols:TitlePanel title="DEBUG ELECTROSERVER" id="titleBox" width="426" height="600" showCloseButton="true" close="close()">
+		<sdgcontrols:BoxContainer styleName="white" width="100%" height="100%" verticalGap="30" verticalScrollPolicy="off" horizontalScrollPolicy="off">
+			<mx:VBox width="100%" horizontalAlign="center" verticalGap="15">
+				<mx:Grid width="80%">
+					<mx:GridRow width="100%" height="100%">
+						<mx:GridItem height="100%">
+							<mx:Text text="Plugin" color="0xFFFF0000"/>
+						</mx:GridItem>
+						<mx:GridItem height="100%">
+							<mx:TextInput id="plugin" width="200" />
+						</mx:GridItem>
+					</mx:GridRow>
+					<mx:GridRow width="100%" height="100%">
+						<mx:GridItem height="100%">
+							<mx:Text text="Action" color="0xFFFF0000"/>
+						</mx:GridItem>
+						<mx:GridItem height="100%">
+							<mx:TextInput id="action" width="200" />
+						</mx:GridItem>
+					</mx:GridRow>
+					<mx:GridRow width="100%" height="100%">
+						<mx:GridItem height="100%">
+							<mx:Text text="Payload" color="0xFFFF0000"/>
+						</mx:GridItem>
+						<mx:GridItem height="100%">
+							<mx:TextInput id="payload" width="200" />
+						</mx:GridItem>
+					</mx:GridRow>
+					<mx:GridRow width="100%" height="100%">
+						<mx:GridItem height="100%">
+							<mx:Text text="Receiver Avatar ID" color="0xFFFF0000"/>
+						</mx:GridItem>
+						<mx:GridItem height="100%">
+							<mx:TextInput id="receiverId" width="200" />
+						</mx:GridItem>
+					</mx:GridRow>
+					<mx:GridRow width="100%" height="100%">
+						<mx:GridItem height="100%">
+							<mx:Text text="Sender Avatar ID" color="0xFFFF0000"/>
+						</mx:GridItem>
+						<mx:GridItem height="100%">
+							<mx:TextInput id="senderId" width="200" />
+						</mx:GridItem>
+					</mx:GridRow>
+					<mx:GridRow width="100%" height="100%">
+						<mx:GridItem height="100%">
+							<mx:Text text="Status ID" color="0xFFFF0000"/>
+						</mx:GridItem>
+						<mx:GridItem height="100%">
+							<mx:TextInput id="status" width="200" />
+						</mx:GridItem>
+					</mx:GridRow>
+					<mx:GridRow width="100%" height="100%">
+						<mx:GridItem height="100%">
+							<mx:Text text="Buddy Avatar ID" color="0xFFFF0000"/>
+						</mx:GridItem>
+						<mx:GridItem height="100%">
+							<mx:TextInput id="buddyAvatarId" width="200" />
+						</mx:GridItem>
+					</mx:GridRow>
+					<mx:GridRow width="100%" height="100%">
+						<mx:GridItem height="100%">
+							<mx:Text text="Friend Type ID" color="0xFFFF0000"/>
+						</mx:GridItem>
+						<mx:GridItem height="100%">
+							<mx:TextInput id="friendTypeId" width="200" />
+						</mx:GridItem>
+					</mx:GridRow>
+					<mx:GridRow width="100%" height="100%">
+						<mx:GridItem height="100%">
+							<mx:Text text="Room ID" color="0xFFFF0000"/>
+						</mx:GridItem>
+						<mx:GridItem height="100%">
+							<mx:TextInput id="roomId" width="200" />
+						</mx:GridItem>
+					</mx:GridRow>
+					<mx:GridRow width="100%" height="100%">
+						<mx:GridItem height="100%">
+							<mx:Text text="Achievement ID" color="0xFFFF0000"/>
+						</mx:GridItem>
+						<mx:GridItem height="100%">
+							<mx:TextInput id="achievementId" width="200" />
+						</mx:GridItem>
+					</mx:GridRow>
+					<mx:GridRow width="100%" height="100%">
+						<mx:GridItem height="100%">
+							<mx:Text text="Game ID" color="0xFFFF0000"/>
+						</mx:GridItem>
+						<mx:GridItem height="100%">
+							<mx:TextInput id="gameId" width="200" />
+						</mx:GridItem>
+					</mx:GridRow>
+				</mx:Grid>
+				<mx:Button id="send" label="Send" click="sendMessage(event)"/>
+			</mx:VBox>
+		</sdgcontrols:BoxContainer>
+	</sdgcontrols:TitlePanel>
+</mx:Canvas>

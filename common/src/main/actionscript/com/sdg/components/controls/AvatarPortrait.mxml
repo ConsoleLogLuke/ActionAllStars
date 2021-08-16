@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml"
+	xmlns:controls="com.sdg.components.controls.*" creationComplete="onCreationComplete(event)" >
+	
+	<mx:Script>
+		<![CDATA[
+			import com.sdg.utils.PreviewUtil;
+			import com.sdg.utils.DisplayUtil;
+			import com.sdg.model.Avatar;
+			
+			private var _avatar:Avatar;
+			private var _avatarVisible:Boolean = true;
+			private const HEIGHT:int = 183;
+			
+			public function init(params:Object = null):void
+			{
+			}
+			
+			public function onCreationComplete(event:Event):void
+			{
+				if (_avatar)
+					avatar = _avatar;
+			}
+			
+			public function set avatar(value:Avatar):void
+			{
+				_avatar = value;
+				
+				if (initialized)
+				{	
+				    // load avatarPreview with the avatar			
+					avatarPreview.addEventListener(Event.COMPLETE, onAvatarPreviewComplete);
+					avatarPreview.loadAvatar(_avatar);
+					
+					 // set the avatar name label
+					 avatarName.text = _avatar.name;
+					 
+					 // set the label colors
+					 avatarName.setStyle("color", PreviewUtil.getAvatarTextColor(_avatar));
+					 avatarNameBox.setStyle("backgroundColor", PreviewUtil.getAvatarLevelColor(_avatar));
+				}
+			}
+			
+			public function get avatar():Avatar
+			{
+				return _avatar;
+			}
+			
+			public function set avatarNameVisible(value:Boolean):void
+			{
+				avatarNameBox.visible = avatarNameBox.includeInLayout = _avatarVisible = value;
+			}
+			
+			private function onAvatarPreviewComplete(event:Event):void
+			{
+				var x:int = _avatar.gender == 1 ? 66 : 53;
+				
+				// set the image
+				var avatarPreview:AvatarPreview = AvatarPreview(event.currentTarget);
+				avatarPreview.scrollRect = new Rectangle(x, 0, 130, HEIGHT);
+			    avatarImage.source = DisplayUtil.displayObjectToBitmap(avatarPreview, new Rectangle(0, 0, 130, HEIGHT));
+			    
+			    // set show the label if needed
+   				avatarNameBox.visible = _avatarVisible;
+			}
+			
+		]]>
+	</mx:Script>
+	
+	<mx:Canvas>
+		<mx:Image id="avatarImage" mask="{portraitMask}" horizontalCenter="0" verticalCenter="0" />
+		
+		<!-- avatar label -->
+		<mx:HBox id="avatarNameBox" horizontalCenter="0" verticalAlign="middle" bottom="0" paddingLeft="2" paddingTop="4" paddingRight="2" paddingBottom="1" minWidth="100"   
+			cornerRadius="14" mouseChildren="false" borderStyle="solid" borderThickness="3" backgroundColor="0xFFFFFF" borderColor="0xBBBBBB" visible="false"  >
+			<mx:Label id="avatarName" width="100%" textAlign="center" fontSize="11" color="#000000" />
+		</mx:HBox>
+	</mx:Canvas>
+	
+	<controls:AvatarPreview id="avatarPreview" backgroundImage="" visible="false" includeInLayout="false"  />
+	<mx:Canvas id="portraitMask" width="130" height="{HEIGHT}" cornerRadius="66" borderStyle="solid" backgroundColor="#000000" />
+</mx:Canvas>

@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:VBox xmlns:mx="http://www.adobe.com/2006/mxml" borderStyle="solid" borderThickness="2" borderColor="#000000" cornerRadius="8"
+	backgroundColor="#80002A" paddingTop="5" paddingBottom="5" paddingLeft="5" paddingRight="5" verticalGap="0"
+	implements="com.sdg.components.dialog.ISdgDialog">
+	<mx:Script>
+		<![CDATA[
+			import mx.managers.PopUpManager;
+			import mx.events.ResizeEvent;
+			import mx.controls.listClasses.IListItemRenderer;
+			private var _itemRenderer:IListItemRenderer;
+
+			[Embed(source="swfs/turf/HouseIcon.swf")]
+			private static var turfValueIcon:Class;
+
+			public function init(params:Object):void
+			{
+				addEventListener(ResizeEvent.RESIZE, onResize);
+
+				itemRenderer = params.itemRenderer;
+			}
+
+			public function close():void
+			{
+				PopUpManager.removePopUp(this);
+			}
+
+			public function set itemRenderer(value:IListItemRenderer):void
+			{
+				_itemRenderer = value;
+				var turfItem:TurfItem = _itemRenderer.data as TurfItem;
+				nameToolTip.text = turfItem.itemName;
+				//ownedToolTip.text = String(turfItem.inventoryTotal);
+				turfValueToolTip.text = String(turfItem.turfValue);
+				onResize(null);
+			}
+
+			public function get itemRenderer():IListItemRenderer
+			{
+				return _itemRenderer;
+			}
+
+			private function onResize(event:ResizeEvent):void
+			{
+				removeEventListener(ResizeEvent.RESIZE, onResize);
+				// position this control
+				var point:Point = _itemRenderer.parent.localToGlobal(new Point(_itemRenderer.x, _itemRenderer.y));
+
+				var xPoint:Number = point.x + _itemRenderer.width;
+				if (xPoint + this.width > 925)
+					xPoint = point.x - this.width;
+
+				this.x = xPoint;
+				this.y = point.y - 7;
+			}
+		]]>
+	</mx:Script>
+	<mx:Label id="nameToolTip" y="3" color="#ffffff" fontSize="11" fontFamily="EuroStyle" fontWeight="bold"/>
+	<mx:HBox verticalAlign="middle" horizontalGap="3">
+		<mx:Image source="{turfValueIcon}"/>
+		<mx:Label id="turfValueToolTip" color="#ffffff" fontSize="11" fontFamily="EuroStyle" fontWeight="bold"/>
+	</mx:HBox>
+
+	<!--<mx:Label text="Turf Value:" y="18" fontSize="11" fontFamily="EuroStyle" fontWeight="bold" paddingLeft="3"/>-->
+	<!--<mx:Label text="Owned:" y="33" fontSize="11" fontFamily="EuroStyle" fontWeight="bold" paddingLeft="3"/>
+	<mx:Label id="ownedToolTip" x="55" y="33" color="#ebc03f" fontSize="11" fontFamily="EuroStyle" fontWeight="bold" paddingRight="3"/>-->
+</mx:VBox>

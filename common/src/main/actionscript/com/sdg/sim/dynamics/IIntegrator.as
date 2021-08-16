@@ -1,0 +1,1 @@
+﻿package com.sdg.sim.dynamics{	public interface IIntegrator	{		function step(dt:Number):void;	}}

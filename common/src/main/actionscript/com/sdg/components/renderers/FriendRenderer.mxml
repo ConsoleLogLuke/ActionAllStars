@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" height="58" backgroundColor="#fff000" dataChange="onDataChange()">
+	<mx:Script>
+		<![CDATA[
+			import com.sdg.view.FriendUserTitleBlock;
+			
+			private var _friendBlock:FriendUserTitleBlock;
+			
+			private function onDataChange():void
+			{
+				if (data == null) return;
+				trace("data " + data.name);
+				
+				var fb:FriendUserTitleBlock = new FriendUserTitleBlock(0, data.name, data.level, data.teamId, data.teamName, data.teamColor1, data.teamColor2);
+				friendBlockContainer.addChild(fb);
+				fb.setPresence(data.presence, data.roomId, data.roomName);
+				
+				if (_friendBlock != null)
+					friendBlockContainer.removeChild(_friendBlock);
+				
+				_friendBlock = fb;
+			}
+		]]>
+	</mx:Script>
+	<mx:UIComponent id="friendBlockContainer" horizontalCenter="0" verticalCenter="0" width="287" height="54"/>
+</mx:Canvas>

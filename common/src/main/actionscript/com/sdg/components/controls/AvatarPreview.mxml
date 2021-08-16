@@ -1,0 +1,629 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml"
+			width="259"
+			height="344"
+			backgroundImage="@Embed('images/avatarSelectBg.png')" backgroundSize="100%"
+	   		creationComplete="init();"
+			>
+			<mx:Canvas id="avatarContainer" width="{width}" height="{height}"
+				verticalScrollPolicy="off" horizontalScrollPolicy="off"
+				dragEnter="dragEnterHandler(event);"
+				dragDrop="dragDropHandler(event);" />
+
+	<mx:Script>
+		<![CDATA[
+			import com.sdg.utils.Constants;
+			import org.pranaframework.reflection.Constant;
+			import com.sdg.net.Environment;
+			import com.boostworthy.collections.HashMap;
+			import com.sdg.collections.HashTable;
+			import com.sdg.events.AvatarApparelSaveEvent;
+			import com.sdg.events.InventoryListEvent;
+			import mx.effects.easing.Back;
+
+			import com.sdg.model.Avatar;
+		    import com.sdg.events.AvatarApparelEvent;
+		    import com.sdg.model.InventoryItem;
+		    import com.sdg.model.IPreviewItem;
+		    import com.sdg.utils.PreviewUtil;
+
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			import mx.collections.ArrayCollection;
+			import mx.controls.Image;
+			import mx.events.CollectionEvent;
+			import mx.events.CollectionEventKind;
+			import mx.events.DragEvent;
+			import mx.events.PropertyChangeEvent;
+			import mx.managers.DragManager;
+
+			import flash.utils.Timer;
+
+			private var _downloadedImages:Array;
+			private var _initialApparelIds:Array = new Array();
+			private var _initialImageSetDownloaded:Boolean = false;
+			private var _initialImageSetDownloadedTimer:Timer = new Timer(5000, 1);
+			private var _avatarImagesDrawn:Timer = new Timer(500, 1);
+		    private var _apparelLength:uint = 7;
+		    private var _avatarWidthAdjust:int = 0;
+		    private var _avatarHeightAdjust:int = 0;
+		    private var _avatarVerticalAlign:int = 0;
+		    private var _avatarHorizontalAlign:int = 0;
+		    private var _avatar:Avatar;
+		    private var _downloadAttemptCount:uint = 0;
+		    private var _defaultApparelCounter:int = 0;
+		    private var _currentItemSetId:int = 0;
+			private var _hairImages:Object = new Object();
+			private var _initialBackground:String;
+			private var _regularViewOnly:Boolean = false;
+
+			private static var _imageCache:Object = new Object();
+
+		    private function init():void
+		   	{
+		   		_initialImageSetDownloadedTimer.addEventListener(TimerEvent.TIMER, onReadyToDrawTimerExpired);
+		   		_avatarImagesDrawn.addEventListener(TimerEvent.TIMER, onImageSetDrawn);
+
+		   		if (avatarContainer.getChildren().length == 0)
+		   			reset();
+		   	}
+
+		   	private function dragEnterHandler(event:DragEvent):void
+		    {
+	       		var dropTarget:Canvas = Canvas(event.currentTarget);
+	            DragManager.acceptDragDrop(dropTarget);
+	        }
+
+	        private function dragDropHandler(event:DragEvent):void
+	        {
+				var itemsArray:Array = event.dragSource.dataForFormat('items') as Array;
+				if (itemsArray.length > 0)
+					selectApparel(itemsArray[0]);
+	        }
+
+	        private function getLayerName(layerId:Number):String
+	        {
+	        	return "avatarApparelLayer_" + layerId;
+	        }
+
+	        public function reset():void
+	        {
+	        	trace("reset called");
+	        	_downloadedImages = new Array();
+		   		_initialImageSetDownloaded = false;
+		   		_initialImageSetDownloadedTimer.reset();
+		   		_initialImageSetDownloadedTimer.start();
+		   		_avatarImagesDrawn.stop();
+		   		_hairImages = new Object();
+	        	avatarContainer.removeAllChildren();
+				for (var i:uint = 0; i < Avatar.APPAREL_LENGTH; i++)
+				{
+					// create the images that will actually display the avatar
+					var img:Image = new Image();
+					img.name = getLayerName(i);
+					avatarContainer.addChild(img);
+				}
+	        }
+
+	        // properties
+
+	        /**
+	        * Adjusts the width of the avatar in pixels
+	        */
+	        public function get avatarWidthAdjust():int
+	        {
+	        	return _avatarWidthAdjust;
+	        }
+
+	        public function set avatarWidthAdjust(value:int):void
+	        {
+	        	_avatarWidthAdjust = value;
+	        }
+
+   	        /**
+	        * Adjusts the height of the avatar in pixels
+	        */
+	        public function get avatarHeightAdjust():int
+	        {
+	        	return _avatarHeightAdjust;
+	        }
+
+	        public function set avatarHeightAdjust(value:int):void
+	        {
+	        	_avatarHeightAdjust = value;
+			}
+
+	        /**
+	        * Adjusts the horizontal alignment of the avatar in pixels
+	        */
+	        public function get avatarHorizontalAlign():int
+	        {
+	        	return this._avatarHorizontalAlign;
+	        }
+
+	        public function set avatarHorizontalAlign(value:int):void
+	        {
+	        	_avatarHorizontalAlign = value;
+	        }
+
+	        /**
+	        * Adjusts the vertical alignment of the avatar in pixels
+	        */
+	        public function get avatarVerticalAlign():int
+	        {
+	        	return this._avatarVerticalAlign;
+	        }
+
+	        public function set avatarVerticalAlign(value:int):void
+	        {
+	        	_avatarVerticalAlign = value;
+	        }
+
+	        /**
+	        * Removes any existing avatar and stops any timers that are running
+	        */
+	        public function cleanUp():void
+	        {
+	        	reset();
+	        	_initialImageSetDownloadedTimer.stop();
+	        }
+
+	        private function swapImage(image:Image):void
+	        {
+				// get the currently displayed image that we'll be replacing
+			    var imageToReplace:Image = Image(avatarContainer.getChildByName(image.name));
+			    var childIndex:uint = avatarContainer.getChildIndex(imageToReplace);
+
+			    // replace the image
+			    avatarContainer.removeChildAt(childIndex);
+			    avatarContainer.addChildAt(image, childIndex);
+	        }
+
+			private function showImageSet():void
+			{
+				// draw whatever images we have downloaded at this point
+				trace("swapping " + _downloadedImages.length + " images");
+        		for each (var image:Image in _downloadedImages)
+        			swapImage(image);
+
+        		_initialImageSetDownloaded = true;
+        		trace("avatarPreview image set completed");
+
+        		// start this timer to give a short pause for the images to be drawn
+        		_avatarImagesDrawn.start();
+			}
+
+			private function onReadyToDrawTimerExpired(event:TimerEvent):void
+			{
+				trace("onReadyToDrawTimerExpired");
+				// just return if we've already downloaded a complete set of images
+				if (_initialImageSetDownloaded)
+					return;
+
+				// draw whatever images we have downloaded at this point
+				if (++_downloadAttemptCount > 3)
+				{
+					trace("TimerExpired - showing images...");
+					showImageSet();
+				}
+				else
+				{
+					this.loadAvatar(this._avatar, false);
+				}
+			}
+
+			private function onImageDownloadFail(event:IOErrorEvent):void
+			{
+				event.currentTarget.removeEventListener(Event.COMPLETE, arguments.callee);
+				event.currentTarget.removeEventListener(IOErrorEvent.IO_ERROR, onImageDownloadFail);
+			}
+
+			private function onHatHairDownloaded(event:Event, hairLayerId:int):void
+			{
+				// get the downloaded hat-hair image
+				var downloadedImage:Image = Image(event.target);
+				 _hairImages[hairLayerId] = downloadedImage;
+
+	        	// first remove our listener from this image
+	        	event.currentTarget.removeEventListener(Event.COMPLETE, arguments.callee);
+	        	event.currentTarget.removeEventListener(IOErrorEvent.IO_ERROR, onImageDownloadFail);
+
+	        	// is this the hair that is currently on the avatar?
+	        	if (hairLayerId == PreviewUtil.getHairLayerId(_avatar))
+	        	{
+	            	if (_initialImageSetDownloaded)
+	    	    		swapImage(downloadedImage);
+	    	    	else
+	        			addImageToSet(downloadedImage);
+	        	}
+			}
+
+	        private function onImageDownloadComplete(event:Event, itemTypeId:int):void
+	        {
+	        	// get the downloaded image
+	        	var downloadedImage:Image = Image(event.target);
+
+	        	// first remove our listener from this image
+	        	downloadedImage.removeEventListener(Event.COMPLETE, arguments.callee);
+
+	        	// if we already have all our initial images, just replace this one
+	        	if (_initialImageSetDownloaded)
+	        	{
+	        		swapImage(downloadedImage);
+
+	        		// if we are putting on a hat - use the hat-hair
+		        	if (downloadedImage.name == getLayerName(PreviewUtil.getLayerId(PreviewUtil.HAT)))
+		        	{
+		        		var hairImage:Image = this._hairImages[PreviewUtil.getHairLayerId(_avatar, false, itemTypeId)] as Image;
+		        		if (hairImage)
+			        		swapImage(hairImage);
+		        	}
+
+	        		return;
+	        	}
+	        	else
+	        		addImageToSet(downloadedImage);
+	        }
+
+	        private function onCompressedImageDownloadComplete(event:Event, previewUrl:String, itemTypeId:int):void
+	        {
+	        	var urlLoader:URLLoader = URLLoader(event.currentTarget);
+
+	        	// remove our listener
+	        	urlLoader.removeEventListener(Event.COMPLETE, arguments.callee);
+
+				// load our new byte array
+				var bytes:ByteArray = new ByteArray();
+				bytes.writeBytes(urlLoader.data);
+
+	        	// store the image in our cache
+	        	_imageCache[previewUrl] = bytes;
+
+				// create a new image
+				var layerId:int = PreviewUtil.getLayerId(itemTypeId);
+				var image:Image = createBlankImage(layerId);
+				image.addEventListener(Event.COMPLETE, function(event:Event):void {onImageDownloadComplete(event, itemTypeId)});
+				image.load(bytes);
+	        }
+
+	        private function onCompressedHatHairDownloadComplete(event:Event, previewUrl:String, layerId:int, hairLayerId:int):void
+	        {
+	        	var urlLoader:URLLoader = URLLoader(event.currentTarget);
+
+	        	// remove our listener
+	        	urlLoader.removeEventListener(Event.COMPLETE, arguments.callee);
+
+				// load our new byte array
+				var bytes:ByteArray = new ByteArray();
+				bytes.writeBytes(urlLoader.data);
+
+	        	// store the image in our cache
+	        	_imageCache[previewUrl] = bytes;
+
+				// create a new image
+				var image:Image = createBlankImage(layerId);
+				image.addEventListener(Event.COMPLETE, function(event:Event):void {onHatHairDownloaded(event, hairLayerId)});
+				image.load(bytes);
+	        }
+
+	        private function onImageSetDrawn(event:Event):void
+	        {
+	        	trace("onImageSetDrawn called");
+	        	this.dispatchEvent(new Event(Event.COMPLETE));
+	        }
+
+			private function addImageToSet(downloadedImage:Image):void
+			{
+	        	// add the image to our downloaded images so we can draw them
+	        	// at the same time once they are all downloaded
+	        	_downloadedImages.push(downloadedImage);
+
+	        	// if we now have all our downloaded images draw them all at once here
+	        	if (_downloadedImages.length == _apparelLength)
+	        		showImageSet();
+			}
+
+			private function downloadHatHair(layerId:int, hairLayerId:int, hairUrl:String):void
+			{
+				// see if the compressed image exists in the cache
+				var bytes:ByteArray = _imageCache[hairUrl] as ByteArray;
+				if (bytes != null)
+				{
+					// create a new image
+					var image:Image = createBlankImage(layerId);
+					image.addEventListener(Event.COMPLETE, function(event:Event):void {onHatHairDownloaded(event, hairLayerId)});
+					image.addEventListener(IOErrorEvent.IO_ERROR, onImageDownloadFail);
+					image.load(bytes);
+				}
+				else
+				{
+					// download the image from the server
+					var urlLoader:URLLoader = new URLLoader();
+					urlLoader.dataFormat = URLLoaderDataFormat.BINARY;
+					urlLoader.addEventListener(Event.COMPLETE, function(event:Event):void {onCompressedHatHairDownloadComplete(event, hairUrl, layerId, hairLayerId)});
+					urlLoader.addEventListener(IOErrorEvent.IO_ERROR, onImageDownloadFail);
+
+					var request:URLRequest = new URLRequest(hairUrl);
+					urlLoader.load(request);
+				}
+			}
+
+			public function selectApparel(apparel:IPreviewItem):void
+	        {
+				var layerId:int = PreviewUtil.getLayerId(apparel.itemTypeId);
+
+				if (layerId == -1)
+					return;
+
+				// did our item set change?
+				if (_currentItemSetId != _avatar.currentItemSetId && !_regularViewOnly)
+				{
+					_currentItemSetId = _avatar.currentItemSetId;
+				    loadAvatar(this._avatar, false, false, false);
+					return;
+				}
+
+				if (apparel.itemTypeId == PreviewUtil.BACKGROUNDS)
+					setStyle("backgroundImage", apparel.previewUrl);
+				// if this is a hair item, download the hat hairs separately
+				else if (apparel.itemTypeId == PreviewUtil.HAIR)
+				{
+					downloadHatHair(layerId, PreviewUtil.PREVIEW_HAIR_A, apparel.previewUrl + "&layerId=9000");
+					downloadHatHair(layerId, PreviewUtil.PREVIEW_HAIR_B, apparel.previewUrl + "&layerId=9010");
+					downloadHatHair(layerId, PreviewUtil.PREVIEW_HAIR_C, apparel.previewUrl + "&layerId=9011");
+					downloadHatHair(layerId, PreviewUtil.PREVIEW_HAIR_D, apparel.previewUrl + "&layerId=9012");
+					downloadHatHair(layerId, PreviewUtil.PREVIEW_HAIR_E, apparel.previewUrl + "&layerId=9013");
+				}
+				else
+				{
+					var previewLayerId:int = 9000;
+					if (_avatar.isWearingSkateboardingOutfit)
+					{
+						if (apparel.itemTypeId == PreviewUtil.BODY ||
+							apparel.itemTypeId == PreviewUtil.SHOES ||
+							apparel.itemTypeId == PreviewUtil.PANTS ||
+							apparel.itemTypeId == PreviewUtil.SHIRTS)
+							{
+								previewLayerId = 9100;
+							}
+
+					}
+					var previewUrl:String = apparel.previewUrl + "&layerId=" + previewLayerId;
+					if (this._regularViewOnly)
+						previewUrl = apparel.previewUrl;
+
+					// see if the compressed image exists in the cache
+					var bytes:ByteArray = _imageCache[previewUrl] as ByteArray;
+					if (bytes != null)
+					{
+						// create a new image
+						var image:Image = createBlankImage(layerId);
+						image.addEventListener(Event.COMPLETE, function(event:Event):void {onImageDownloadComplete(event, apparel.itemTypeId)});
+						image.load(bytes);
+					}
+					else
+					{
+						// download the image from the server
+						var urlLoader:URLLoader = new URLLoader();
+						urlLoader.dataFormat = URLLoaderDataFormat.BINARY;
+						urlLoader.addEventListener(Event.COMPLETE, function(event:Event):void {onCompressedImageDownloadComplete(event, previewUrl, apparel.itemTypeId)});
+
+						var request:URLRequest = new URLRequest(previewUrl);
+						urlLoader.load(request);
+					}
+				}
+			}
+
+	        private function createBlankImage(layerId:int):Image
+	        {
+	        	var image:Image = new Image();
+				image.name = getLayerName(layerId);
+				image.width = this.width + _avatarWidthAdjust;
+				image.height = this.height + _avatarHeightAdjust;
+				image.x += ((_avatarWidthAdjust / 2) * -1) + _avatarHorizontalAlign;
+				image.y += ((_avatarHeightAdjust / 2) * -1) + _avatarVerticalAlign;
+				return image;
+	        }
+
+	        public function removeApparel(itemTypeId:int):void
+	        {
+	        	var layerId:int = PreviewUtil.getLayerId(itemTypeId);
+	        	if (layerId == -1)
+	        		return;
+
+				// did our item set change?
+				if (_currentItemSetId != _avatar.currentItemSetId && !_regularViewOnly)
+				{
+					_currentItemSetId = _avatar.currentItemSetId;
+				    loadAvatar(this._avatar, false, false, false);
+					return;
+				}
+
+				// if we just took off a hat, make sure we use the non-hat-hair
+				if (PreviewUtil.isHeadwear(itemTypeId))
+				{
+					var hairImage:Image = this._hairImages[PreviewUtil.PREVIEW_HAIR_A] as Image;
+					if (hairImage != null)
+						swapImage(hairImage);
+				}
+
+	        	// create a blank image
+				var image:Image = createBlankImage(layerId);
+				swapImage(image);
+	        }
+
+//	        public function loadAvatar(avatar:Avatar, resetDownloadCount:Boolean = true, resetDirty:Boolean = true, itemSetChanges:Boolean = true, tempApparelItem:IPreviewItem = null):void
+	        public function loadAvatar(avatar:Avatar, resetDownloadCount:Boolean = true, resetDirty:Boolean = true, regularViewOnly:Boolean = false):void
+	        {
+	        	trace("loadAvatar called");
+
+	        	_regularViewOnly = regularViewOnly;
+//	        	_itemSetChanges = itemSetChanges;
+//	        	_tempApparelItem = tempApparelItem;
+
+	        	if (avatar == null)
+	        	{
+	        		trace("null avatar in avatarPreview");
+	        		return;
+	        	}
+
+	        	if (resetDownloadCount)
+	        		this._downloadAttemptCount = 0;
+
+	        	trace("downloadAttemptCount " + this._downloadAttemptCount);
+
+	        	_avatar = avatar;
+
+	        	// remove any existing apparel
+	        	reset();
+
+	        	// get the apparel items if we don't have them yet
+	        	if (!avatar.hasApparel())
+	        	{
+			   		CairngormEventDispatcher.getInstance().addEventListener(AvatarApparelEvent.AVATAR_APPAREL_COMPLETED, onApparelListCompleted);
+					dispatchEvent(new AvatarApparelEvent(avatar));
+	        	}
+	        	else
+	        		putOnApparel(avatar.apparel, resetDirty);
+	        }
+
+			/**
+			 * checks to see if our apparel items have changed since the avatar was loaded into this control
+			*/
+			public function apparelChanged(apparel:ArrayCollection):Boolean
+			{
+				if (getStyle("backgroundImage") != _initialBackground)
+					return true;
+
+				// if our array lengths are not the same we are dirty
+				if (apparel.length != _initialApparelIds.length)
+					return true;
+
+				// if an apparel id has changed we are dirty
+				for (var i:uint = 0; i < apparel.length; i++)
+				{
+					var apparelItem:InventoryItem = apparel[i] as InventoryItem;
+					var id:int = apparelItem != null ? apparelItem.inventoryItemId : 0;
+					if (id != int(_initialApparelIds[i]))
+						return true;
+				}
+
+				// not dirty
+				return false;
+			}
+
+//			private function onInventoryListCompleted(ev:InventoryListEvent):void
+//        	{
+//        		for each (var item:InventoryItem in _avatar.getInventoryListById(ev.itemTypeId))
+//        		{
+//        			if (item.itemValueType == InventoryItem.DEFAULT)
+//        			{
+//        				_avatar.setApparel(item);
+//        				break;
+//        			}
+//        		}
+//
+//        		if (--_defaultApparelCounter == 0)
+//        		{
+//        			dispatchEvent(new AvatarApparelSaveEvent(_avatar));
+//        			CairngormEventDispatcher.getInstance().removeEventListener(InventoryListEvent.LIST_COMPLETED, onInventoryListCompleted);
+//        		}
+//
+//        		putOnApparel(_avatar.apparel);
+//        	}
+
+//			private function checkPremiumApparel():void
+//        	{
+//        		for each (var item:InventoryItem in _avatar.apparel)
+//        		{
+//        			if (item != null && item.itemValueType == InventoryItem.PREMIUM)
+//        			{
+//        				trace ("is not default");
+//        				// remove and request for inventory
+//        				//_avatar.removeApparel(PreviewUtil.getLayerId(item.itemTypeId));
+//        				var layerId:int = PreviewUtil.getLayerId(item.itemTypeId);
+//        				if (layerId == 8 || layerId == 9)
+//        					_avatar.removeApparel(layerId);
+//        				else
+//        				{
+//        					if (++_defaultApparelCounter == 1)
+//        						CairngormEventDispatcher.getInstance().addEventListener(InventoryListEvent.LIST_COMPLETED, onInventoryListCompleted);
+//
+//        					dispatchEvent(new InventoryListEvent(_avatar.avatarId, item.itemTypeId));
+//        				}
+//        			}
+//        		}
+//        	}
+
+	        private function onApparelListCompleted(ev:AvatarApparelEvent):void
+			{
+				if (ev.avatar.avatarId != this._avatar.avatarId)
+					return;
+
+				putOnApparel(ev.avatar.apparel);
+
+				// check for premium
+				//if (ev.avatar.membershipStatus == 0)
+				//	checkPremiumApparel();
+
+               	// remove our event listener
+		   		CairngormEventDispatcher.getInstance().removeEventListener(AvatarApparelEvent.AVATAR_APPAREL_COMPLETED, onApparelListCompleted);
+			}
+
+			private function putOnApparel(apparel:ArrayCollection, resetDirty:Boolean = true):void
+			{
+				var apparelCount:int;
+
+				var suit:IPreviewItem = apparel.getItemAt(PreviewUtil.getLayerId(PreviewUtil.SUITS)) as IPreviewItem;
+
+				if (suit != null)
+				{
+					apparelItem = suit as InventoryItem;
+					if (apparelItem != null)
+					{
+						selectApparel(apparelItem);
+					}
+					_apparelLength = 1;
+				}
+				else
+				{
+					for (var i:uint = 0; i < apparel.length; i++)
+					{
+						var apparelItem:InventoryItem = apparel.getItemAt(i) as InventoryItem;
+						if (apparelItem != null)
+							apparelCount++;
+					}
+					_apparelLength = apparelCount;
+
+					// put on our apparel items
+					for (i = 0; i < apparel.length; i++)
+					{
+						apparelItem = apparel.getItemAt(i) as InventoryItem;
+						if (apparelItem != null)
+						{
+							selectApparel(apparelItem);
+						}
+					}
+				}
+
+					if (resetDirty)
+    					setInitialApparelIds(apparel);
+			}
+
+			private function setInitialApparelIds(apparel:ArrayCollection):void
+			{
+				_initialApparelIds = new Array();
+
+				// put the apparel id in an array
+				for (var i:uint = 0; i < apparel.length; i++)
+				{
+					var apparelItem:InventoryItem = apparel.getItemAt(i) as InventoryItem;
+					var id:int = apparelItem != null ? apparelItem.inventoryItemId : 0;
+					this._initialApparelIds.push(id);
+				}
+
+				_initialBackground = getStyle("backgroundImage");
+			}
+
+		]]>
+	</mx:Script>
+</mx:Canvas>

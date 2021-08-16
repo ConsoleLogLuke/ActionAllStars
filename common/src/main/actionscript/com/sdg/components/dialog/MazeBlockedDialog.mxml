@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:UIComponent xmlns:mx="http://www.adobe.com/2006/mxml" implements="com.sdg.components.dialog.ISdgDialog" width="925" height="665">
+	<mx:Script>
+		<![CDATA[
+			import com.sdg.util.AssetUtil;
+			import com.sdg.net.QuickLoader;
+			import mx.managers.PopUpManager;
+			
+			public function init(params:Object):void
+			{
+				var displayUrl:String = AssetUtil.GetGameAssetUrl(79, 'MazeBlocked.swf');
+				var display:DisplayObject = new QuickLoader(displayUrl, onComplete, onError, 2);
+				
+				function onError():void
+				{
+					close();
+				}
+				
+				function onComplete():void
+				{
+					display.addEventListener('close', onClose);
+					addChild(display);
+				}
+				
+				function onClose(event:Event):void
+				{
+					display.removeEventListener('close', onClose);
+					removeChild(display);
+					close();
+				}
+			}
+			
+			public function close():void
+			{
+				PopUpManager.removePopUp(this);
+			}
+		]]>
+	</mx:Script>
+</mx:UIComponent>

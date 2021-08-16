@@ -1,0 +1,1 @@
+﻿package com.sdg.sim.core{		import com.sdg.sim.dynamics.IIntegrator;	import flash.events.IEventDispatcher;		public interface ISimulationManager extends IEventDispatcher	{		function invalidateMember(entity:SimEntity):void;				function addIntegrator(integrator:IIntegrator):void;				function removeIntegrator(integrator:IIntegrator):void;	}}

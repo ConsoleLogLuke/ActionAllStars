@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" borderStyle="solid" borderThickness="2" borderColor="0xffffff" buttonMode="true" mouseChildren="false"
+	cornerRadius="14" width="100" height="26" initialize="init()" mouseOver="onMouseOver(event)" mouseOut="onMouseOut(event)">
+	<mx:Script>
+		<![CDATA[
+			private var _selected:Boolean;
+			
+			private function init():void
+			{
+				selected = false;
+			}
+			
+			private function onMouseOver(event:MouseEvent):void
+			{
+				highlightStyle = true;
+			}
+			
+			private function onMouseOut(event:MouseEvent):void
+			{
+				highlightStyle = _selected;
+			}
+			
+			private function set highlightStyle(value:Boolean):void
+			{
+				var bgColor:Object = null;
+				var fontColor:Object = 0xffffff;
+				
+				if (value)
+				{
+					bgColor = 0xffffff;
+					fontColor = 0x000000;
+				}
+				
+				setStyle("backgroundColor", bgColor);
+				buttonLabel.setStyle("color", fontColor);
+			}
+			
+			public function set selected(value:Boolean):void
+			{
+				_selected = value;
+				highlightStyle = value;
+			}
+		]]>
+	</mx:Script>
+	<mx:Label id="buttonLabel" fontFamily="EuroStyle" fontWeight="bold" fontSize="14" text="{label}" horizontalCenter="0" verticalCenter="0"/>
+</mx:Canvas>

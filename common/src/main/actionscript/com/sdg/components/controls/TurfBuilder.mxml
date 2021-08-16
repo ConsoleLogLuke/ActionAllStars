@@ -1,0 +1,453 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" backgroundImage="assets/swfs/turfBuilder/TurfBuilderContainer.swf" width="594" height="256"
+	creationComplete="init()" xmlns:controls="com.sdg.components.controls.*" rollOver="slideShow.play()" rollOut="rollOutHandler()"
+	showEffect="{slideShow}" hideEffect="{slideHide}" show="categoryList.selectedIndex = 0">
+
+	<mx:Metadata>
+		[Event(name="saveRoom", type="flash.events.Event")]
+		[Event(name="updateRoom", type="flash.events.Event")]
+	</mx:Metadata>
+
+	<mx:Script>
+		<![CDATA[
+			import com.sdg.control.PDAController;
+			import com.sdg.net.socket.SocketClient;
+			import mx.events.CloseEvent;
+			import com.sdg.utils.PreviewUtil;
+			import com.teso.ui.DropDown;
+			import com.sdg.utils.MainUtil;
+			import mx.core.IStateClient;
+			import mx.events.ListEvent;
+			import mx.effects.easing.Sine;
+			import com.sdg.events.RoomEnumEvent;
+			import com.sdg.model.Room;
+			import com.sdg.control.room.RoomManager;
+			import com.sdg.store.skin.ScrollBarBacking;
+			import com.sdg.store.skin.ScrollButtonDown;
+			import com.sdg.store.skin.ScrollButtonUp;
+			import com.sdg.model.DisplayObjectCollection;
+			import com.sdg.model.InventoryItem;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			import com.sdg.events.InventoryListEvent;
+			import com.sdg.graphics.RoundRectStyle;
+			import com.sdg.display.LineStyle;
+			import com.sdg.graphics.GradientStyle;
+			import com.sdg.components.controls.store.StoreNavBar;
+			import com.sdg.model.InventoryItemType;
+			import mx.binding.utils.BindingUtils;
+			import com.sdg.model.ModelLocator;
+			import mx.collections.ArrayCollection;
+
+			[Bindable]
+			private var itemTypeList:ArrayCollection;
+
+			[Bindable]
+			private var startY:Number;
+
+			private var turfItemList:Object = new Object();
+			private var displayHash:Object;
+			private var defaultDisplayArray:Array;
+			//private var displayArray:Array;
+			//private var displayCollection:ArrayCollection;
+
+			private var modelLocator:ModelLocator = ModelLocator.getInstance();
+
+			private var room:Room;
+			private var _itemToolTip:TurfItemToolTip;
+			private var _sortDropDown:DropDown;
+			private var _previouslySelectedTheme:Object;
+
+			private const DEFAULT_SORT:String = "default sort";
+			private const TURF_VALUE_SORT:String = "turf value sort";
+			private const ALPHABETICAL:String = "alphabetical sort";
+
+			private function init():void
+			{
+				startY = y;
+				itemTypeList = modelLocator.inventoryItemTypes[2];
+				BindingUtils.bindSetter(selectCategory, categoryList, "selectedItem");
+
+				var button:StoreNavBar = new StoreNavBar(finishedButton.width, finishedButton.height, "Finished");
+				button.roundRectStyle = new RoundRectStyle(10, 10);
+				button.labelFormat = new TextFormat('EuroStyle', 14, 0x9D330B, true);
+				button.buttonMode = true;
+				button.addEventListener(MouseEvent.CLICK, onFinishedClicked);
+				button.addEventListener(MouseEvent.MOUSE_OVER, onButtonMouseOver);
+				button.addEventListener(MouseEvent.MOUSE_OUT, onButtonMouseOut);
+
+				finishedButton.addChild(button);
+				button.labelX = button.width/2 - button.labelWidth/2;
+				setDefaultButton(button);
+
+				// Create sort dropdown.
+				var dropSortArray:Array = new Array();
+				dropSortArray.push( {title:"Default", name:DEFAULT_SORT} );
+				dropSortArray.push( {title:"Alphabetical", name:ALPHABETICAL} );
+				var dropFmat:TextFormat = new TextFormat('EuroStyle', 10, 0x666666, true);
+				_sortDropDown = new DropDown(120, 17, " Sort By:", dropFmat, 0x191919, dropSortArray, "down", onSortSelect, true);
+				sorter.addChild(_sortDropDown);
+
+				function onButtonMouseOver(event:MouseEvent):void
+				{
+					setMouseOverButton(event.currentTarget);
+				}
+
+				function onButtonMouseOut(event:MouseEvent):void
+				{
+					setDefaultButton(event.currentTarget);
+				}
+
+				function setDefaultButton(button:StoreNavBar):void
+				{
+					button.labelColor = 0x9D330B;
+					button.borderStyle = new LineStyle(0x913300, 1, 1);
+
+					var gradientBoxMatrix:Matrix = new Matrix();
+					gradientBoxMatrix.createGradientBox(button.width, button.height, Math.PI/2, 0, 0);
+					button.gradient = new GradientStyle(GradientType.LINEAR, [0xF7D85B, 0xD88616], [1, 1], [0, 255], gradientBoxMatrix);
+				}
+
+				function setMouseOverButton(button:StoreNavBar):void
+				{
+					button.labelColor = 0xffcc33;
+					button.borderStyle = new LineStyle(0xff9900, 1, 1);
+
+					var gradientBoxMatrix:Matrix = new Matrix();
+					gradientBoxMatrix.createGradientBox(button.width, button.height, Math.PI/2, 0, 0);
+					button.gradient = new GradientStyle(GradientType.LINEAR, [0xd18500, 0xa54c0a], [1, 1], [0, 255], gradientBoxMatrix);
+				}
+
+				function onFinishedClicked(event:MouseEvent):void
+				{
+					dispatchEvent(new Event('saveRoom'));
+				}
+			}
+
+			private function onSortSelect(e:Event):void
+			{
+				var array:Array;
+
+				var sortName:String = e.currentTarget.name;
+
+				if (sortName == this.DEFAULT_SORT)
+				{
+					array = defaultDisplayArray;
+				}
+				else if (sortName == this.ALPHABETICAL)
+				{
+					array = defaultDisplayArray.concat().sortOn("itemDescription", Array.CASEINSENSITIVE);
+				}
+
+				itemListBox.dataProvider = new ArrayCollection(array);;
+			}
+
+			private function rollOutHandler():void
+			{
+				if (mouseY < 0 || mouseX < 0 || mouseX > width)
+					slideMinimize.play();
+			}
+
+			private function onItemRemovedFromRoom(event:RoomEnumEvent):void
+			{
+				changeRoomItem(event, 0);
+			}
+
+			private function onItemAddedToRoom(event:RoomEnumEvent):void
+			{
+				changeRoomItem(event, 1);
+				//rollOutHandler();
+			}
+
+			private function changeRoomItem(event:RoomEnumEvent, roomId:int):void
+			{
+				var itemRemoved:InventoryItem = event.item as InventoryItem;
+				if (itemRemoved == null) return;
+				var itemTypeId:uint = itemRemoved.itemTypeId;
+				getInventoryType(itemTypeId, function(collection:ArrayCollection):void {resetInventoryRoom(collection, itemRemoved.inventoryItemId, roomId)});
+			}
+
+//			private function onItemRemovedFromRoom(event:TurfItemChangeEvent):void
+//			{
+//				var itemRemoved:InventoryItem = event.inventoryItem;
+//				var itemTypeId:uint = itemRemoved.itemTypeId;
+//				getInventoryType(itemTypeId, function(collection:ArrayCollection):void {resetInventoryRoom(collection, itemRemoved.inventoryItemId)});
+//			}
+
+			private function resetInventoryRoom(collection:ArrayCollection, inventoryId:uint, roomId:int):void
+			{
+				for each (var item:InventoryItem in collection)
+				{
+					if (item.inventoryItemId == inventoryId)
+					{
+						item.roomId = roomId;
+
+						var turfItem:TurfItem = displayHash[item.itemId] as TurfItem;
+						if (turfItem != null)
+						{
+							if (roomId == 0)
+								turfItem.inventoryCount++;
+							else
+								turfItem.inventoryCount--;
+						}
+						break;
+					}
+				}
+			}
+
+			private function getInventoryType(itemTypeId:uint, callBack:Function):void
+			{
+				var collection:ArrayCollection = turfItemList[itemTypeId] as ArrayCollection;
+				if (collection == null)
+				{
+					CairngormEventDispatcher.getInstance().addEventListener(InventoryListEvent.LIST_COMPLETED, onInventoryListCompleted);
+					dispatchEvent(new InventoryListEvent(modelLocator.avatar.avatarId, itemTypeId));
+				}
+				else
+				{
+					callBack(collection);
+				}
+
+				function onInventoryListCompleted(ev:InventoryListEvent):void
+				{
+					CairngormEventDispatcher.getInstance().removeEventListener(InventoryListEvent.LIST_COMPLETED, onInventoryListCompleted);
+
+					var itemTypeId:uint = ev.itemTypeId;
+					turfItemList[itemTypeId] = modelLocator.avatar.getInventoryListById(itemTypeId);
+					callBack(turfItemList[itemTypeId]);
+				}
+			}
+
+			private function populateGrid(collection:ArrayCollection):void
+			{
+				//var displayCollection:DisplayObjectCollection = new DisplayObjectCollection();
+				defaultDisplayArray = new Array();
+				displayHash = new Object();
+
+				for each (var item:InventoryItem in collection)
+				{
+					var display:TurfItem = displayHash[item.itemId] as TurfItem;
+
+					if (display == null)
+					{
+						display = new TurfItem();
+						displayHash[item.itemId] = display;
+						defaultDisplayArray.push(display);
+					}
+
+					display.addInventoryItem(item);
+				}
+
+				//itemWindow.items = displayCollection;
+				//itemListBox.dataProvider = defaultDisplayCollection;
+
+				_sortDropDown.selectOptionByName(DEFAULT_SORT);
+	        }
+
+			private function selectCategory(itemType:InventoryItemType):void
+			{
+				if (itemType == null) return;
+				getInventoryType(itemType.itemTypeId, populateGrid);
+				itemLabel.text = null;
+				_previouslySelectedTheme = null;
+			}
+
+			private function scrollCategoryList(scrollPosition:Number):void
+			{
+				if (scrollPosition < 0 || scrollPosition > itemTypeList.length - categoryList.columnCount) return;
+
+				categoryList.horizontalScrollPosition = scrollPosition;
+			}
+
+			private function onSelection():void
+			{
+				var turfItem:TurfItem = itemListBox.selectedItem as TurfItem;
+				itemLabel.text = turfItem.itemDescription;
+
+				if (turfItem.itemTypeId == PreviewUtil.THEME && room.themeId != turfItem.themeId)
+				{
+					if (room.layoutId == turfItem.layoutId)
+					{
+						changeTheme();
+					}
+					else
+					{
+						var alert:SdgAlertChrome = SdgAlertChrome.show("Switching to a theme with a different layout will clear your home turf and put all of your items back in your locker. Would you like to continue?", "Changing Themes", onClose, null, true, false);
+						alert.addButton("Yes", 1);
+						alert.addButton("No", 2);
+					}
+				}
+
+				function onClose(event:CloseEvent):void
+				{
+					if (event.detail == 1)
+					{
+						room.removeAllInventoryItems();
+						dispatchEvent(new Event('updateRoom'));
+						changeTheme();
+					}
+					else
+						itemListBox.selectedItem = _previouslySelectedTheme;
+				}
+
+				function changeTheme():void
+				{
+					SocketClient.getInstance().sendPluginMessage("room_config_server_level", "changeThemeConfig", { roomId:room.id, themeId:String(turfItem.themeId) });
+					_previouslySelectedTheme = turfItem;
+				}
+			}
+
+			private function clearTurf():void
+			{
+				var confirmation:SdgAlertChrome = SdgAlertChrome.show("Are you sure you want to remove all your items from the room?", "Clear Turf", onClose, null, true, false);
+				confirmation.addButton("Yes", 1);
+				confirmation.addButton("No", 2);
+
+				function onClose(event:CloseEvent):void
+				{
+					if (event.detail == 1)
+						room.removeAllInventoryItems();
+				}
+			}
+
+			private function onItemRollOver(event:ListEvent):void
+			{
+				if (!_itemToolTip)
+					_itemToolTip = MainUtil.showDialog(TurfItemToolTip, {itemRenderer:event.itemRenderer}, false, false) as TurfItemToolTip;
+				else if (_itemToolTip.parent == null)
+				{
+					MainUtil.reShowDialog(_itemToolTip, false);
+
+					_itemToolTip.itemRenderer = event.itemRenderer;
+				}
+				else
+				{
+					_itemToolTip.itemRenderer = event.itemRenderer;
+				}
+			}
+
+			private function onItemRollOut(event:ListEvent):void
+			{
+				if (_itemToolTip && _itemToolTip.initialized)
+				{
+					if (IStateClient(event.itemRenderer).currentState != "highlighted" && IStateClient(event.itemRenderer).currentState != "selected")
+						_itemToolTip.close();
+				}
+			}
+
+			private function onRollOut(event:Event):void
+			{
+				if (_itemToolTip && _itemToolTip.initialized)
+					_itemToolTip.close();
+			}
+
+			private function onItemDragEntered(event:Event):void
+			{
+				rollOutHandler();
+				itemListBox.proxyImage.alpha = 0;
+			}
+
+			private function onPDAOpen(event:Event):void
+			{
+				dispatchEvent(new Event('saveRoom'));
+			}
+
+			override public function set visible(value:Boolean):void
+			{
+				if (value == super.visible) return;
+
+				super.visible = value;
+				if (value == true)
+				{
+					room = RoomManager.getInstance().currentRoom;
+					room.addEventListener(RoomEnumEvent.ITEM_REMOVED, onItemRemovedFromRoom);
+					room.addEventListener(RoomEnumEvent.ITEM_ADDED, onItemAddedToRoom);
+					room.addEventListener("item drag entered", onItemDragEntered);
+					PDAController.getInstance().addEventListener(PDAController.SHOW_PDA, onPDAOpen);
+				}
+				else
+				{
+					room.removeEventListener(RoomEnumEvent.ITEM_REMOVED, onItemRemovedFromRoom);
+					room.removeEventListener(RoomEnumEvent.ITEM_ADDED, onItemAddedToRoom);
+					room.removeEventListener("item drag entered", onItemDragEntered);
+					PDAController.getInstance().removeEventListener(PDAController.SHOW_PDA, onPDAOpen);
+					turfItemList = new Object();
+					categoryList.selectedItem = null;
+				}
+			}
+		]]>
+	</mx:Script>
+
+	<mx:Style>
+		.turfScrollbar
+		{
+			upArrowUpSkin: Embed(source="images/scrollbars/turfArrowUp.png");
+			upArrowDisabledSkin: Embed(source="images/scrollbars/turfArrowUp.png");
+			upArrowOverSkin: Embed(source="images/scrollbars/turfArrowUpOver.png");
+			upArrowDownSkin: Embed(source="images/scrollbars/turfArrowUpOver.png");
+			downArrowUpSkin: Embed(source="images/scrollbars/turfArrowDown.png");
+			downArrowDisabledSkin: Embed(source="images/scrollbars/turfArrowDown.png");
+			downArrowOverSkin: Embed(source="images/scrollbars/turfArrowDownOver.png");
+			downArrowDownSkin: Embed(source="images/scrollbars/turfArrowDownOver.png");
+			track-skin: Embed(source="images/scrollbars/scrollBarTrack.jpg");
+			thumb-up-skin: Embed(source='images/scrollbars/scrollThumb.jpg');
+			thumb-over-skin: Embed(source='images/scrollbars/scrollThumbOver.jpg');
+			thumb-down-skin: Embed(source='images/scrollbars/scrollThumbOver.jpg');
+		}
+	</mx:Style>
+
+	<!-- effects -->
+	<mx:Move id="slideShow" target="{this}" yTo="{startY - 308}" duration="300"  easingFunction="Sine.easeIn" effectStart="slideMinimize.stop()"/>
+	<mx:Move id="slideHide" target="{this}" yTo="{startY}" duration="300" easingFunction="Sine.easeOut" effectStart="slideShow.stop()"/>
+    <mx:Move id="slideMinimize" target="{this}" yTo="{startY - 76}" duration="300" startDelay="100" easingFunction="Sine.easeOut" effectStart="slideShow.stop()"/>
+
+    <mx:Canvas width="588" y="22" horizontalCenter="0">
+		<mx:Image source="assets/swfs/turfBuilder/button_Left.swf" left="0"
+			click="scrollCategoryList(categoryList.horizontalScrollPosition - 1)"/>
+		<controls:HorizontalListCustom id="categoryList" columnWidth="77" rowHeight="41" columnCount="7"
+			paddingTop="0" paddingBottom="0" paddingLeft="0" paddingRight="0" horizontalCenter="0"
+			horizontalScrollPolicy="off" backgroundAlpha="0" borderStyle="none"
+			itemRenderer="com.sdg.components.renderers.ItemTypeRenderer" dataProvider="{itemTypeList}"/>
+		<mx:Image source="assets/swfs/turfBuilder/button_Right.swf" right="0"
+			click="scrollCategoryList(categoryList.horizontalScrollPosition + 1)"/>
+	</mx:Canvas>
+	<!-- heading -->
+	<mx:Label text="TURF LOCKER" fontSize="11" color="#ffffff" fontFamily="EuroStyle"
+		horizontalCenter="-2" y="4" filters="{[new GlowFilter(0xffffff, .6, 10, 10, 2, 3)]}"/>
+
+
+	<!-- Edit Turf Mode Box -->
+	<mx:VBox right="4" y="66" horizontalAlign="center" width="113" height="187" paddingTop="15" verticalGap="10">
+		<mx:Label text="Edit Turf Mode" fontSize="12" color="#656565" fontWeight="bold" fontFamily="EuroStyle"/>
+
+		<!-- Finished button -->
+		<mx:UIComponent id="finishedButton" width="100" height="32"/>
+
+		<!-- Clear Turf button -->
+		<!--<mx:TextArea width="100" height="40"
+			borderThickness="1" borderColor="#656565" borderStyle="solid" backgroundColor="#333333"
+			text="CLEAR TURF" fontSize="11" color="#ffffff" fontWeight="bold" textAlign="center"/>-->
+		<mx:Canvas id="clearTurfButton" borderThickness="1" borderColor="#656565" borderStyle="solid" backgroundColor="#333333" cornerRadius="5"
+			width="100" height="24" mouseChildren="false" click="clearTurf()"
+			mouseOver="clearTurfButton.setStyle('borderColor', '#ffffff')" mouseOut="clearTurfButton.setStyle('borderColor', '#656565')" buttonMode="true">
+			<mx:Label text="CLEAR TURF" fontSize="10" color="#ffffff" fontWeight="bold" fontFamily="EuroStyle" horizontalCenter="0" verticalCenter="0"/>
+		</mx:Canvas>
+	</mx:VBox>
+
+	<!--<sdgcontrols:ItemTileList id="itemGrid" borderStyle="none"
+			disabledColor="#042a50" backgroundAlpha="0" horizontalCenter="0" dataProvider="{_controller.inventoryItems}"
+			itemRenderer="com.sdg.components.renderers.CustomizerItemRenderer" change="{onSelection()}" verticalScrollBarStyleName="vscrollbar"
+			columnCount="4" rowCount="4" rowHeight="74" columnWidth="74" itemWidth="64" itemHeight="64"
+			itemRollOver="onItemRollOver(event)" itemRollOut="onItemRollOut(event)" rollOut="onRollOut(event)"/>-->
+
+
+
+	<!--<mx:UIComponent id="itemListBox" width="460" height="160" x="13" bottom="10"/>-->
+	<controls:TurfItemTileList id="itemListBox" borderStyle="none" disabledColor="#333333" rollOverColor="#999999" selectionColor="#ffffff"
+			backgroundAlpha="0" x="20" bottom="20" itemRenderer="com.sdg.components.renderers.TurfItemRenderer"
+			verticalScrollBarStyleName="turfScrollbar" change="onSelection()"
+			itemRollOver="onItemRollOver(event)" itemRollOut="onItemRollOut(event)" rollOut="onRollOut(event)"
+			columnCount="6" rowCount="2" rowHeight="72" columnWidth="72" itemWidth="60" itemHeight="60"/>
+	<mx:Label id="itemLabel" x="20" y="73" color="#ebc03f" fontSize="11" fontFamily="EuroStyle" fontWeight="bold"/>
+
+	<mx:UIComponent id="sorter" x="329" y="70"/>
+</mx:Canvas>

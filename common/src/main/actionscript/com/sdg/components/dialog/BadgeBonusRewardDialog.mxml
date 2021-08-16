@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml"
+    width="300" height="200"
+	implements="com.sdg.components.dialog.ISdgDialog">
+	<mx:Script>
+		<![CDATA[
+			import com.sdg.ui.SimpleXButton;
+			import com.sdg.ui.GoodCloseButton;
+			import com.sdg.ui.RoundCornerCloseButton;
+			import com.sdg.net.Environment;
+			import mx.managers.PopUpManager;
+			
+			protected var _title:String = "BONUS:";
+			[Bindable]
+			protected var _description:String;
+			[Bindable]
+			protected var _thumbnailUrl:String;
+			protected var backgroundPath:String = Environment.getAssetUrl() + '/test/gameSwf/gameId/99/gameFile/small_popUpBox.swf';
+			
+			//Add Cancel X in rawchildren and a listener
+
+			public function init(params:Object):void
+			{
+				// Import Parameters
+				_description = params.description as String;
+				_thumbnailUrl = params.url as String
+				//_description = "Go to your inventory to see your item.";
+				//_thumbnailUrl = "http://dev/test/inventoryThumbnail?itemId=2685";
+				
+				// Close Button				
+				var closeBtn:RoundCornerCloseButton = new RoundCornerCloseButton();
+				closeBtn.x = 245;
+				closeBtn.y = 6;
+				closeBtn.buttonMode = true;
+				closeBtn.addEventListener(MouseEvent.CLICK, onCloseClick);
+				this.rawChildren.addChild(closeBtn);
+				
+				this.x = 330;
+				this.y = 360;
+			}
+			
+			public function onCloseClick(e:Event):void
+			{
+				close();
+			}
+
+			public function close():void
+			{
+				PopUpManager.removePopUp(this);
+			}
+		]]>
+	</mx:Script>
+	
+	<mx:Image id="blackBackground" buttonMode="false"  source="{backgroundPath}"/>
+	
+	<mx:HBox borderStyle="solid" borderThickness="0" borderColor="#00ff00">
+		<mx:VBox borderStyle="solid" borderThickness="0" borderColor="#00ff00"
+			 paddingBottom="17" paddingLeft="17" paddingRight="17" paddingTop="17">
+			<mx:Image id="bonusImage" buttonMode="false" visible="true" source="{_thumbnailUrl}"/>
+		</mx:VBox>
+		<mx:VBox borderStyle="solid" borderThickness="0" borderColor="#00ff00" maxWidth="150" horizontalScrollPolicy="off" verticalScrollPolicy="off">
+			<mx:Text id="title" color="#ffffff" fontSize="12" text="{_title}" width="148" paddingTop="5"/>
+			<mx:Text id="description" color="#ffffff" fontSize="12" text="{_description}" width="148"/>
+		</mx:VBox>
+	</mx:HBox>
+</mx:Canvas>

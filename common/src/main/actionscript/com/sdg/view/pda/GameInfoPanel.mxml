@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<pda:SkinableContainer xmlns:mx="http://www.adobe.com/2006/mxml"
+	xmlns:sdgcontrols="com.sdg.components.controls.*"
+	xmlns:pda="com.sdg.view.pda.*"
+	implements="com.sdg.view.pda.interfaces.IPDASidePanel"
+	verticalCenter="-10" width="346" height="517"
+	skinColor="{_secondaryColor}"
+	skinShape="{new RoundRectComplex(width, height, 0, 15, 0, 15)}"
+	backgroundAlpha=".7">
+	<pda:SkinableContainer id="titleBar" width="100%" height="45" skinColor="{_primaryColor}"
+		skinShape="{new RoundRectComplex(width, titleBar.height, 0, 15, 0, 0)}">
+	<mx:Label text="Game Info" fontSize="18" fontWeight="bold" fontThickness="250" color="#999999" left="25" top="10" fontFamily="EuroStyle"/>
+	</pda:SkinableContainer>
+	
+	<pda:SkinableContainer id="footerBar" width="100%" height="25" bottom="0" skinColor="{_primaryColor}"
+		skinShape="{new RoundRectComplex(width, footerBar.height, 0, 0, 0, 15)}"/>
+	
+	<sdgcontrols:SimpleItemPreview id="itemPreview" verticalCenter="{titleBar.height/2 - footerBar.height/2}" horizontalCenter="0"/>
+	
+	<mx:Script>
+		<![CDATA[
+			import com.sdg.model.IPreviewItem;
+			import com.sdg.control.PDAController;
+			import com.sdg.graphics.customShapes.RoundRectComplex;
+			
+			private var _controller:PDAController;
+			private var _isInitialized:Boolean = false;
+			
+			[Bindable]
+			private var _primaryColor:uint = 0x000000;
+			
+			[Bindable]
+			private var _secondaryColor:uint = 0x000000;
+			
+			public function init(controller:PDAController = null):void
+			{
+				this.controller = controller;
+				_isInitialized = true;
+			}
+			
+			public function close():void
+			{
+			}
+			
+			public function showItem(previewItem:IPreviewItem):void
+			{
+				itemPreview.showItem(previewItem);
+			}
+			
+			public function refresh():void
+			{
+			}
+			
+			public function set controller(value:PDAController):void
+			{
+				_controller = value;
+			}
+			
+			public function get isInitialized():Boolean
+			{
+				return _isInitialized;
+			}
+			
+			public function set primaryColor(value:uint):void
+			{
+				_primaryColor = value;
+			}
+			
+			public function set secondaryColor(value:uint):void
+			{
+				_secondaryColor = value;
+			}
+		]]>
+	</mx:Script>
+</pda:SkinableContainer>

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="20" height="6" buttonMode="true">
+	<mx:Script>
+		<![CDATA[
+			public var direction:String = "horizontal";
+			private var _angle:int = 0;
+			
+			override protected function updateDisplayList(w:Number, h:Number):void
+			{
+				super.updateDisplayList(w, h);
+				var side:Number;
+				
+				if (direction == "horizontal")
+					side = h;
+				else if (direction == "vertical")
+					side = w;
+				
+				arrow.graphics.clear();
+				arrow.graphics.beginFill(0xffffff);
+				arrow.graphics.moveTo(0, -side/2);
+				arrow.graphics.lineTo(10, side/2);
+				arrow.graphics.lineTo(-10, side/2);
+				arrow.graphics.lineTo(0, -side/2);
+				arrow.graphics.endFill();
+				
+				arrow.rotation = _angle;
+			}
+			
+			public function flipArrow():void
+			{
+				_angle += 180;
+				invalidateDisplayList();
+			}
+			
+			public function set pointsTo(value:String):void
+			{
+				const ROTATION_MAP:Object = {top:0, right:90, bottom:180, left:270};
+				_angle = ROTATION_MAP[value];
+			}
+		]]>
+	</mx:Script>
+	<mx:UIComponent id="arrow" horizontalCenter="0" verticalCenter="0"/>
+</mx:Canvas>

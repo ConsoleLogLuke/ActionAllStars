@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:VBox xmlns:mx="http://www.adobe.com/2006/mxml"
+	borderStyle="solid" cornerRadius="20"
+	horizontalAlign="center" verticalAlign="middle"
+	verticalGap="0" creationComplete="init()" paddingTop="0" paddingBottom="0">
+	<mx:Script>
+		<![CDATA[
+			import mx.controls.CheckBox;
+			import mx.controls.TextInput;
+			import mx.core.Container;
+			import mx.containers.HBox;
+			import mx.controls.Text;
+			private var _completed:Boolean = false;
+			private var _initialX:int;
+			private var _initialY:int;
+
+			private var _boxStyle:String;
+			private var _boxStyleInt:uint;
+
+			private var _highlighted:Boolean = false;
+			private var _displayCheck:Boolean = true;
+
+			public static const TWO_BOX_STYLE:uint = 2;
+			public static const THREE_BOX_STYLE:uint = 3;
+
+			[Embed(source="images/registration/checkMark_large.png")]
+			public var checkMarkLarge:Class;
+			[Embed(source="images/registration/checkMark_small.png")]
+			public var checkMarkSmall:Class;
+
+			private function init():void
+			{
+				_initialX = this.x;
+				_initialY = this.y;
+			}
+
+			// properties
+			public function get completed():Boolean
+			{
+				return this._completed;
+			}
+
+			public function set completed(value:Boolean):void
+			{
+				this._completed = value;
+			}
+
+			public function get highlighted():Boolean
+			{
+				return this._highlighted;
+			}
+
+			public function set highlighted(value:Boolean):void
+			{
+				this._highlighted = value;
+			}
+
+			public function set displayCheck(value:Boolean):void
+			{
+				this._displayCheck = value;
+			}
+
+			[Inspectable(enumeration="twoBox,threeBox")]
+			public function set boxStyle(value:String):void
+			{
+				this._boxStyle = value;
+				_boxStyleInt = value == "twoBox" ? TWO_BOX_STYLE : THREE_BOX_STYLE;
+			}
+
+			public function display():void
+			{
+				if (highlighted)
+					enableHighlight();
+				else
+					disableHighlight();
+			}
+
+			private function enableHighlight():void
+			{
+				this.styleName = "highlight";
+				if (_boxStyleInt == THREE_BOX_STYLE)
+				{
+					this.width = 420;
+					this.height = 158;
+					this.x = _initialX - 20;
+					this.y = _initialY - 5;
+				}
+				else if (_boxStyleInt == TWO_BOX_STYLE)
+				{
+					this.width = 420;
+					this.height = 237;
+					this.x = _initialX - 20;
+					this.y = _initialY - 10;
+				}
+
+				setColors(this, "#4c6fa4", "#06193c");
+				setCheckMark();
+			}
+
+			private function disableHighlight():void
+			{
+				this.styleName = "default";
+				if (_boxStyleInt == THREE_BOX_STYLE)
+				{
+					this.width = 380;
+					this.height = 148;
+					this.x = _initialX;
+					this.y = _initialY;
+				}
+				else if (_boxStyleInt == TWO_BOX_STYLE)
+				{
+					this.width = 380;
+					this.height = 217;
+					this.x = _initialX;
+					this.y = _initialY;
+
+				}
+				setColors(this, "#ffffff", "#4c6fa4");
+				setCheckMark();
+			}
+
+			private function setCheckMark():void
+			{
+				if (!_displayCheck)
+					return;
+
+				this.setStyle("backgroundImage", null);
+				if (!_highlighted)
+				{
+					if (_completed)
+					{
+						if (_boxStyleInt == TWO_BOX_STYLE)
+							this.setStyle("backgroundImage", checkMarkLarge);
+						else if (_boxStyleInt == THREE_BOX_STYLE)
+							this.setStyle("backgroundImage", checkMarkSmall);
+					}
+				}
+			}
+
+			private function setColors(container:Container, textColor:String, textInputBorderColor:String):void
+			{
+				for each (var obj:Object in container.getChildren())
+				{
+					if (obj is Container)
+						setColors(Container(obj), textColor, textInputBorderColor);
+					else if (obj is Text)
+					{
+						if (Text(obj).id != "tosText")
+						{
+							Text(obj).setStyle("color", textColor);
+						}
+					}
+					else if (obj is TextInput)
+						TextInput(obj).setStyle("borderColor", textInputBorderColor);
+					else if (obj is CheckBox)
+					{
+						var checkbox:CheckBox = CheckBox(obj);
+						checkbox.setStyle("color", textColor);
+						checkbox.setStyle("textRollOverColor", textColor);
+					}
+				}
+			}
+		]]>
+	</mx:Script>
+
+	<mx:Style>
+		.highlight
+		{
+			borderColor: #172d5f;
+			borderThickness: 8;
+			backgroundColor: #ecf4ff;
+		}
+		.default
+		{
+			borderColor: #4c6fa4;
+			borderThickness: 4;
+			backgroundColor: #5f81b4;
+		}
+	</mx:Style>
+</mx:VBox>

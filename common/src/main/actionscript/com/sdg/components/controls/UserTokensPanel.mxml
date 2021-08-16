@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns="com.sdg.components.controls.*" xmlns:mx="http://www.adobe.com/2006/mxml"
+	width="200"
+	height="36"
+	x="410"
+	y="4"
+	backgroundAlpha="0"
+	borderThickness="0"
+	creationComplete="init()">
+
+	<mx:Script>
+		<![CDATA[
+			import com.sdg.manager.SoundManager;
+			import com.sdg.model.GameAssetId;
+			import com.sdg.util.AssetUtil;
+			import com.sdg.events.AvatarUpdateEvent;
+			import com.sdg.events.AvatarEvent;
+			import com.sdg.components.dialog.TransactionDialog;
+			import com.sdg.components.dialog.SaveYourGameDialog;
+			import com.sdg.utils.MainUtil;
+			import com.sdg.display.GradientFillStyle;
+			import com.sdg.display.FillStyle;
+			import com.sdg.display.BoxStyle;
+			import com.sdg.buttonstyle.ButtonSyle;
+			import com.sdg.buttonstyle.IButtonStyle;
+			import com.sdg.controls.BasicButton;
+			import com.sdg.model.ModelLocator;
+			import com.sdg.model.Avatar;
+			import com.sdg.net.QuickLoader;
+			import com.sdg.net.Environment;
+
+			[Embed(source='swfs/TopUI.swf', symbol="TokenIndicator")]
+			private var TokenIndicator:Class;
+
+			protected var _indicator:Object;
+			//protected var _container:Sprite;
+			//protected var _backing:Sprite;
+			//protected var _tokenIcon:QuickLoader;
+			//protected var _tokenField:TextField;
+			//protected var _tokenField:TokenIndicator;
+			protected var _userAvatar:Avatar;
+			//protected var _tokenIcon:DisplayObject;
+
+			private function init():void
+			{
+				_userAvatar = ModelLocator.getInstance().avatar;
+
+				_indicator = new TokenIndicator();
+				//_indicator.rankfield.autoSize = TextFieldAutoSize.NONE;
+				//_indicator.levelfield.autoSize = TextFieldAutoSize.NONE;
+				rawChildren.addChild(DisplayObject(_indicator));
+
+				_indicator.tokenfield.text = _userAvatar.currency.toString();
+
+				//_container = new Sprite();
+				//rawChildren.addChild(_container);
+
+				//_tokenIcon = new TokenIndicator();
+				//_tokenIcon.tokenField.text = "5000";
+				//_container.addChild(_tokenIcon);
+
+				//_backing = new Sprite();
+				//_container.addChild(_backing);
+
+				//_tokenField = new TextField();
+				//_tokenField.defaultTextFormat = new TextFormat('EuroStyle', 20, 0xffffff, false);
+				//_tokenField.embedFonts = true;
+				//_tokenField.autoSize = TextFieldAutoSize.LEFT;
+				//_tokenField.text = _userAvatar.currency.toString();
+				//_container.addChild(_tokenField);
+
+				//var tokenUrl:String = Environment.getAssetUrl() + '/test/gameSwf/gameId/99/gameFile/token.swf';
+				//var tokenUrl:String = Environment.getAssetUrl() + '/test/gameSwf/gameId/99/gameFile/uiToken.swf';
+				//_tokenIcon = new QuickLoader(tokenUrl, render,null,3);
+				//_container.addChild(_tokenIcon);
+
+				// Listen for changes in currency.
+				_userAvatar.addEventListener(AvatarUpdateEvent.TOKENS_UPDATE, onTokensUpdate);
+
+				// Listen for roll over so we can play a sound.
+				addEventListener(MouseEvent.ROLL_OVER, onRollOver);
+			}
+
+			////////////////////
+			// INSTANCE METHODS
+			////////////////////
+			/*
+			public function render():void
+			{
+				var tokenFieldX:Number = 10;
+				if (_tokenIcon)
+				{
+					var tokenScale:Number = (height - 4) / _tokenIcon.height;
+					_tokenIcon.width *= tokenScale;
+					_tokenIcon.height *= tokenScale;
+					_tokenIcon.x = 5;
+					_tokenIcon.y = 2;
+					tokenFieldX = _tokenIcon.x + _tokenIcon.width + 5;
+				}
+
+				_tokenField.x = tokenFieldX;
+				_tokenField.y = height / 2 - _tokenField.height / 2;
+
+				var w:Number = _tokenField.x + _tokenField.width + 5;
+
+				//var gradMatrix:Matrix = new Matrix();
+				//gradMatrix.createGradientBox(width, height, Math.PI / 2);
+				//_backing.graphics.clear();
+				//_backing.graphics.beginGradientFill(GradientType.LINEAR, [0x3a3a3a, 0x0a0a0a], [1, 1], [1, 255], gradMatrix);
+				//_backing.graphics.lineStyle(1, 0xffffff, 0.2);
+				//_backing.graphics.moveTo(0, 0);
+				//_backing.graphics.lineTo(w, 0);
+				//_backing.graphics.lineTo(w, height - 8);
+				//_backing.graphics.curveTo(w, height, w - 8, height);
+				//_backing.graphics.lineTo(0, height);
+				//_backing.graphics.lineTo(0, 0);
+			}
+			*/
+
+			////////////////////
+			// GET/SET METHODS
+			////////////////////
+
+			public function setTokens(value:uint):void
+			{
+				//var num:Number = new Number(value);
+				_indicator.tokenfield.text = value.toString();
+				//_tokenField.text = value.toString();
+				//render();
+			}
+
+			////////////////////
+			// EVENT HANDLERS
+			////////////////////
+			/*
+			private function onAddClick(e:MouseEvent):void
+			{
+				if (_userAvatar.membershipStatus == 3)
+				{
+					MainUtil.showDialog(SaveYourGameDialog);
+				}
+				else
+				{
+					MainUtil.showDialog(TransactionDialog);
+
+					// Play a sound.
+					var soundUrl:String = AssetUtil.GetGameAssetUrl(GameAssetId.WORLD_SOUND, 'add_tokens_click.mp3');
+					SoundManager.GetInstance().playSound(soundUrl);
+				}
+			}
+			*/
+
+			private function onTokensUpdate(e:AvatarUpdateEvent):void
+			{
+				// Update token count.
+				this.setTokens(_userAvatar.currency);
+				//_tokenField.text = _userAvatar.currency.toString();
+				//render();
+			}
+
+			private function onRollOver(e:MouseEvent):void
+			{
+				// Play a sound.
+				var soundUrl:String = AssetUtil.GetGameAssetUrl(GameAssetId.WORLD_SOUND, 'add_tokens_roll_over.mp3');
+				SoundManager.GetInstance().playSound(soundUrl);
+			}
+
+		]]>
+	</mx:Script>
+
+</mx:Canvas>

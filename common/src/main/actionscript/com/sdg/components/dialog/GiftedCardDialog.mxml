@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas
+	xmlns:mx="http://www.adobe.com/2006/mxml"
+	xmlns:sdgcontrols="com.sdg.components.controls.*"
+	xmlns:business="com.sdg.business.*"
+	horizontalScrollPolicy="off"
+	verticalScrollPolicy="off"
+	implements="com.sdg.components.dialog.ISdgDialog">
+	<mx:Script>
+		<![CDATA[
+			import com.sdg.components.dialog.helpers.MainDialogHelper;
+		import com.sdg.net.Environment;
+		import com.sdg.components.CloseButton;
+		import mx.managers.PopUpManager;
+		import com.sdg.model.ModelLocator;
+		import com.sdg.utils.MainUtil;
+		import flash.filters.DropShadowFilter;
+		
+		private static const TITLE_FILTER:GlowFilter = new GlowFilter(0x923131, 1, 4, 4, 10);
+		private static const SHADOW_LEVEL_1:DropShadowFilter = new DropShadowFilter(1, 45, 0, 0.7);
+		private static const SHADOW_LEVEL_2:DropShadowFilter = new DropShadowFilter(2, 45, 0, 0.7, 6, 6);
+		private static const SHADOW_LEVEL_3:DropShadowFilter = new DropShadowFilter(8, 45, 0, 0.7, 12, 12);
+		
+		private var _alreadyHasCard:Boolean ;
+		private var _cardDefinitionID:int;
+		private var _cardImageURL:String;
+		private var _titleText:String;
+		private var _messageText:String;
+		private var _cardPlayerName:String;
+		private var _fallBackParams:Object =
+		{
+			alreadyHasCard: false,
+			cardID: 2,
+			playerName: 'Hidden Athlete',
+			titleText: 'Congratulations!',
+			messageText: 'It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.'
+		}
+			
+		public function init(params:Object):void
+		{
+			// Attempt to get neccesary values from params object.
+			if (params == null) params = _fallBackParams;
+			try
+			{
+				_alreadyHasCard = (params.alreadyHasCard != null) ? params.alreadyHasCard : false;
+				_cardDefinitionID = (params.cardID != null) ? params.cardID : 2;
+				_cardPlayerName = (params.playerName != null) ? params.playerName : 'Hidden Athlete';
+				_titleText = (params.titleText != null) ? params.titleText : 'Congratulations!';
+				_messageText = (params.messageText != null) ? params.messageText : 'Message Text';
+			}
+			catch (e:Error)
+			{
+				trace('Could not retrieve ALL params for GiftedCardDialog: ' + e.message);
+			}
+			
+			// Build card image URL.
+			_cardImageURL = Environment.getAssetUrl() + '/test/tradingCardImage/get?tradingCardDefinitionId=' + _cardDefinitionID;
+			
+			// Load the card image.
+			_cardImage.addEventListener(Event.COMPLETE, _imgLoadCmpl);
+			_cardImage.load(_cardImageURL);
+			
+			// Update text.
+			_mainLabel.text = _titleText;
+			_message.htmlText = _messageText;
+			_newsCallToAction.text = 'Get more info for this and other events in Action Sports News.';
+			
+			// Create close button.
+			var closeBtn:CloseButton = new CloseButton();
+			closeBtn.init();
+			closeBtn.x = (_mainCanvas.width / 2) + (_messageContainer.width / 2) - closeBtn.width - 10;
+			closeBtn.y = 10;
+			closeBtn.buttonMode = true;
+			closeBtn.addEventListener(MouseEvent.CLICK, _closeClick);
+			addChild(closeBtn);
+			
+			// Position reward callout.
+			_rewardCallout.rotation = -2;
+			_rewardCallout.x = (_mainCanvas.width / 2) + (_cardImageContainer.width / 2) + 10;
+			_rewardCallout.y = 38;
+			
+			// Apply drop shadow filters.
+			_cardImage.filters = [SHADOW_LEVEL_3];
+			_messageContainer.filters = [SHADOW_LEVEL_1];
+			closeBtn.filters = [SHADOW_LEVEL_1];
+			_rewardCallout.filters = [SHADOW_LEVEL_2];
+			
+			// Apply filter to the title.
+			_mainLabel.filters = [TITLE_FILTER, SHADOW_LEVEL_2];
+		}
+		
+		public function close():void
+		{
+			PopUpManager.removePopUp(this);
+		}
+		
+		private function showCardAlbum():void
+		{
+			if (ModelLocator.getInstance().avatar.membershipStatus == 3)
+				//MainUtil.showDialog(MonthFreeUpsellDialog, {showPremiumHeader:false, messaging:"This feature is only available if you register."});
+				MainUtil.showDialog(SaveYourGameDialog);
+			else
+				MainUtil.showDialog(CardAlbum);
+		}
+		
+		////////////////////
+		// EVENT HANDLERS
+		////////////////////
+		
+		private function _closeClick(e:MouseEvent):void
+		{
+			close();
+		}
+		
+		private function _imgLoadCmpl(e:Event):void
+		{
+			_cardImage.rotation = -2;
+			Bitmap(_cardImage.content).smoothing = true;
+		}
+		
+		]]>
+		
+	</mx:Script>
+	
+	<mx:Style>
+		.title
+		{
+			fontSize: 24;
+			borderColor: #5f0808;
+			borderStyle: solid;
+		}
+		.message
+		{
+			color: #ffffff;
+			fontFamily: GillSans;
+		}
+	</mx:Style>
+	
+	<!-- this Canvas is our parent container -->
+	<!--<sdgcontrols:TitlePanel id="_mainTitlePanel" title="New Trading Card!" width="360" height="540" backgroundColor="#494949" showCloseButton="true" close="close()">-->
+	<mx:Box id="_mainCanvas" width="925" horizontalAlign="center">
+		<mx:VBox verticalGap="12">
+			<mx:HBox width="100%" horizontalAlign="center">
+				<mx:Label id="_mainLabel" styleName="title"></mx:Label>
+			</mx:HBox>
+			<mx:HBox width="100%" horizontalAlign="center" height="355">
+				<mx:HBox id="_cardImageContainer" width="240" height="344" horizontalAlign="center">
+					<mx:Image id="_cardImage"></mx:Image>
+				</mx:HBox>
+			</mx:HBox>
+			<mx:Canvas id="_messageContainer" width="376" height="130" cornerRadius="10" borderStyle="solid" borderThickness="0" backgroundColor="#000000" backgroundAlpha="0.5" horizontalScrollPolicy="off" verticalScrollPolicy="off">
+				<mx:VBox verticalGap="12" width="100%">
+					<mx:HBox width="100%" horizontalScrollPolicy="off" verticalScrollPolicy="off">
+						<mx:Text id="_message" styleName="message" width="376" paddingLeft="8" paddingTop="8" paddingRight="8"/>
+					</mx:HBox>
+					<mx:HBox width="100%" height="50" horizontalScrollPolicy="off" verticalScrollPolicy="off" buttonMode="true" click="MainDialogHelper.showDialog({news:true})">
+						<mx:Box paddingLeft="12">
+							<mx:Image id="buttonNews" source="assets/swfs/news.swf" toolTip="Action Sports News"/>
+						</mx:Box>
+						<mx:Text id="_newsCallToAction" width="250" selectable="false" buttonMode="true" />
+					</mx:HBox>
+				</mx:VBox>
+				
+			</mx:Canvas>
+		</mx:VBox>
+	</mx:Box>
+	<mx:Canvas id="_rewardCallout" buttonMode="true" click="showCardAlbum()">
+		<mx:VBox>
+			<mx:Text text="Reward!" fontSize="56" paddingBottom="-20" selectable="false" mouseChildren="false" buttonMode="true"/>
+			<mx:Text text="Check your card album" fontSize="18" selectable="false" mouseChildren="false" buttonMode="true"/>
+		</mx:VBox>
+	</mx:Canvas>
+	<!--</sdgcontrols:TitlePanel>-->
+</mx:Canvas>

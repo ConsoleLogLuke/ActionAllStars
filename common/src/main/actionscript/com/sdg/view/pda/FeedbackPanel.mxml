@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml"
+	xmlns:sdgcontrols="com.sdg.components.controls.*"
+	xmlns:pda="com.sdg.view.pda.*"
+	implements="com.sdg.view.pda.interfaces.IPDAMainPanel"
+	width="316" height="400">
+	
+	<mx:Script>
+		<![CDATA[
+			import com.sdg.view.pda.interfaces.IPDAMainScreen;
+			import com.sdg.utils.MainUtil;
+			import com.sdg.components.controls.SdgAlert;
+			import com.sdg.model.InventoryItem;
+			import com.sdg.view.pda.interfaces.IPDASidePanel;
+			import mx.events.CloseEvent;
+			import com.sdg.control.room.RoomManager;
+			import com.sdg.control.PDAController;
+			import com.sdg.events.InventoryListEvent;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			import com.sdg.utils.PreviewUtil;
+			
+			[Bindable]
+			private var _controller:PDAController;
+			private var _isInitialized:Boolean = false;
+			private var _isDefaultTextShowing:Boolean = false;
+			
+			public function init(controller:PDAController = null):void
+			{
+				this.controller = controller;
+				refresh();
+				_isInitialized = true;
+			}
+			
+			private function onFocus(event:FocusEvent):void
+			{
+				textInput.removeEventListener(FocusEvent.FOCUS_IN, onFocus);
+				clearInput();
+				_isDefaultTextShowing = false;
+			}
+			
+			public function refresh():void
+			{
+				textInput.text = "Hey, Athletes! Have any comments about Action AllStars? " + 
+						"Suggestions about how we can make Action AllStars the best site it can be? Your " + 
+						"feedback is important, so please let us know!";
+				
+				textInput.addEventListener(FocusEvent.FOCUS_IN, onFocus);
+				_isDefaultTextShowing = true;
+			}
+			
+			public function close():void
+			{
+				removeThankYou();
+			}
+			
+			private function clearInput():void
+			{
+				textInput.text = "";
+				thankYou.visible = false;
+			}
+			
+			private function submitComment():void
+			{
+				if (textInput.text == "") return;
+				if (_isDefaultTextShowing) return;
+				if (_controller == null) return;
+				
+				_controller.submitComment(textInput.text);
+				clearInput();
+				
+				thankYou.visible = true;
+				textInput.addEventListener(TextEvent.TEXT_INPUT, onTextInput);
+			}
+			
+			private function removeThankYou():void
+			{
+				textInput.removeEventListener(TextEvent.TEXT_INPUT, onTextInput);
+				thankYou.visible = false;
+			}
+			
+			private function onTextInput(event:TextEvent):void
+			{
+				removeThankYou();
+			}
+			
+			public function set controller(value:PDAController):void
+			{
+				_controller = value;
+			}
+			
+			public function get isInitialized():Boolean
+			{
+				return _isInitialized;
+			}
+			
+			public function get sidePanel():IPDASidePanel
+			{
+				return null;
+			}
+			
+			public function get panelName():String
+			{
+				return "Comments";
+			}
+		]]>
+	</mx:Script>
+	
+	<mx:TextArea id="textInput" width="280" height="250" y="20" horizontalCenter="0" fontSize="18" maxChars="256"/>
+	<mx:HBox y="300" horizontalCenter="0">
+		<pda:PDAButton2 id="clearButton" width="100" height="30" cornerRadius="5"
+			fontSize="11" color="#ffffff" fontWeight="bold" label="Clear" click="clearInput()"
+			mouseOverSound="{_controller.mouseOverSound}" clickSound="{_controller.clickSound}"/>
+		<pda:PDAButton2 id="submitButton" width="100" height="30" cornerRadius="5"
+			fontSize="11" color="#ffffff" fontWeight="bold" label="Submit" click="submitComment()"
+			mouseOverSound="{_controller.mouseOverSound}" clickSound="{_controller.clickSound}"/>
+	</mx:HBox>
+	<mx:Label id="thankYou" text="Thank you for your feedback." color="#ffffff" fontSize="15"
+		horizontalCenter="0" y="350" visible="false"/>
+</mx:Canvas>

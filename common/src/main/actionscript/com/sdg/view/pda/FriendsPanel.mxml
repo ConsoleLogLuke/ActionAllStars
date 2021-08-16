@@ -1,0 +1,298 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" xmlns:pda="com.sdg.view.pda.*"
+	implements="com.sdg.view.pda.interfaces.IPDAMainPanel"
+	width="316" height="400" xmlns:controls="com.sdg.components.controls.*">
+
+	<mx:Script>
+		<![CDATA[
+			import com.sdg.logging.LoggingUtil;
+			import mx.collections.SortField;
+			import mx.collections.Sort;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			import com.sdg.view.pda.interfaces.IPDAMainScreen;
+			import com.sdg.model.Buddy;
+			import com.sdg.events.AvatarEvent;
+			import mx.collections.ArrayCollection;
+			import com.sdg.control.BuddyManager;
+			import com.sdg.view.pda.interfaces.IPDASidePanel;
+			import com.sdg.control.PDAController;
+
+			[Embed(source="images/scrollbars/scroll_bar_off.png")]
+			private static var scrollBarOff:Class;
+			[Embed(source="images/scrollbars/scroll_bar_over.png")]
+			private static var scrollBarOver:Class;
+			[Embed(source="images/scrollbars/scroll_down_off.png")]
+			private static var scrollDownOff:Class;
+			[Embed(source="images/scrollbars/scroll_down_over.png")]
+			private static var scrollDownOver:Class;
+			[Embed(source="images/scrollbars/scroll_up_off.png")]
+			private static var scrollUpOff:Class;
+			[Embed(source="images/scrollbars/scroll_up_over.png")]
+			private static var scrollUpOver:Class;
+
+			[Bindable]
+			private var _controller:PDAController;
+			private var _isInitialized:Boolean = false;
+
+			private var _sidePanel:IPDASidePanel;
+
+			private var _friendInfoPanel:FriendInfoPanel;
+
+			[Bindable]
+			private var _buddyList:ArrayCollection;
+
+			private var _selectedSort:Image;
+
+			public function init(controller:PDAController = null):void
+			{
+				this.controller = controller;
+				refresh();
+				_isInitialized = true;
+			}
+
+			public function refresh():void
+			{
+				partyView = false;
+			}
+
+			public function close():void
+			{
+				if (_friendInfoPanel)
+					_friendInfoPanel.close();
+			}
+
+			private function onSelection(event:Event):void
+			{
+				selectFriend();
+			}
+
+			private function selectFriend():void
+			{
+				if (_friendInfoPanel == null) _friendInfoPanel = new FriendInfoPanel();
+
+				var mainScreen:IPDAMainScreen = _controller.pdaView.mainScreen;
+				_friendInfoPanel.y = mainScreen.y + mainScreen.height/2 - _friendInfoPanel.height/2 - 5;
+				_sidePanel = _friendInfoPanel;
+				_controller.pdaView.sidePanel = _friendInfoPanel;
+
+				var buddy:Buddy = friendsList.selectedItem as Buddy;
+				_friendInfoPanel.buddyInfo = buddy;
+				CairngormEventDispatcher.getInstance().dispatchEvent(new AvatarEvent(buddy.avatarId, _friendInfoPanel));
+			}
+
+			private function sortByName():void
+			{
+				_selectedSort = sortAlpha;
+				sortAlpha.alpha = 1;
+				sortLevel.alpha = .6;
+				sortGuest.alpha = .6;
+				sortTheme.alpha = .6;
+				showText(_selectedSort);
+
+				var onlineSort:SortField = new SortField("presence", true, false, true);
+				var nameSort:SortField = new SortField("name", true);
+				sortList([onlineSort, nameSort]);
+			}
+
+			private function sortByLevel():void
+			{
+				_selectedSort = sortLevel;
+				sortAlpha.alpha = .6;
+				sortLevel.alpha = 1;
+				sortGuest.alpha = .6;
+				sortTheme.alpha = .6;
+				showText(_selectedSort);
+
+				var onlineSort:SortField = new SortField("presence", true, false, true);
+				var levelSort:SortField = new SortField("level", true, true, true);
+				var nameSort:SortField = new SortField("name", true);
+
+				sortList([onlineSort, levelSort, nameSort]);
+			}
+
+			private function sortByGuest():void
+			{
+				_selectedSort = sortGuest;
+				sortAlpha.alpha = .6;
+				sortLevel.alpha = .6;
+				sortGuest.alpha = 1;
+				sortTheme.alpha = .6;
+				showText(_selectedSort);
+
+				var onlineSort:SortField = new SortField("presence", true, false, true);
+				var guestSort:SortField = new SortField("numGuest", true, true, true);
+				var nameSort:SortField = new SortField("name", true);
+
+				sortList([onlineSort, guestSort, nameSort]);
+			}
+
+			private function sortByTheme():void
+			{
+				_selectedSort = sortTheme;
+				sortAlpha.alpha = .6;
+				sortLevel.alpha = .6;
+				sortGuest.alpha = .6;
+				sortTheme.alpha = 1;
+				showText(_selectedSort);
+
+				var onlineSort:SortField = new SortField("presence", true, false, true);
+				var themeSort:SortField = new SortField("partyName", true);
+				var nameSort:SortField = new SortField("name", true);
+
+				sortList([onlineSort, themeSort, nameSort]);
+			}
+
+			private function onMouseOver(event:MouseEvent):void
+			{
+				var currentTarget:Image = event.currentTarget as Image;
+
+				if (currentTarget == _selectedSort) return;
+
+				currentTarget.alpha = 1;
+
+				showText(currentTarget);
+			}
+
+			private function onMouseOut(event:MouseEvent):void
+			{
+				var currentTarget:Image = event.currentTarget as Image;
+
+				if (currentTarget == _selectedSort) return;
+
+				currentTarget.alpha = .6;
+
+				showText(_selectedSort);
+			}
+
+			private function showText(button:Image):void
+			{
+				if (button == sortAlpha)
+					sortText.text = "Sort Alphabetically";
+				else if (button == sortLevel)
+					sortText.text = "Sort by Level";
+				else if (button == sortGuest)
+					sortText.text = "Sort by Guests";
+				else if (button == sortTheme)
+					sortText.text = "Sort by Party Name";
+			}
+
+			private function sortList(sortFields:Array):void
+			{
+				var sort:Sort = new Sort();
+				sort.fields = sortFields;
+				_buddyList.sort = sort;
+				_buddyList.refresh();
+			}
+
+			public function set controller(value:PDAController):void
+			{
+				_controller = value;
+			}
+
+			public function get isInitialized():Boolean
+			{
+				return _isInitialized;
+			}
+
+			public function get sidePanel():IPDASidePanel
+			{
+				return _sidePanel;
+			}
+
+			public function get panelName():String
+			{
+				return "Friends & Parties";
+			}
+
+			private function set partyView(value:Boolean):void
+			{
+				if (value)
+				{
+					// party mode
+					friendsButton.selected = false;
+					partiesButton.selected = true;
+					_buddyList = BuddyManager.getPartyCollection();
+
+					sortLevel.visible = sortLevel.includeInLayout = false;
+					sortGuest.visible = true;
+					sortTheme.visible = sortTheme.includeInLayout = true;
+					sortByGuest();
+				}
+				else
+				{
+					friendsButton.selected = true;
+					partiesButton.selected = false;
+					_buddyList = BuddyManager.getBuddyCollection();
+
+					sortLevel.visible = sortLevel.includeInLayout = true;
+					sortGuest.visible = false;
+					sortTheme.visible = sortTheme.includeInLayout = false;
+					sortByName();
+				}
+
+				_controller.pdaView.sidePanel = null;
+				_sidePanel = null;
+				friendsList.selectedItem = null;
+			}
+		]]>
+	</mx:Script>
+
+	<mx:Style>
+		.listScrollbar
+		{
+			upArrowUpSkin: Embed(source="images/scrollbars/scroll_up_off.png");
+			upArrowDisabledSkin: Embed(source="images/scrollbars/18x18_nothingness.png");
+			upArrowOverSkin: Embed(source="images/scrollbars/scroll_up_over.png");
+			upArrowDownSkin: Embed(source="images/scrollbars/scroll_up_over.png");
+			downArrowUpSkin: Embed(source="images/scrollbars/scroll_down_off.png");
+			downArrowDisabledSkin: Embed(source="images/scrollbars/18x18_nothingness.png");
+			downArrowOverSkin: Embed(source="images/scrollbars/scroll_down_over.png");
+			downArrowDownSkin: Embed(source="images/scrollbars/scroll_down_over.png");
+			track-skin: Embed(source="images/scrollbars/19x19_nothingness.png");
+			thumb-up-skin: Embed(source="images/scrollbars/scroll_bar_off.png");
+			thumb-over-skin: Embed(source="images/scrollbars/scroll_bar_over.png");
+			thumb-down-skin: Embed(source="images/scrollbars/scroll_bar_over.png");
+		}
+	</mx:Style>
+	<controls:SdgList id="friendsList" top="40" paddingRight="0" paddingLeft="0" paddingTop="0" paddingBottom="0"
+		width="316" dataProvider="{_buddyList}" change="onSelection(event)" verticalScrollBarStyleName="listScrollbar"
+		backgroundAlpha="0"	verticalScrollPolicy="on" horizontalCenter="0" columnCount="1" rowCount="6" variableRowHeight="true"
+		borderStyle="none" itemRenderer="com.sdg.components.renderers.FriendRenderer2"/>
+
+	<mx:HBox horizontalCenter="0" y="5">
+		<pda:SelectionButton id="friendsButton" label="Friends" click="partyView = false"/>
+		<pda:SelectionButton id="partiesButton" label="Parties" click="LoggingUtil.sendClickLogging(LoggingUtil.PARTY_BUTTON_CLICK); partyView = true"/>
+	</mx:HBox>
+
+	<mx:HBox verticalAlign="middle" horizontalGap="4" x="4" y="374">
+		<mx:HBox horizontalGap="2">
+			<mx:Image id="sortAlpha" source="assets/swfs/pda/friendsList/friends_sortIcons_alphabetical.swf"
+				click="{sortByName()}" buttonMode="true" mouseOver="onMouseOver(event)" mouseOut="onMouseOut(event)"/>
+			<mx:Image id="sortLevel" source="assets/swfs/pda/friendsList/friends_sortIcons_star.swf"
+				click="{sortByLevel()}" buttonMode="true" mouseOver="onMouseOver(event)" mouseOut="onMouseOut(event)"/>
+			<mx:Image id="sortGuest" source="assets/swfs/pda/friendsList/friends_sortIcons_guest.swf"
+				click="{sortByGuest()}" buttonMode="true" mouseOver="onMouseOver(event)" mouseOut="onMouseOut(event)"/>
+			<mx:Image id="sortTheme" source="assets/swfs/pda/friendsList/friends_sortIcons_party.swf"
+				click="{sortByTheme()}" buttonMode="true" mouseOver="onMouseOver(event)" mouseOut="onMouseOut(event)"/>
+		</mx:HBox>
+		<mx:Label id="sortText" fontFamily="EuroStyle" fontSize="11" fontWeight="bold" color="0xffffff" alpha=".5"/>
+	</mx:HBox>
+
+	<!--<mx:Label id="friendAmount" text="{'Friends: ' + _buddyList.length}" horizontalCenter="0" bottom="68"
+		fontFamily="EuroStyle" fontSize="15" fontWeight="bold"/>
+	<pda:WindowMenuControl id="sortBy" width="100%" horizontalCenter="0" bottom="0"
+		paddingTop="0" paddingBottom="2" paddingLeft="10" paddingRight="10">
+		<pda:MainMenuButton width="37" height="40" labelText="Sort by: Online" callBack="sortByPresence"
+			iconSource="assets/swfs/buddy/buddies_online.swf"
+			mouseOverSound="{_controller.mouseOverSound}" clickSound="{_controller.clickSound}"/>
+		<pda:MainMenuButton width="37" height="40" labelText="Sort by: Alphabetical" callBack="sortByName"
+			iconSource="assets/swfs/buddy/buddies_AtoZ.swf"
+			mouseOverSound="{_controller.mouseOverSound}" clickSound="{_controller.clickSound}"/>
+		<pda:MainMenuButton width="37" height="40" labelText="Sort by: Level" callBack="sortByLevel"
+			iconSource="assets/swfs/buddy/buddies_level.swf"
+			mouseOverSound="{_controller.mouseOverSound}" clickSound="{_controller.clickSound}"/>
+		<pda:MainMenuButton width="37" height="40" labelText="Sort by: Team Affiliation" callBack="sortByTeam"
+			iconSource="assets/swfs/buddy/buddies_team.swf"
+			mouseOverSound="{_controller.mouseOverSound}" clickSound="{_controller.clickSound}"/>
+	</pda:WindowMenuControl>-->
+</mx:Canvas>

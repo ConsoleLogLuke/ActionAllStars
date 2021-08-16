@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="626" height="337" backgroundColor="#ffffff">
+	<mx:Script>
+
+		<![CDATA[
+			import com.sdg.utils.MainUtil;
+			import mx.managers.PopUpManager;
+			import mx.events.CloseEvent;
+			import mx.controls.Button;
+			
+			public function addButton(label:String, identifier:int = -1, width:int = 122, height:int = 38, fontSize:int = 18):Button
+			{
+				var button:Button = new Button();
+				buttonContainer.addChild(button);
+				button.width = width;
+				button.height = height;
+				button.buttonMode = true;
+				button.styleName = "login";
+				button.setStyle("fontSize", fontSize);
+				button.label = label;
+				button.addEventListener(MouseEvent.CLICK, onClick);
+				return button;
+				
+				function onClick(event:MouseEvent):void
+				{
+					close(identifier);
+				}
+			}
+			
+			public function show(message:String, title:String, closeHandler:Function = null,
+								customBackground:String = "assets/swfs/mvp/BackgroundDenied.swf"):void
+			{
+				if (closeHandler != null)
+					addEventListener(CloseEvent.CLOSE, closeHandler);
+				
+				visible = true;
+				
+				MainUtil.showModalDialog(null, null, this);
+				
+				titleText.text = title;
+				messageText.text = message;
+				
+				setStyle("backgroundImage", customBackground);
+			}
+			
+			/**
+			 * Static show method.
+			 */
+			public static function show(message:String, title:String, closeHandler:Function = null,
+										customBackground:String = "assets/swfs/mvp/BackgroundDenied.swf"):MVPAlert
+			{
+				var alert:MVPAlert = new MVPAlert();
+				alert.show(message, title, closeHandler, customBackground);
+				return alert;
+			}
+			
+			public function close(closeDetail:int = -1):void
+			{
+				var event:CloseEvent = new CloseEvent(CloseEvent.CLOSE, false, true, closeDetail);
+				
+				dispatchEvent(event);
+				
+				if (!event.isDefaultPrevented())
+				{
+					visible = false;
+					PopUpManager.removePopUp(this);
+				}
+			}
+		]]>
+	</mx:Script>
+	<mx:Style>
+		Button.login
+		{
+			color: #9d330b;
+			fillColors: #f7d85b, #d88616;
+			fillAlphas: 1, 1;
+			borderColor: #9d330b;
+			selectionColor: #f0b242;
+			textRollOverColor: #9d330b;
+			textSelectedColor: #9d330b;
+			borderThickness: 1;
+			cornerRadius: 8;
+			fontWeight: bold;
+			fontThickness: 150;
+			fontFamily: EuroStyle;
+			paddingLeft: 8; paddingTop: 8; paddingRight: 8; paddingBottom: 8;
+			skin:ClassReference("com.sdg.components.skins.ButtonSkin");
+		}
+		
+		Button.xButton
+		{
+			color: #ffffff;
+			fillColors: #08415c, #08415c;
+			fillAlphas: 1, 1;
+			borderColor: #000000;
+			selectionColor: #f0b242;
+			textRollOverColor: #ffffff;
+			textSelectedColor: #ffffff;
+			borderThickness: 1;
+			cornerRadius: 0;
+			fontWeight: bold;
+			fontThickness: 150;
+			fontFamily: EuroStyle;
+			paddingLeft: 0; paddingTop: 0; paddingRight: 0; paddingBottom: 0;
+			skin:ClassReference("com.sdg.components.skins.ButtonSkin");
+		}
+	</mx:Style>
+	<mx:Label id="titleText" fontFamily="EuroStyle" fontWeight="bold" fontSize="31" x="33" y="33" color="0xffffff" filters="{[new GlowFilter(0x000000, 1, 6, 6, 10)]}"/>
+	<mx:Text id="messageText" fontFamily="EuroStyle" fontWeight="bold" fontSize="15" color="0x06394C" width="320" x="33" y="80" textAlign="left"/>
+	<mx:VBox id="buttonContainer" horizontalAlign="center" width="320" x="33" bottom="50"/>
+	<mx:Button label="X" width="20" height="20" styleName="xButton" top="15" right="15" click="close()"/>
+</mx:Canvas>

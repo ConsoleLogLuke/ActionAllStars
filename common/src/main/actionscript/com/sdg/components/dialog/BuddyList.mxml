@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml"
+	xmlns:controls="com.sdg.components.controls.*"
+	xmlns:dialogs="com.sdg.components.dialog.*"
+	implements="com.sdg.components.dialog.ISdgDialog">
+
+	<mx:Script>
+		<![CDATA[
+			import mx.events.ListEvent;
+			import com.sdg.model.Buddy;
+
+		import mx.collections.ArrayCollection;
+		import mx.core.Application;
+		import mx.managers.PopUpManager;
+		import com.sdg.control.BuddyManager;
+		import com.sdg.model.ModelLocator;
+		import com.sdg.net.socket.SocketClient;
+		import com.sdg.utils.MainUtil;
+
+        [Embed(source="images/buddy/buddyIconOnline.png")]
+        public var buddyIconOnline:Class;
+
+		[Embed(source="images/buddy/buddyIconOffline.png")]
+        public var buddyIconOffline:Class;
+
+        private var _avatarCustomizer:AvatarCustomizer;
+
+		public function init(params:Object):void
+		{
+			if (params == null)
+				return;
+
+			// populate our buddy list
+			refreshBuddies(params);
+		}
+
+		public function refreshBuddies(buddies:Object):void
+		{
+			// first sort the list
+			buddies.sortOn("sortField");
+
+			var buddyCollection:ArrayCollection = new ArrayCollection();
+			for each (var buddy:Buddy in buddies)
+			{
+				// only add confirmed buddies
+				if (buddy.status != 3)
+					continue;
+
+				// set the list item label
+				var label:String = "  " + buddy.name;
+
+				// set the list item data object
+				var buddyAvatarId:uint = buddy.avatarId;
+				var presence:int = buddy.presence;
+				var data:Object = {buddyAvatarId:buddyAvatarId, presence:presence};
+
+				// set the list item icon
+				var icon:Class = presence == 1 ? buddyIconOnline : buddyIconOffline;
+
+				// add the buddy to the list control's data provider
+				buddyCollection.addItem({label:label, data:data, icon:icon})
+			}
+
+			// set the data provider
+			listBuddy.dataProvider = buddyCollection;
+			palsCount.title = buddyCollection.length + " Buddy";
+			if (buddyCollection.length != 1)
+				palsCount.title = buddyCollection.length + " Buddies";
+		}
+
+   	    public function close():void
+        {
+        	if (avatarCustomizer.visible)
+        	{
+				avatarCustomizer.includeInLayout = false;
+				avatarCustomizer.visible = false;
+        	}
+        	listBuddy.selectedItem = null;
+
+        	PopUpManager.removePopUp(this);
+        }
+
+		private function itemChange(e:Event):void
+		{
+			var buddyAvatarId:uint = listBuddy.selectedItem.data.buddyAvatarId;
+			avatarCustomizer.init({avatarId:buddyAvatarId});
+			avatarCustomizer.includeInLayout = true;
+			avatarCustomizer.visible = true;
+			PopUpManager.centerPopUp(this);
+		}
+
+		public function closeAvatarCustomizer():void
+		{
+			avatarCustomizer.includeInLayout = false;
+			avatarCustomizer.visible = false;
+			PopUpManager.centerPopUp(this);
+		}
+
+		]]>
+	</mx:Script>
+
+	<mx:Style source="styles/style.css" />
+	<mx:Style>
+		List.buddylist
+		{
+			fontFamily: GillSans;
+			fontSize: 20;
+			fontWeight: bold;
+			paddingTop: 1;
+			paddingBottom: 1;
+			paddingLeft:10;
+			paddingRight:10;
+			verticalAlign: bottom;
+		}
+	</mx:Style>
+
+	<mx:HBox>
+		<mx:VBox>
+			<controls:TitlePanel id="buddyList" title="Buddies" width="300" height="460" showCloseButton="true" styleName="small" verticalGap="8" close="close()" horizontalAlign="center" >
+				<mx:List id="listBuddy" width="100%" height="93%" cornerRadius="14" backgroundColor="#e0eeff" change="itemChange(event)"
+			  		borderStyle="solid" borderColor="#6489bf" borderThickness="2" iconField="icon" styleName="buddylist"  />
+			  	<controls:TitlePlate id="palsCount" styleName="black" width="100%" height="27" />
+			</controls:TitlePanel>
+		</mx:VBox>
+		<dialogs:AvatarCustomizer id="avatarCustomizer" includeInLayout="false" visible="false" />
+	</mx:HBox>
+</mx:Canvas>

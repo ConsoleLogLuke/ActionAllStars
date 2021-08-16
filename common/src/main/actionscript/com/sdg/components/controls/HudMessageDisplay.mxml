@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml">
+	<mx:Script>
+		<![CDATA[
+			import com.sdg.control.HudController;
+			import mx.effects.easing.*;
+			private var _controller:HudController = HudController.getInstance();
+			private var timerIntervalId:uint = 0;
+			
+			public function setMessageDisplay():void
+			{
+				// if no message is currently being displayed already
+				if (timerIntervalId == 0 && !_controller.messageQueue.isEmpty())
+				{
+					timerIntervalId = setTimeout(changeMessage, 5000);
+					var message:IHudMessage = _controller.messageQueue.removeElementAt(0);
+					this.addChild(DisplayObject(message));
+					message.removeCallback = deleteMessage;
+					fadeEffect.play();
+				}
+			}
+			
+			public function changeMessage(addToList:Boolean = true):void
+			{
+				clearTimeout(timerIntervalId);
+				timerIntervalId = 0;
+				
+				var message:IHudMessage = this.removeChildAt(0) as IHudMessage;
+				if (addToList)
+					_controller.addMessageToList(message);
+				
+				setMessageDisplay();
+			}
+			
+			private function deleteMessage(message:IHudMessage):void
+			{
+				changeMessage(false);
+			}
+		]]>
+	</mx:Script>
+	<mx:Fade id="fadeEffect" alphaFrom="0" alphaTo="1" duration="500" easingFunction="Sine.easeOut" target="{this}"/>
+</mx:Canvas>

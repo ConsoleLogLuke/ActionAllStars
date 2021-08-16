@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:VBox 
+	xmlns:mx="http://www.adobe.com/2006/mxml"
+	 borderStyle="solid" borderThickness="2" cornerRadius="6"
+	 backgroundColor="#252525" alpha=".90"  
+	 implements="com.sdg.components.dialog.ISdgDialog"
+	 horizontalAlign="center"
+	 paddingTop="6"
+	 paddingBottom="6"
+	 paddingLeft="6"
+	 paddingRight="6"
+	 >
+	<mx:Script>
+		<![CDATA[
+			import com.sdg.model.ItemSet;
+			import com.sdg.model.ModelLocator;
+			import mx.collections.ArrayCollection;
+			import com.sdg.utils.PreviewUtil;
+			import com.sdg.model.AvatarLevel;
+			import mx.events.ResizeEvent;
+			import mx.controls.listClasses.ListItemRenderer;
+			import mx.controls.listClasses.IListItemRenderer;
+			import mx.managers.PopUpManager;
+			import com.sdg.model.StoreItem;
+			import com.sdg.model.InventoryItem;
+			
+			private var _itemRenderer:IListItemRenderer;
+			
+			public function init(params:Object):void
+			{
+				
+				addEventListener(ResizeEvent.RESIZE, onResize);
+				
+				itemRenderer = params.itemRenderer;
+				item = params.item;
+			}
+			
+			public function close():void
+			{
+				PopUpManager.removePopUp(this);
+			}
+			
+			public function set item(value:Object):void
+			{
+				// first find the effect
+				if (!setEffect(value))
+					return;
+					
+				// set the item name
+				itemName.text = value.name;
+				
+				// part of an item set?
+				if (value.itemSetId)
+				{
+					// get the itemSet object this item and set the descriptions and item names
+					var itemSet:ItemSet = ModelLocator.getInstance().itemSetsMap[value.itemSetId] as ItemSet;
+					attributesDescription.text = itemSet.description;
+					head.text = itemSet.name + " Head Gear";
+					shirt.text = itemSet.name + " Shirt";
+					pants.text = itemSet.name + " Pants";
+					shoes.text = itemSet.name + " Shoes";
+					 
+					// style for itemSets 
+					attributesDescription.setStyle("styleName", "paragraphDesc");
+					setStyle("paddingLeft", 20);
+					setStyle("paddingRight", 20);
+					itemSetBox.visible = itemSetBox.includeInLayout = true;
+					setItemStyles(value.itemSetId);
+				}
+				else
+				{
+					// style for non-itemSets
+					attributesDescription.setStyle("styleName", "itemAttributes");
+					setStyle("paddingLeft", 6);
+					setStyle("paddingRight", 6);
+					itemSetBox.visible = itemSetBox.includeInLayout = false;
+				}
+				
+				// is there a time limit for this effect?
+				if (value.effectDurationSeconds)
+					attributesDescription.text += " for " + value.effectDurationSeconds + " seconds";
+				
+				// cooldown?	
+				if (value.cooldownSeconds)
+				{
+					attributesDescription.text += "\n";
+					
+					var cooldownSeconds:int = int(value.cooldownSeconds);
+					var minutes:int = cooldownSeconds / 60;
+					var seconds:int = cooldownSeconds % 60;
+					
+					if (minutes > 0)
+						attributesDescription.text += minutes + " minute ";
+					
+					if (seconds > 0)
+						attributesDescription.text += seconds + " second ";
+						
+					attributesDescription.text += "cooldown";
+				}
+				
+				// charges?
+				if (value.charges > 0)
+					attributesDescription.text += "\n" + value.charges + " charges";
+				
+				if (value.levelRequirement)
+					attributesDescription.text += "\n" + "Requires level " + value.levelRequirement;
+					
+				this.x = 100;
+				this.y = 100;
+			}
+			
+			/**
+			 * The TileList item that this is toolTip is for
+			 */ 
+			public function set itemRenderer(value:IListItemRenderer):void
+			{
+				_itemRenderer = value;
+				onResize(null);
+			}
+			
+			public function get itemRenderer():IListItemRenderer
+			{
+				return _itemRenderer;
+			}
+			
+			private function setItemStyles(itemSetId:int):void
+			{
+				// see if the user is wearing the required items and light them up if so
+				var apparel:ArrayCollection = ModelLocator.getInstance().avatar.apparel;
+				
+				// a 'set' currently consists of hat, shirt, pants and shoes
+				var headItem:InventoryItem = apparel.getItemAt(PreviewUtil.getLayerId(PreviewUtil.HAT)) as InventoryItem;
+				var shirtItem:InventoryItem = apparel.getItemAt(PreviewUtil.getLayerId(PreviewUtil.SHIRTS)) as InventoryItem;
+				var pantsItem:InventoryItem = apparel.getItemAt(PreviewUtil.getLayerId(PreviewUtil.PANTS)) as InventoryItem;
+				var shoesItem:InventoryItem = apparel.getItemAt(PreviewUtil.getLayerId(PreviewUtil.SHOES)) as InventoryItem;
+				
+				head.setStyle("styleName",  headItem &&  headItem.itemSetId == itemSetId  ? "itemSetOn" : "itemSetOff");
+				shirt.setStyle("styleName", shirtItem && shirtItem.itemSetId == itemSetId ? "itemSetOn" : "itemSetOff");
+				pants.setStyle("styleName", pantsItem && pantsItem.itemSetId == itemSetId ? "itemSetOn" : "itemSetOff");
+				shoes.setStyle("styleName", shoesItem && shoesItem.itemSetId == itemSetId ? "itemSetOn" : "itemSetOff");
+			}
+			
+			private function setEffect(item:Object):Boolean
+			{
+				var effectFound:Boolean = false;
+				
+				// find the attribute that effects the avatar
+				if (item.walkSpeedPercent)
+				{
+					effectFound = true;
+					
+					var walkSpeedPercent:int = item.walkSpeedPercent;
+					attributesDescription.text = walkSpeedPercent >= 100 ? "+" : "-";
+					attributesDescription.text += (walkSpeedPercent - 100) + "% Speed";
+				}
+				else if (item.levelRequirement || item.itemSetId)
+				{
+					attributesDescription.text = "";
+					effectFound = true;
+				}
+				
+				return effectFound;
+			}
+			
+			private function onResize(event:ResizeEvent):void
+			{
+				// position this control
+				var point:Point = _itemRenderer.parent.localToGlobal(new Point(_itemRenderer.x, _itemRenderer.y));
+				this.x = point.x + _itemRenderer.width;
+				this.y = point.y + (_itemRenderer.height / 2) - (this.height / 2);	
+			}
+			
+		]]>
+	</mx:Script>
+	
+	<mx:Style>
+	
+		.itemSetOff
+		{
+			paddingTop: 0;
+			paddingBottom: 0;
+			paddingLeft: 10;
+			color: #636363;
+			fontWeight: normal;
+		}
+		
+		.itemSetOn
+		{
+			paddingTop: 0;
+			paddingBottom: 0;
+			paddingLeft: 10;
+			color: #96b6e7;
+			fontWeight: bold;
+		}
+		
+		.paragraphDesc
+		{	
+			fontWeight: normal;
+			textAlign: left;
+		}
+		
+		.itemAttributes
+		{
+			textAlign: center;
+			fontWeight: bold;
+		}
+				
+	</mx:Style>
+	<mx:Label id="itemName" color="#FFCC33" />
+	<mx:Text id="attributesDescription" width="175" />
+	<mx:VBox id="itemSetBox" visible="false" includeInLayout="false" verticalGap="-3" width="100%">
+		<mx:Label text="Items Required" fontSize="14" color="#04b407" />
+		<mx:Label id="head" text="Skateboarding Head Gear" styleName="itemSetOff" />
+		<mx:Label id="shirt" text="Skateboarding Shirt" styleName="itemSetOff"/>
+		<mx:Label id="pants" text="Skateboarding Pants" styleName="itemSetOff"/>
+		<mx:Label id="shoes" text="Skateboarding Shoes" styleName="itemSetOff"/>
+	</mx:VBox>
+</mx:VBox>

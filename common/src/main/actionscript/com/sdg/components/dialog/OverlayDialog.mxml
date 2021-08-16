@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas
+	xmlns:mx="http://www.adobe.com/2006/mxml"
+	xmlns:controls="com.sdg.components.controls.*"
+	implements="com.sdg.components.dialog.ISdgDialog"
+	width="925" height="665" >
+	
+	<mx:Script>
+		<![CDATA[
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			import com.sdg.events.ShowOverlayEvent;
+			import com.sdg.events.TutorialResetEvent;
+			
+			import com.sdg.model.ModelLocator;
+			
+			import mx.managers.PopUpManager;
+			import com.sdg.net.Environment;
+			import com.sdg.utils.Constants;
+
+			// show skip button, true only if worldMap && showing tutorial all the time
+			
+			private var _showSkip:int;
+			private	var _txtPath:String;		
+			[Bindable]
+			private	var _swfPath:String;		
+
+			/**
+			 * Get the paths to the text and swf files 
+			 */
+			public function init(params:Object):void
+			{
+				CairngormEventDispatcher.getInstance().dispatchEvent(new ShowOverlayEvent());
+				
+				_showSkip=0;
+				
+				if (params.txtPath != null)
+				{
+					_txtPath = params.txtPath;
+					_swfPath = params.swfPath;
+					_showSkip = params.showSkip;
+				}			
+				else
+				{
+					trace("Unexpected params in OverlayDialog");
+					close();
+				}
+			}
+			
+		  	private function ioErrorHandler(event:IOErrorEvent):void 
+		  	{
+				trace("tutorial ioErrorHandler: " + event.text);
+				close();
+		  	}
+
+			public function close():void
+			{
+				PopUpManager.removePopUp(this);
+			}
+			
+			private function onClose(e:Event):void
+			{
+				close();
+			}
+            
+            private function onTutorialReset(e:Event):void
+            {
+ 				var avatarID:uint = ModelLocator.getInstance().user.avatarId;
+				CairngormEventDispatcher.getInstance().dispatchEvent(new TutorialResetEvent(avatarID, Constants.TUTORIAL_OFF ));
+				close();
+            }
+            
+
+            private function onTutorialOff(e:Event):void
+            {
+ 				var avatarID:uint = ModelLocator.getInstance().user.avatarId;
+				CairngormEventDispatcher.getInstance().dispatchEvent(new TutorialResetEvent(avatarID, Constants.TUTORIAL_OFF ));
+            }
+
+            private function onTutorialOn(e:Event):void
+            {
+ 				var avatarID:uint = ModelLocator.getInstance().user.avatarId;
+				CairngormEventDispatcher.getInstance().dispatchEvent(new TutorialResetEvent(avatarID, Constants.TUTORIAL_ON ));
+            }
+
+
+			private function initFrontLayerSwf():void
+			{
+				try
+				{
+					Object(frontLayerSwf.content).addEventListener(Event.CLOSE, onClose);
+					
+					try 
+					{
+						Object(frontLayerSwf.content).setXMLPath(_txtPath);
+					} catch( e:Error )
+					{
+						trace( "setXMLPath() " + e.message );
+					}
+					
+					Object(frontLayerSwf.content).addEventListener(TutorialResetEvent.TUTORIAL_RESET, onTutorialReset);
+					Object(frontLayerSwf.content).addEventListener(TutorialResetEvent.EVENT_CHECK_TRUE, onTutorialOn);
+					Object(frontLayerSwf.content).addEventListener(TutorialResetEvent.EVENT_CHECK_FALSE, onTutorialOff);
+					
+					try
+						{	// if _showSkip == 1 the swf will show the checkbox with the check mark off
+							// if _showSkip == 0 the swf will NOT show the checkbox at all.
+							Object(frontLayerSwf.content).showCheckBox(_showSkip);
+						}catch(e:Error)
+						{
+							trace("showSkipButton " + e.message); 
+						}
+				}
+				catch(e:Error)
+				{
+					trace("overlaySwf error: " + e.message);
+					close();
+				}
+			}
+		]]>
+
+	</mx:Script>
+
+	<mx:SWFLoader id="frontLayerSwf" source="{_swfPath}" init="initFrontLayerSwf()" ioError="ioErrorHandler(event)" />
+</mx:Canvas>

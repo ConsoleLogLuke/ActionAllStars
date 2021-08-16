@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml"
+	xmlns:sdgcontrols="com.sdg.components.controls.*"
+	xmlns:pda="com.sdg.view.pda.*"
+	implements="com.sdg.view.pda.interfaces.IPDAMainPanel"
+	width="316" height="400">
+	
+	<mx:Script>
+		<![CDATA[
+			import com.sdg.view.pda.interfaces.IPDAMainScreen;
+			import com.sdg.utils.MainUtil;
+			import com.sdg.components.controls.SdgAlert;
+			import com.sdg.model.InventoryItem;
+			import com.sdg.view.pda.interfaces.IPDASidePanel;
+			import mx.events.CloseEvent;
+			import com.sdg.control.room.RoomManager;
+			import com.sdg.control.PDAController;
+			import com.sdg.events.InventoryListEvent;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			import com.sdg.utils.PreviewUtil;
+			
+			[Bindable]
+			private var _controller:PDAController;
+			
+			private var _gameInfoPanel:GameInfoPanel;
+			
+			private var _isInitialized:Boolean = false;
+			private var _sidePanel:IPDASidePanel;
+			
+			public function init(controller:PDAController = null):void
+			{
+				this.controller = controller;
+				refresh();
+				_isInitialized = true;
+			}
+			
+			public function refresh():void
+			{
+				getInventoryItems(PreviewUtil.BOARD_GAME);
+				setupGameButton.visible = false;
+			}
+			
+			public function close():void
+			{
+				_sidePanel = null;
+				
+				if (_gameInfoPanel)
+					_gameInfoPanel.close();
+			}
+			
+			private function onSelection():void
+			{
+				var game:InventoryItem = itemGrid.selectedItem as InventoryItem;
+				
+				if (!game.isGreyedOut)
+				{
+					if (_gameInfoPanel == null) _gameInfoPanel = new GameInfoPanel();
+					
+					var mainScreen:IPDAMainScreen = _controller.pdaView.mainScreen;
+					_gameInfoPanel.y = mainScreen.y + mainScreen.height/2 - _gameInfoPanel.height/2;
+					setupGameButton.visible = true;
+					_sidePanel = _gameInfoPanel;
+					_controller.pdaView.sidePanel = _gameInfoPanel;
+					_gameInfoPanel.showItem(game);
+				}
+				else
+				{
+					var alert:SdgAlert = SdgAlert.show("Sorry, you need to upgrade to Premium Membership level to put on this item.",
+						"Upgrade To Premium Now!", SdgAlert.NO | SdgAlert.YES, SdgAlert.NO, onUpgrade);
+					alert.setButtonLabel(SdgAlert.NO, "Upgrade Now");
+					alert.setButtonLabel(SdgAlert.YES, "Back");
+					
+					itemGrid.selectedItem = null;
+				}
+			}
+			
+			private function getInventoryItems(itemTypeId:int):void
+			{
+				_controller.getInventoryType(itemTypeId);
+			}
+			
+			private function onSetupGameButtonClick():void
+			{
+				RoomManager.getInstance().userController.showInvitePanel(itemGrid.selectedItem, 1);
+				_controller.hidePDA();
+			}
+			
+			private function onUpgrade(event:CloseEvent):void
+			{
+				if (event.detail == SdgAlert.NO)
+					MainUtil.postAvatarIdToURL("membership.jsp");
+			}
+			
+			public function set controller(value:PDAController):void
+			{
+				_controller = value;
+			}
+			
+			public function get isInitialized():Boolean
+			{
+				return _isInitialized;
+			}
+			
+			public function get sidePanel():IPDASidePanel
+			{
+				return _sidePanel;
+			}
+			
+			public function get panelName():String
+			{
+				return "Games";
+			}
+		]]>
+	</mx:Script>
+	
+	<mx:Canvas id="inventoryList" width="316" height="350" verticalCenter="0">
+		<sdgcontrols:ItemTileList id="itemGrid" borderStyle="none" dataProvider="{_controller.inventoryGames}"
+			disabledColor="#042a50" backgroundAlpha="0" horizontalCenter="0" verticalScrollBarStyleName="vscrollbar"
+			itemRenderer="com.sdg.components.renderers.GameItemRenderer" change="{onSelection()}"
+			columnCount="3" rowCount="3" rowHeight="95" columnWidth="100" itemWidth="64" itemHeight="64"/>
+		<pda:PDAButton2 id="setupGameButton" width="150" height="50" cornerRadius="5" horizontalCenter="0" bottom="0"
+			fontSize="15" color="#ffffff" fontWeight="bold" click="{onSetupGameButtonClick()}" label="Play Game"
+			mouseOverSound="{_controller.mouseOverSound}" clickSound="{_controller.clickSound}"/>
+	</mx:Canvas>
+</mx:Canvas>

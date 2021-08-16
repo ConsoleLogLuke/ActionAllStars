@@ -1,0 +1,225 @@
+package com.sdg.components.dialog
+{
+	import com.adobe.cairngorm.control.CairngormEventDispatcher;
+	import com.sdg.business.resource.IRemoteResource;
+	import com.sdg.business.resource.SdgResourceLocator;
+	import com.sdg.components.controls.SdgAlertChrome;
+	import com.sdg.events.ItemPurchaseEvent;
+	import com.sdg.events.RoomNavigateEvent;
+	import com.sdg.graphics.Point;
+	import com.sdg.logging.LoggingUtil;
+	import com.sdg.model.Avatar;
+	import com.sdg.model.ModelLocator;
+	import com.sdg.model.StoreItem;
+	import com.sdg.net.Environment;
+	import com.sdg.net.QuickLoader;
+	import com.sdg.net.socket.SocketClient;
+	import com.sdg.store.StoreConstants;
+	import com.sdg.utils.ItemUtil;
+	import com.sdg.utils.MainUtil;
+	
+	import flash.display.DisplayObject;
+	import flash.events.Event;
+	import flash.events.IOErrorEvent;
+	import flash.net.URLLoader;
+	import flash.net.URLRequest;
+	
+	import mx.containers.Canvas;
+	import mx.events.CloseEvent;
+	import mx.managers.PopUpManager;
+
+	public class InteractiveSignDialog extends Canvas implements ISdgDialog
+	{
+		private var _itemId:uint = 0;
+		private var _invId:uint = 0;
+		private var _display:DisplayObject;
+		private var _resource:IRemoteResource;
+		
+		// To Regulate Logging
+		private var _loggingStatus:Boolean = false; // turns on logging
+		
+		public function InteractiveSignDialog()
+		{
+			super();
+			
+			this.x = 0;
+			this.y = 0;
+		}
+		
+		public function init(params:Object):void
+		{
+			if (params)
+			{
+				_itemId = params.itemId;
+				_invId = params.invId;
+			}
+			
+			_resource = SdgResourceLocator.getInstance().getDoodadSWF_1(_itemId);
+			_resource.addEventListener(Event.COMPLETE, loadCompleteHandler);
+			_resource.load();
+		}
+		
+		protected function loadCompleteHandler(e:Event):void
+		{
+			_display = DisplayObject(_resource.content);
+			_display.addEventListener(Event.CLOSE,onClick);
+			//_display.addEventListener(Event.CANCEL,onCancel);
+			_display.addEventListener("Transport",onTransport);
+			_display.addEventListener('buy item', onBuyItem);
+			this.rawChildren.addChild(_display);
+			
+			_loggingStatus = true;
+		}
+		
+		protected function onBuyItem(event:Event):void
+		{
+			// Try to get an item id.
+			var params:Object = event as Object;
+			var itemId:int = (params.itemId != null) ? params.itemId : -1;
+			if (itemId < 0) return;
+			
+			// Load attributes of the item.
+			var url:String = ItemUtil.GetItemAttributesUrl(itemId);
+			var request:URLRequest = new URLRequest(url);
+			var urlLoader:URLLoader = new URLLoader();
+			urlLoader.addEventListener(Event.COMPLETE, onComplete);
+			urlLoader.addEventListener(IOErrorEvent.IO_ERROR, onError);
+			urlLoader.load(request);
+			
+			function onComplete(e:Event):void
+			{
+				// Remove event listeners.
+				urlLoader.removeEventListener(Event.COMPLETE, onComplete);
+				urlLoader.removeEventListener(IOErrorEvent.IO_ERROR, onError);
+				
+				// Get store item from loaded data.
+				var itemXML:XML = new XML(urlLoader.data);
+				var item:StoreItem = StoreItem.StoreItemFromXML(itemXML,StoreConstants.STORE_ID_INWOLRDSHOPDIALOG);
+				if (item == null) return;
+				
+				// Buy the item.
+				buyItem(item);
+			}
+			
+			function onError(e:IOErrorEvent):void
+			{
+				// Remove event listeners.
+				urlLoader.removeEventListener(Event.COMPLETE, onComplete);
+				urlLoader.removeEventListener(IOErrorEvent.IO_ERROR, onError);
+			}
+		}
+		
+		protected function buyItem(item:StoreItem, confirmPopup:Boolean = true):void
+		{
+			var avatar:Avatar = ModelLocator.getInstance().avatar;
+			
+			if (avatar.membershipStatus == 3)
+			{
+				MainUtil.showDialog(SaveYourGameDialog);
+				return;
+			}
+			// Attempt to buy the item.
+			
+			// Make sure the user has enough currency.
+			if (avatar.currency < item.price)
+			{
+				SdgAlertChrome.show("Hey there, it looks like you need more tokens!", "TIME OUT!");
+				return;
+			}
+			
+			// Make sure the avatar level is high enough to buy this item.
+			if (avatar.subLevel < item.levelRequirement)
+			{
+				SdgAlertChrome.show("That's a bummer... you need to level up to own this item.", "TIME OUT!");
+				return;
+			}
+			
+			// Make sure the item is the correct gender.
+			//
+			//
+			
+			// Try to make the purchase.
+			CairngormEventDispatcher.getInstance().addEventListener(ItemPurchaseEvent.SUCCESS, onItemPurchaseSuccess);
+			CairngormEventDispatcher.getInstance().addEventListener(ItemPurchaseEvent.ALREADY_OWNED, onItemAlreadyOwned);
+			CairngormEventDispatcher.getInstance().dispatchEvent(new ItemPurchaseEvent(avatar, item, StoreConstants.STORE_ID_CATALOG));
+			
+			function onItemPurchaseSuccess(e:ItemPurchaseEvent):void
+			{
+				// When an item is purchased successfuly, we want to put it on the avatar right away.
+				
+				// Remove event listener.
+				CairngormEventDispatcher.getInstance().removeEventListener(ItemPurchaseEvent.SUCCESS, onItemPurchaseSuccess);
+				CairngormEventDispatcher.getInstance().removeEventListener(ItemPurchaseEvent.ALREADY_OWNED, onItemAlreadyOwned);
+				
+				// Make sure the event is for the correct avatar.
+				if (avatar.id != e.avatar.id) return;
+				
+				// Make sure the item is the one we just tried to buy.
+				if (item.id != e.storeItem.id) return;
+				
+				// Play purchase sound.
+				//playPurchaseSound(item.price);
+				SocketClient.getInstance().sendPluginMessage("avatar_handler", "uiEvent", { uiEvent:"<uiEvent><uiId>3</uiId><avUp>1</avUp></uiEvent>" });
+				if(confirmPopup)SdgAlertChrome.show("Check your Inventory to use your new gear!", "ITEM PURCHASED!");
+				
+				close();
+			}
+			
+			function onItemAlreadyOwned(e:ItemPurchaseEvent):void
+			{
+				// When an item is purchased successfuly, we want to put it on the avatar right away.
+				
+				// Remove event listener.
+				CairngormEventDispatcher.getInstance().removeEventListener(ItemPurchaseEvent.SUCCESS, onItemPurchaseSuccess);
+				CairngormEventDispatcher.getInstance().removeEventListener(ItemPurchaseEvent.ALREADY_OWNED, onItemAlreadyOwned);
+				
+				SdgAlertChrome.show("Hey, did you know you already own this item?  Open your Customizer to find and use it.", "TIME OUT!");
+			}
+			
+		}
+		
+		protected function onClick(e:Event):void
+		{
+			this.close();
+		}
+		
+		protected function onTransport(e:Event):void
+		{
+			var roomId:String = "";
+			if (e.hasOwnProperty("roomId"))
+			{
+				var obj:Object =  e as Object;
+				roomId = obj.roomId as String;
+			}
+			
+			if (_loggingStatus)
+			{
+				_loggingStatus = false;
+				LoggingUtil.sendSignTransportClickLogging(_invId);
+			}
+			
+			dispatchEvent(new RoomNavigateEvent(RoomNavigateEvent.ENTER_ROOM, roomId));
+			
+			this.close();
+		}
+		
+		public function close():void
+		{
+			_loggingStatus = false;
+			
+			// Remove Listener
+			_display.removeEventListener(Event.CLOSE,onClick);
+			_display.removeEventListener("Transport",onTransport);
+			_display.removeEventListener('buy item', onBuyItem);
+			
+			try
+			{
+				Object(_display).unloadSound();
+			}
+			catch(e:Error) {}
+			
+			PopUpManager.removePopUp(this);
+		}
+		
+	}
+}

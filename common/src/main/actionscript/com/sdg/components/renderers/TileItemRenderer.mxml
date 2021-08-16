@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:VBox xmlns:mx="http://www.adobe.com/2006/mxml"
+	horizontalAlign="center" verticalAlign="middle"
+	horizontalScrollPolicy="off" verticalScrollPolicy="off"
+	dataChange="{imageSource = data.thumbnailUrl; label = data.name; trace('dataChange ' + label + ' ' + this)}"
+	buttonMode="true">
+	
+	<mx:Script>
+		<![CDATA[
+			[Bindable]
+			public var imageSource:String;
+			[Bindable]
+			protected var state:String;
+			[Bindable]
+			protected var selectedBorderThickness:int = 3;
+			[Bindable]
+			protected var defaultBorderThickness:int = 2;
+			[Bindable]
+			protected var iconFilters:Array;
+			[Bindable]
+			protected var backAlpha:Number;
+			[Bindable]
+			protected var sizeOffset:int = 0;
+			[Bindable]
+			protected var greyedBorderColor:uint = 0xcccccc;
+			[Bindable]
+			protected var greyedColor:uint = 0xdddddd;
+			[Bindable]
+			protected var showLabel:Boolean = false;
+			
+			override public function get currentState():String
+			{
+				return state;
+			}
+			
+			override public function set currentState(value:String):void
+			{
+				state = value;
+			}
+		]]>
+	</mx:Script>
+	<mx:Canvas width="{getStyle('itemWidth') + 6 + sizeOffset}"
+		height="{getStyle('itemHeight') + 6 + sizeOffset}">
+		<mx:Canvas id="tileBackground" horizontalScrollPolicy="off" verticalScrollPolicy="off" horizontalCenter="0" verticalCenter="0"
+			backgroundColor="0xFFFFFF" backgroundAlpha="{backAlpha}"
+			borderColor="{data.hasOwnProperty('isGreyedOut') &amp;&amp; data.isGreyedOut ? greyedBorderColor : state == 'selected' ? getStyle('selectionColor') :
+						state == 'highlighted' ? getStyle('rollOverColor') : getStyle('disabledColor')}"
+			borderThickness="{state == 'selected' ? selectedBorderThickness : defaultBorderThickness}"
+			borderStyle="solid" dropShadowEnabled="true"
+			width="{state == 'selected' ? getStyle('itemWidth') + 6 + sizeOffset: getStyle('itemWidth') + sizeOffset}"
+			height="{state == 'selected' ? getStyle('itemHeight') + 6 + sizeOffset: getStyle('itemHeight') + sizeOffset}">
+			<mx:Image source="{imageSource}" horizontalAlign="center" verticalAlign="middle" horizontalCenter="0" verticalCenter="0"
+				filters="{iconFilters}"
+				width="{tileBackground.width - 4 - sizeOffset}"
+				height="{tileBackground.height - 4 - sizeOffset}"/>
+			<mx:Canvas id="film" visible="{data.hasOwnProperty('isGreyedOut') &amp;&amp; data.isGreyedOut}" backgroundColor="{greyedColor}" backgroundAlpha=".7" width="100%" height="100%">
+				<mx:Canvas width="62" height="15" backgroundColor="#8d0200" rotation="-42" x="3" y="50">
+					<mx:Label text="MVP Only" fontSize="9" fontFamily="EuroStyle" fontWeight="normal" horizontalCenter="0" verticalCenter="0"/>
+				</mx:Canvas>
+			</mx:Canvas>
+		</mx:Canvas>
+	</mx:Canvas>
+	<mx:Text width="{this.width}" id="itemLabel" text="{data.name}" visible="{showLabel}" includeInLayout="{showLabel}"/>
+</mx:VBox>

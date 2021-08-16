@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:VBox xmlns:mx="http://www.adobe.com/2006/mxml"
+	verticalGap="5" verticalScrollPolicy="off" horizontalScrollPolicy="off"
+	horizontalAlign="center" verticalAlign="middle">
+	<mx:Script>
+		<![CDATA[
+			import mx.controls.Spacer;
+			import mx.controls.Text;
+			import com.sdg.model.ModelLocator;
+			import mx.controls.SWFLoader;
+			import com.sdg.components.dialog.AvatarCustomizer;
+			import com.sdg.net.Environment;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			import com.sdg.events.PickemScorecardEvent;
+			
+			private var _customizer:AvatarCustomizer;
+			private var _currentPickemModule:PickemModule = null;
+			
+			private var _sharedObject:SharedObject;
+			
+			public function getScorecard(avatarId:int, customizer:AvatarCustomizer):void
+			{
+				_customizer = customizer;
+				CairngormEventDispatcher.getInstance().addEventListener(PickemScorecardEvent.SCORECARD_RECEIVED, onScorecardReceived);
+				dispatchEvent(new PickemScorecardEvent(avatarId));
+			}
+			
+			private function onScorecardReceived(event:PickemScorecardEvent):void
+			{
+				if (String(event.params.questions.@status) == "unplayed")
+				{
+					var unplayedText1:Text = new Text();
+					unplayedText1.text = "You don't have any picks yet!";
+					unplayedText1.width = 230;
+					unplayedText1.styleName = "noPicks";
+					//unplayedText1.setStyle("textAlign", "center");
+					//unplayedText1.setStyle("fontSize", 24);
+					//unplayedText1.setStyle("color", "#769ebe");
+					
+					var spacer:Spacer = new Spacer();
+					spacer.height = 10;
+					spacer.width = 230;					
+					
+					var unplayedText2:Text = new Text();
+					unplayedText2.text = "Go to the Broadcast Center to Play Sports Psychic!";
+					unplayedText2.width = 230;
+					unplayedText2.styleName = "noPicks";
+					//unplayedText2.setStyle("textAlign", "center");
+					//unplayedText2.setStyle("fontSize", 24);
+					//unplayedText2.setStyle("color", "#769ebe");
+					
+					this.addChild(unplayedText1);
+					this.addChild(spacer);
+					this.addChild(unplayedText2);
+					return;
+				}
+				
+				// error check to see if there are more than 5 questions
+				var largestEventId:int;
+				if (event.params.questions.question.length() == 5)
+					largestEventId = event.params.questions.question[0].@eventId;
+				else
+				{
+					for each (var q:XML in event.params.questions.question)
+					{
+						if (q.@eventId > largestEventId)
+							largestEventId = q.@eventId;
+					}
+				}
+				
+				var numCorrect:int = 0;
+								
+				for each (var question:XML in event.params.questions.question)
+				{
+					if (question.@eventId != largestEventId)
+						continue;
+						
+					var module:PickemModule = new PickemModule();
+					module.addEventListener(MouseEvent.MOUSE_OVER, onPickemMouseOver);
+					module.addEventListener(MouseEvent.MOUSE_OUT, onPickemMouseOut);
+					this.addChild(module);
+					
+					var selected:int = 0;
+					var correct:int = 0;
+					var images:Object = new Object;
+					
+					for (var i:int = 0; i < question.children().length(); i++)
+					{
+						if (question.answer[i].@selected == 1)
+							selected = i+1;
+						
+						if (String(event.params.questions.@status) == "resolved")
+						{
+							if (question.answer[i].@correct == 1)
+							{
+								// means 2 correct answers (tie)
+								if (correct > 0)
+									correct = -1;
+								else
+									correct = i+1;
+							}
+							if (question.answer[i].@selected == 1 && question.answer[i].@correct == 1)
+								numCorrect++;
+						}
+						
+						if ("@teamid" in question.answer[i])
+							images[i] = "http://" + Environment.getApplicationDomain() + "/test/static/clipart/teamLogoTemplate?teamId=" + question.answer[i].@teamid;
+						else if ("@playerid" in question.answer[i])
+							images[i] = "http://" + Environment.getApplicationDomain() + "/test/static/clipart/playerLogoTemplate?playerId=" + question.answer[i].@playerid;
+					}
+					
+					module.setParams(question.@text, {img:images[0], text:question.answer[0], answerCount:int(question.answer[0].@answerCount)},
+						{img:images[1], text:question.answer[1], answerCount:int(question.answer[1].@answerCount)});
+					module.setState(selected, correct);
+				}
+				_sharedObject = ModelLocator.getInstance().pickemSharedObject;
+				
+				switch (String(event.params.questions.@status))
+				{
+					case "unresolved":
+						_customizer.pickemText.text = "Update picks until 4:00pm PST in the Sports Psychic room";
+						_customizer.pickemText.setStyle("fontSize", 14);
+						_customizer.pickemText.setStyle("fontThickness", 150);
+						ModelLocator.getInstance().pickemSharedObject.clear();
+						break;
+					case "resolved":
+						onResolved(numCorrect, event.params.questions.children().length());
+						break;
+					default:
+						break;
+				}
+			}
+			
+			private function onResolved(numCorrect:int, totalQuestions:int):void
+			{
+				var tokensEarned:int = Math.pow(2, numCorrect) * 100;
+				_customizer.pickemText.text = "You've earned " + tokensEarned + " tokens.";
+				_customizer.pickemText.setStyle("fontSize", 17);
+				_customizer.pickemText.setStyle("fontThickness", 150);
+				
+				if (_sharedObject.data.newPickemResults != null && _sharedObject.data.newPickemResults == "true")
+				{
+					var resultsInAnimation:SWFLoader = _customizer.pickemResultsIn;
+					resultsInAnimation.source = "assets/swfs/scoreCard.swf";
+					resultsInAnimation.addEventListener(Event.INIT, function(event:Event):void {initSwf(event, numCorrect, totalQuestions, tokensEarned)});
+					resultsInAnimation.addEventListener(IOErrorEvent.IO_ERROR, onIOError);
+					_sharedObject.clear();
+				}				
+			}
+			
+			private function onIOError(event:IOErrorEvent):void
+			{
+				trace("ioErrorHandler: " + event.text);
+				event.currentTarget.removeEventListener(Event.INIT, arguments.callee);
+				event.currentTarget.removeEventListener(IOErrorEvent.IO_ERROR, onIOError);
+				//close();
+			}
+			
+			private function onClose(event:Event):void
+			{
+				event.currentTarget.removeEventListener(Event.CLOSE, onClose);
+				event.currentTarget.visible = false;
+			}
+			
+			private function initSwf(event:Event, numCorrect:int, totalQuestions:int, tokensEarned:int):void
+			{
+				event.currentTarget.removeEventListener(Event.INIT, arguments.callee);
+				event.currentTarget.removeEventListener(IOErrorEvent.IO_ERROR, onIOError);
+				
+				try
+				{
+					// get the swf
+					var swf:Object = Object(event.currentTarget.content);
+					event.currentTarget.visible = true;
+					swf.addEventListener(Event.CLOSE, onClose);
+					swf.setResults(numCorrect, totalQuestions, tokensEarned);
+				}
+				catch(e:Error)
+				{
+					trace("overlaySwf error: " + e.message);
+				}
+			}
+			
+			private function onPickemMouseOut(event:MouseEvent):void
+			{
+				_customizer.pickemQuestion.text = "";
+				_customizer.questionBubble.visible = false;
+				_currentPickemModule = null;
+			}
+			
+			private function onPickemMouseOver(event:MouseEvent):void
+			{
+				var module:PickemModule = event.currentTarget as PickemModule;
+				if (module != null && module != _currentPickemModule)
+				{
+					_customizer.pickemQuestion.text = module.question;
+					
+					var choice1Percent:int = module.choice1Percent;
+					var choice2Percent:int = module.choice2Percent;
+					
+					_customizer.choice1.text = module.choice1.text;
+					_customizer.choice2.text = module.choice2.text;
+					_customizer.voteMeter.setMeter(choice1Percent, choice2Percent);
+					_customizer.choice1Percent.text = choice1Percent + "%";
+					_customizer.choice2Percent.text = choice2Percent + "%";
+					
+					_customizer.questionBubble.visible = true;
+					_customizer.questionBubble.y = module.y + 55;
+					_currentPickemModule = module;
+				}
+			}
+		]]>
+	</mx:Script>
+	<mx:Style>
+		Text.noPicks
+		{
+			textAlign: center;
+			fontSize: 24;
+			fontThickness: 150;
+			color: #769ebe;
+		}
+	</mx:Style>
+</mx:VBox>

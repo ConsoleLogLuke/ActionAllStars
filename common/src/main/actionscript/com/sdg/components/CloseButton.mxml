@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="20" height="20">
+	<mx:Script>
+		<![CDATA[
+		
+		private var _width:Number = 20;
+		private var _height:Number = 20;
+		private var _fillColor:uint = 0xfa9c1c;
+		private var _borderColor:uint = 0xffffff;
+		private var _xColor:uint = 0xffffff;
+		
+		////////////////////
+		// INSTANCE METHODS
+		////////////////////
+		
+		public function init(params:Object = null):void
+		{
+			render();
+			addEventListener(MouseEvent.MOUSE_OVER, _onMouseOver);
+			addEventListener(MouseEvent.MOUSE_OUT, _onMouseOut);
+			addEventListener(MouseEvent.MOUSE_DOWN, _onMouseDown);
+			addEventListener(MouseEvent.MOUSE_UP, _onMouseUp);
+		}
+			
+		public function render():void
+		{
+			// Draw circle.
+			graphics.clear();
+			graphics.beginFill(_fillColor);
+			graphics.lineStyle(2, _borderColor);
+			graphics.drawCircle(_width / 2, _height / 2, _width / 2);
+			
+			// Draw X.
+			graphics.lineStyle(2, _xColor);
+			graphics.moveTo(6 * (_width / 20), 6 * (_width / 20));
+			graphics.lineTo(14 * (_width / 20), 14 * (_width / 20));
+			graphics.moveTo(6 * (_width / 20), 14 * (_width / 20));
+			graphics.lineTo(14 * (_width / 20), 6 * (_width / 20));
+		}
+		
+		////////////////////
+		// GET/SET METHODS
+		////////////////////
+		
+		override public function get width():Number
+		{
+			return _width;
+		}
+		override public function set width(value:Number):void
+		{
+			_width = _height = value;
+			render();
+		}
+		
+		override public function get height():Number
+		{
+			return _height;
+		}
+		override public function set height(value:Number):void
+		{
+			_width = _height = value;
+			render();
+		}
+		
+		////////////////////
+		// EVENT HANDLERS
+		////////////////////
+		
+		private function _onMouseOver(e:MouseEvent):void
+		{
+			_fillColor = 0xffffff;
+			_borderColor = 0xfa9c1c;
+			_xColor = 0xfa9c1c;
+			render();
+		}
+		
+		private function _onMouseOut(e:MouseEvent):void
+		{
+			_fillColor = 0xfa9c1c;
+			_borderColor = 0xffffff;
+			_xColor = 0xffffff;
+			render();
+		}
+		
+		private function _onMouseDown(e:MouseEvent):void
+		{
+			_fillColor = 0xfa9c1c;
+			_borderColor = 0xfa9c1c;
+			_xColor = 0xffffff;
+			render();
+		}
+		
+		private function _onMouseUp(e:MouseEvent):void
+		{
+			_fillColor = 0xffffff;
+			_borderColor = 0xfa9c1c;
+			_xColor = 0xfa9c1c;
+			render();
+		}
+		
+		]]>
+	</mx:Script>
+</mx:Canvas>

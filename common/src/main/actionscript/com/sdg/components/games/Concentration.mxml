@@ -1,0 +1,1022 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas
+	xmlns:mx="http://www.adobe.com/2006/mxml"
+	xmlns:viewStackEffects="org.efflex.mx.viewStackEffects.*"
+	xmlns:controls="com.sdg.components.controls.*"
+	implements="com.sdg.components.dialog.ISdgDialog"
+	verticalScrollPolicy="off" horizontalScrollPolicy="off"
+    backgroundImage="assets/swfs/gameBackground.swf"
+    backgroundSize="100%" >
+	<mx:VBox paddingTop="20" paddingBottom="25" paddingLeft="20" paddingRight="25" >
+		<mx:Script>
+			<![CDATA[
+				import com.sdg.components.controls.ModeratorAlertChrome;
+				import com.sdg.net.socket.SocketClient;
+				import com.sdg.model.Server;
+				import mx.controls.Text;
+				import mx.containers.Panel;
+				import com.sdg.components.controls.SdgAlert;
+				import com.sdg.events.BoardGameActionEvent;
+				import com.adobe.cairngorm.control.CairngormEventDispatcher;
+				import com.sdg.utils.DisplayUtil;
+				import com.sdg.display.ChatBubble;
+				import mx.core.Application;
+				import com.sdg.components.controls.AvatarPortrait;
+				import com.sdg.model.Avatar;
+				import mx.events.ResizeEvent;
+				import mx.events.EffectEvent;
+				import mx.containers.ViewStack;
+				import mx.core.mx_internal;
+				import com.sdg.model.ModelLocator;
+				import com.sdg.control.room.RoomManager;
+				import com.sdg.collections.QuickList;
+				import com.sdg.utils.MathUtil;
+				import mx.containers.Canvas;
+				import com.sdg.net.Environment;
+				import mx.managers.PopUpManager;
+				import mx.controls.Image;
+				import mx.containers.HBox;
+
+				static private const GAP:int = 6;
+
+				private var _players:Array = new Array();
+				private var _cards:Array = new Array();
+				private var _columns:int;
+				private var _rows:int;
+				private var _cardSize:int = 50;
+				private var _category:String = "teams";
+				private var _cardTimer:Timer = new Timer(3000, 1);
+				//private var _moveTimer:Timer = new Timer(1000);
+				private var _selectedCards:Array = new Array();
+				private var _chatBubbles:Array = new Array();
+				private var _userAvatar:Avatar = ModelLocator.getInstance().avatar;
+				private var _avatarIdOnMove:int;
+				private var _moveIsOver:Boolean = false;
+				private var _effectCount:int = 0;
+				private var _totalCards:int;
+				private var _visibleCards:int;
+				private var _gameStartMillis:int;
+				private var _level:String = "";
+				//private var _cardFlipSound:Sound;
+				private var _matchFoundSound:Sound;
+				private var _remainingMoveSeconds:int = 15;
+				private var _gameSessionId:String;
+				private var _gameId:int = 1;
+				private var _setNextMoveTimer:Timer = new Timer(500, 1);
+
+				use namespace mx_internal;
+
+				public function init(params:Object):void
+				{
+					var main:Object = Application.application;
+
+					_gameSessionId = params.gameSessionId;
+
+					// load our sounds
+					//_cardFlipSound = new Sound(new URLRequest("assets/audio/cardFlip.mp3"));
+					_matchFoundSound = new Sound(new URLRequest("assets/audio/matchFound.mp3"));
+
+					// turn off the main chatInup control
+					//ChatInput(Application.application.mainLoader.child.console.chatInput).listenForValidation = false;
+
+					// parse our params string
+					var imageUrls:String = "";
+					var attributes:Array = String(params.gameAttributes).split('|');
+					for each (var attribute:String in attributes)
+					{
+						var strs:Array = attribute.split(';');
+						var key:String = strs[0];
+						var value:String = strs[1];
+						switch (key)
+						{
+							case "level":
+								_level = value;
+								break;
+							case "imageUrls":
+								imageUrls = value;
+								break;
+							case "category":
+								_category = value;
+								break;
+							default:
+								break;
+						}
+					}
+
+					// set the board size by the difficulty level
+					switch (_level)
+					{
+						case 'normal':
+							_rows = _columns = 4;
+							_cardSize = 100;
+							break;
+						case 'advanced':
+							_rows = _columns = 6;
+							_cardSize = 70;
+							break;
+						case 'expert':
+							_rows = _columns = 8;
+							_cardSize = 51;
+							break;
+						default:
+							trace("Concentration - unknown difficulty level: " + params.difficultyLevel);
+							return;
+					}
+
+					_totalCards = _visibleCards = (_rows * _columns);
+
+					addEventListener(ResizeEvent.RESIZE, onResize);
+
+					// set the callback on cardTimer and moveTimer
+					_cardTimer.addEventListener(TimerEvent.TIMER, onCardTimer);
+					//_moveTimer.addEventListener(TimerEvent.TIMER, onMoveTimer);
+					_setNextMoveTimer.addEventListener(TimerEvent.TIMER, onSetNextMoveTimer);
+
+					// listen for gameActions from the network
+					CairngormEventDispatcher.getInstance().addEventListener(BoardGameActionEvent.BOARD_GAME_ACTION, onBoardGameAction);
+
+					// create the board
+					setupBoard(imageUrls.split(','));
+
+					// styling the title
+					title.filters = [new GlowFilter(0x923131, 1, 4, 4, 10)];
+
+					// add the players
+					var playerPortraits:Array = params.playerPortraits;
+					if (playerPortraits.length > 1)
+					{
+						// multi-player
+						addPlayerPortraits(playerPortraits);
+						setPlayerOnMove(AvatarPortrait(_players[0]).avatar.avatarId);
+
+						// don't show the chat if we are on a scripted chat server
+						if (Server.getCurrent().chatMode == Server.ULTRA_SAFE_CHAT)
+							chatPanel.visible = chatPanel.includeInLayout = false;
+					}
+					else
+					{
+						// single player
+						_players.push(playerPortraits[0]);
+						chatPanel.visible = chatPanel.includeInLayout = false;
+						_avatarIdOnMove = AvatarPortrait(_players[0]).avatar.avatarId;
+
+						var portrait:AvatarPortrait = AvatarPortrait(playerPortraits[0]);
+						portrait.data = {avatar:portrait.avatar, isActive:true, pairsMissed:0, pairsCompleted:0};
+					}
+
+					// save the time that we started this game..
+					this._gameStartMillis = getTimer();
+				}
+
+				private function addPlayerPortraits(playerPortraits:Array):void
+				{
+					for (var i:int = 0; i < playerPortraits.length; i++)
+					{
+						var portrait:AvatarPortrait = AvatarPortrait(playerPortraits[i]);
+						portrait.data = {avatar:portrait.avatar, isActive:true, pairsMissed:0, pairsCompleted:0};
+
+						// create a portrait panel
+						var playerBox:VBox = new VBox();
+						playerBox.setStyle("cornerRadius", "12");
+						playerBox.setStyle("backgroundColor", "#666666");
+						playerBox.setStyle("borderColor", "#999999");
+						playerBox.setStyle("backgroundAlpha", ".60");
+						playerBox.setStyle("borderStyle", "solid");
+						playerBox.setStyle("borderThickness", 3);
+						playerBox.setStyle("paddingBottom", 5);
+						playerBox.setStyle("paddingTop", 7);
+						playerBox.addChild(portrait);
+
+						// create a canvas so we can place the label manually inside it
+						var playerCanvas:Canvas = new Canvas();
+						playerCanvas.addChild(playerBox);
+
+						var labelBox:VBox = new VBox();
+						labelBox.setStyle("cornerRadius", "8");
+						labelBox.setStyle("backgroundColor", "#000000");
+						labelBox.setStyle("backgroundAlpha", ".70");
+						labelBox.setStyle("borderStyle", "solid");
+						labelBox.setStyle("verticalGap", 0);
+						labelBox.setStyle("horizontalCenter", 0);
+						labelBox.setStyle("horizontalAlign", "center");
+						labelBox.setStyle("verticalAlign", "middle");
+						labelBox.setStyle("top", 7);
+						labelBox.width = 120;
+						labelBox.height = 35;
+
+						var playerLabel:Label = new Label();
+						playerLabel.text = "Player " + (i + 1)
+						playerLabel.setStyle("fontSize", 14);
+
+						labelBox.addChild(playerLabel);
+						//labelBox.addChild(timerLabel);
+						playerCanvas.addChild(labelBox);
+
+						// add even players to the left side, odd players to the right
+					    if (i % 2 == 0)
+					    	leftSide.addChild(playerCanvas)
+					    else
+					    	rightSide.addChild(playerCanvas);
+
+					    // add the avatar to our players list
+					    _players.push(portrait);
+					}
+				}
+
+				private function createChatBubble(index:int):void
+				{
+					// get the bubble image
+					var bubbleImage:Image = (index % 2) ? this.bubbleRight : this.bubbleLeft;
+
+					var bitmap:Bitmap = DisplayUtil.displayObjectToBitmap(bubbleImage);
+					var chatBubble:ChatBubble = new ChatBubble(false, null, bitmap);
+
+					// get our portrait
+					var portrait:AvatarPortrait = AvatarPortrait(this._players[index]);
+
+					// get the location of the avatar portrait
+					var gp:Point = portrait.parent.localToGlobal(new Point(portrait.x, portrait.y));
+					var p:Point = this.globalToLocal(gp);
+
+					// set the location of the chat bubble relative to the avatar portrait
+					var xOffset:int = (index % 2) ? 107 : -90;
+					chatBubble.x = p.x + xOffset;
+					chatBubble.y = p.y + 5;
+
+					this._chatBubbles.push(chatBubble);
+					this.rawChildren.addChild(chatBubble);
+				}
+
+				private function showChatMessage(senderAvatarId:int, chatText:String):void
+				{
+					// find the player index for chat sender
+					for (var i:int = 0; i < _players.length; i++)
+					{
+						// create the chat bubbles if needed
+						if (_chatBubbles.length < i + 1)
+							this.createChatBubble(i);
+
+						// if this our sender, show the message in his chat bubble
+						if (AvatarPortrait(_players[i]).avatar.avatarId == senderAvatarId)
+						{
+							var chatBubble:ChatBubble = ChatBubble(_chatBubbles[i]);
+							chatBubble.showText(chatText, 12);
+						}
+					}
+				}
+
+				public function close():void
+				{
+					CairngormEventDispatcher.getInstance().removeEventListener(BoardGameActionEvent.BOARD_GAME_ACTION, onBoardGameAction);
+					chatInput.listenForValidation = false;
+					//ChatInput(Application.application.mainLoader.child.console.chatInput).listenForValidation = true;
+					PopUpManager.removePopUp(this);
+				}
+
+				private function setupBoard(imageUrls:Array):void
+				{
+					// clear the board if needed
+					this.board.removeAllChildren();
+					_cards = new Array();
+
+					// layout the board
+					var cardNumber:int = 0;
+					for (var i:int = 0; i < _rows; i++)
+					{
+						// create a new row
+						var row:HBox = new HBox();
+						row.setStyle("horizontalGap", GAP);
+
+						for (var j:int = 0; j < _columns; j++)
+						{
+							// create a new card
+							var card:Object = { imageUrl:imageUrls[(i * _columns) + j], foundByPlayer:"_none", cardNumber:++cardNumber};
+							_cards.push(card);
+
+							// create a view stack for our flipping effect
+							var viewStack:ViewStack = new ViewStack();
+							viewStack.width = _cardSize;
+							viewStack.height = _cardSize;
+							viewStack.setStyle("hideEffect", fade);
+							viewStack.addEventListener(EffectEvent.EFFECT_END, onHideCardEffectEnd);
+
+							// create the front side of this card
+							var cardFront:VBox = createCardSide();
+							cardFront.data = card;
+							cardFront.setStyle("backgroundColor", "#6699CC");
+							cardFront.addEventListener(MouseEvent.CLICK, onFrontCardClick);
+							card.cardFront = cardFront;
+
+							var image:Image = new Image();
+							image.source = Environment.getApplicationUrl() + "/test/static/clipart/tagLogoTemplate?tagId=4";
+							image.width = _cardSize * .75;
+							image.height = image.width;
+							cardFront.addChild(image);
+
+							// create the back side of this card
+							var cardBack:VBox = createCardSide();
+							cardBack.data = card;
+							cardBack.setStyle("backgroundColor", "#F5F5DC");
+							card.cardBack = cardBack;
+
+							image = new Image();
+							image.source = Environment.getApplicationUrl() + card.imageUrl;
+							image.width = _cardSize * .9;
+							image.height = image.width;
+							cardBack.addChild(image);
+
+							// add the square to the row
+							viewStack.addChild(cardFront);
+							viewStack.addChild(cardBack);
+							row.addChild(viewStack);
+						}
+
+						// now add the row
+						board.addChild(row);
+					}
+
+					function createCardSide():VBox
+					{
+						var cardSide:VBox = new VBox();
+						cardSide.setStyle("borderStyle", "solid");
+						cardSide.setStyle("borderThickness", "0");
+						cardSide.setStyle("cornerRadius", "3");
+						cardSide.setStyle("horizontalAlign", "center");
+						cardSide.setStyle("verticalAlign", "middle");
+						cardSide.setStyle("showEffect", flipPapervision3D);
+						cardSide.setStyle("hideEffect", flipPapervision3D);
+						cardSide.horizontalScrollPolicy = "off";
+						cardSide.verticalScrollPolicy = "off";
+						cardSide.percentWidth = 100;
+						cardSide.percentHeight = 100;
+						cardSide.addEventListener(EffectEvent.EFFECT_END, onEffectEnd);
+						cardSide.filters = [new DropShadowFilter()];
+
+						// adjust for the team logo swfs
+						if (_category == "teams")
+							cardSide.setStyle("paddingTop", 10 * (_cardSize / 100));
+
+						return cardSide;
+					}
+				}
+
+				private function flipCard(cardNumber:int):void
+				{
+					var card:Object = _cards[cardNumber - 1];
+
+					var cardFront:VBox = VBox(card.cardFront);
+					var cardBack:VBox = VBox(card.cardBack);
+
+					// turn the card and add it to _selectedCards
+					var viewStack:ViewStack = ViewStack(cardFront.parent);
+					viewStack.selectedIndex = 1;
+					_selectedCards.push(cardBack);
+
+					// have we selected 2 cards?
+					if (_selectedCards.length == 2)
+					{
+						var card1Back:VBox = VBox(_selectedCards[0]);
+
+						// do we have a match?
+						cardBack.data.matched = card1Back.data.matched = (cardBack.data.imageUrl == card1Back.data.imageUrl);
+
+						// record the move
+						var avatarPortrait:AvatarPortrait = findPlayer(_avatarIdOnMove);
+						if (cardBack.data.matched)
+						{
+							avatarPortrait.data.pairsCompleted++;
+							_cardTimer.delay = 1500;
+						}
+						else
+						{
+							_moveIsOver = true;
+							avatarPortrait.data.pairsMissed++;
+							_cardTimer.delay = 3000;
+						}
+
+						// start a timer to turn back our cards or remove them if matched
+						_cardTimer.start();
+					}
+
+//					if (_cardFlipSound.bytesTotal == _cardFlipSound.bytesLoaded)
+//						_cardFlipSound.play();
+				}
+
+				private function findPlayer(avatarId:int):AvatarPortrait
+				{
+					for each (var avatarPortrait:AvatarPortrait in _players)
+						if (avatarPortrait.avatar.avatarId == avatarId)
+							return avatarPortrait;
+
+					return null;
+				}
+
+				private function setNextPlayerOnMove():void
+				{
+					// only the first player should set the person on move
+					if (!isFirstPlayer())
+						return;
+
+					// find the current player on move
+					for (var i:int = 0; i < _players.length; i++)
+					{
+						var avatarPortrait:AvatarPortrait = AvatarPortrait(_players[i]);
+						if (avatarPortrait.avatar.avatarId == _avatarIdOnMove)
+						{
+							// now set the next player on move
+							var playerIndex:int = i < _players.length - 1 ? i + 1 : 0;
+							var nextPlayer:AvatarPortrait = AvatarPortrait(_players[playerIndex]);
+							setPlayerOnMove(nextPlayer.avatar.avatarId);
+
+							// if this player is inactive (left the game) skip him
+							if (!nextPlayer.data.isActive)
+								setNextPlayerOnMove();
+							else
+								sendPlayerOnMove(nextPlayer.avatar.avatarId);
+
+							break;
+						}
+					}
+				}
+
+				private function setPlayerOnMove(avatarId:int):void
+				{
+					// just return if we don't have multiple players
+					if (_players.length < 2)
+						return;
+
+					_avatarIdOnMove = avatarId;
+
+					// highlight the player on move
+					for (var i:int = 0; i < _players.length; i++)
+					{
+						var avatarPortrait:AvatarPortrait = AvatarPortrait(_players[i]);
+						var playerBox:VBox = VBox(avatarPortrait.parent);
+						if (avatarPortrait.avatar.avatarId == avatarId)
+						{
+							// make the playerBox green
+							playerBox.setStyle("backgroundColor", "#1e6c00");
+							playerBox.setStyle("borderColor", "#b4ff00");
+
+							// set the glow around the avatar
+							avatarPortrait.avatarImage.filters = [ new GlowFilter(0xffffff, .9, 10, 10, 4, BitmapFilterQuality.MEDIUM) ];
+						}
+						else
+						{
+							// make the playerBox grey
+							playerBox.setStyle("backgroundColor", "#666666");
+							playerBox.setStyle("borderColor", "#999999");
+
+							// remove the glow around the avatar
+							avatarPortrait.avatarImage.filters = [];
+						}
+					}
+
+					_moveIsOver = false;
+
+					// reset the move timer
+					_remainingMoveSeconds = 5;
+				    //this._moveTimer.stop();
+				    //this._moveTimer.start();
+				}
+
+				private function removePlayer(avatarId:int):void
+				{
+					for (var i:int = 0; i < _players.length; i++)
+					{
+						var avatarPortrait:AvatarPortrait = AvatarPortrait(_players[i]);
+						if (avatarPortrait.avatar.avatarId == avatarId)
+						{
+							// are we on move?
+							if (avatarId == _avatarIdOnMove)
+								setNextPlayerOnMove();
+
+							// greyscale this avatar
+							var mat:Array = [ .33,.33,.33,0,0,
+          									  .33,.33,.33,0,0,
+          									  .33,.33,.33,0,0,
+          									  .33,.33,.33,1,0 ];
+							var colorMat:ColorMatrixFilter = new ColorMatrixFilter(mat);
+							avatarPortrait.filters = [colorMat];
+
+							// post a message over the avatar stating the player has left the game
+							var playerCanvas:Canvas = Canvas(avatarPortrait.parent.parent);
+
+							var leftGameBox:VBox = new VBox();
+							leftGameBox.setStyle("cornerRadius", "8");
+							leftGameBox.setStyle("backgroundColor", "#333333");
+							leftGameBox.setStyle("backgroundAlpha", ".80");
+							leftGameBox.setStyle("borderStyle", "solid");
+							leftGameBox.setStyle("borderThickness", 0);
+							leftGameBox.setStyle("paddingBottom", 3);
+							leftGameBox.setStyle("paddingTop", 3);
+							leftGameBox.setStyle("horizontalCenter", 0);
+							leftGameBox.setStyle("verticalCenter", -30);
+							leftGameBox.width = playerCanvas.width - 20;
+
+							var textBox:Text = new Text();
+							textBox.text = avatarPortrait.avatar.name + " has left the game";
+							textBox.width = leftGameBox.width - 6;
+							textBox.setStyle("textAlign", "center");
+
+							leftGameBox.addChild(textBox);
+							playerCanvas.addChild(leftGameBox);
+
+							// mark the player as inactive
+							avatarPortrait.data.isActive = false;
+
+							break;
+						}
+					}
+				}
+
+				private function onFrontCardClick(e:MouseEvent):void
+				{
+					// first make sure it's our move
+					if (_avatarIdOnMove != _userAvatar.avatarId || _moveIsOver)
+						return;
+
+					// do we already have two selected cards?
+					if (_selectedCards.length == 2)
+						return;
+
+					// send the move
+					var cardFront:VBox = VBox(e.currentTarget);
+					sendGameAction("flipCard", cardFront.data.cardNumber);
+				}
+
+				private function onCardTimer(event:TimerEvent):void
+				{
+					// turn back the selected cards
+					trace("onCardTimer called");
+					for each (var cardBack:VBox in _selectedCards)
+					{
+						var viewStack:ViewStack = ViewStack(cardBack.parent);
+
+						// remove the card if its part of a match
+						// otherwise flip it back over
+						if (cardBack.data.matched)
+						{
+							viewStack.visible = false;
+							_visibleCards--;
+						}
+						else
+						{
+							viewStack.selectedIndex = 0;
+
+							// set the timer to put the next player on move
+							if (_players.length > 1)
+								_setNextMoveTimer.start();
+							else
+								_moveIsOver = false;
+						}
+					}
+
+					// clear _selectedCards
+					_selectedCards.splice(0, _selectedCards.length);
+				}
+
+				private function onMoveTimer(event:TimerEvent):void
+				{
+					// if we run out of time for this move, go to the next player
+					if (--_remainingMoveSeconds == 0)
+					{
+						// just return if we have already turn over the second card (the move is over)
+						if (_selectedCards.length == 2)
+							return;
+
+						// if there is one card up, turn it back
+						else if (_selectedCards.length == 1)
+							onCardTimer(null);
+
+						// if there are no cards turned up, go to the next player
+						else
+							setNextPlayerOnMove();
+					}
+				}
+
+				private function onEffectEnd(event:Event):void
+				{
+					var card:VBox = VBox(event.currentTarget);
+
+					// re-apply the dropShadow - it seems to get messed up after the flip effect
+					card.filters = [new DropShadowFilter()];
+
+					if (card.data.matched)
+					{
+						if (!card.data.play)
+							card.data.play = true;
+						else
+							_matchFoundSound.play();
+					}
+				}
+
+				private function onSetNextMoveTimer(event:TimerEvent):void
+				{
+					setNextPlayerOnMove();
+				}
+
+				private function onHideCardEffectEnd(event:Event):void
+				{
+					// show the stats if the game is over
+					if (!_visibleCards && !this.statBox.visible)
+					{
+						// show the game results to the user
+						showStats();
+
+						// send the game results to server if needed
+						sendGameResultsToServer();
+					}
+				}
+
+				private function sendPlayerOnMove(avatarId:int):void
+				{
+					// only one client needs to set the player on move
+					if (!isFirstPlayer())
+						return;
+
+					sendGameAction("setPlayerOnMove", avatarId.toString());
+				}
+
+				private function isFirstPlayer():Boolean
+				{
+					var isFirstPlayer:Boolean = false;
+					for each (var avatarPortrait:AvatarPortrait in this._players)
+					{
+						if (avatarPortrait.data.isActive)
+						{
+							// the first active player sends the results
+							if (avatarPortrait.avatar.avatarId == _userAvatar.avatarId)
+								isFirstPlayer = true;
+
+							break;
+						}
+					}
+
+					return isFirstPlayer;
+				}
+
+				private function sendGameResultsToServer():void
+				{
+					// only one client needs to send the game results
+					if (!isFirstPlayer())
+						return;
+
+					// build the params for the server side boardGameComplete message
+					var params:Object = new Object();
+					params.gameId = 1;
+					params.gameSessionId = _gameSessionId;
+					params.gameName = title.text;
+					params.level=_level;
+					var avatarScores:Array = new Array();
+					for  (var i:int = 0; i < _players.length; i++)
+					{
+						var avatarId:int = AvatarPortrait(_players[i]).avatar.avatarId;
+						var pairs:int =  _players[i].data.pairsCompleted;
+						avatarScores.push(avatarId + ":" + pairs);
+					}
+					params.avatarIds = avatarScores.join(',');
+					// send the boardGameComplete message to the server
+		            SocketClient.getInstance().sendPluginMessage("avatar_handler", "boardGameComplete", params);
+				}
+
+				private function showStats():void
+				{
+					// get and sort the players
+					var players:Array = new Array;
+					for each (var avatarPortrait:AvatarPortrait in _players)
+						players.push(avatarPortrait.data);
+					players.sortOn("pairsCompleted", Array.DESCENDING | Array.NUMERIC);
+
+					// show the  players
+					player1Name.text = players[0].avatar.name;
+					player1Pairs.text = players[0].pairsCompleted;
+
+					if (players.length > 1)
+					{
+						player2Name.text = players[1].avatar.name;
+						player2Pairs.text = players[1].pairsCompleted;
+						player2Stats.visible = true;
+					}
+					if (players.length > 2)
+					{
+						player3Name.text = players[2].avatar.name;
+						player3Pairs.text = players[2].pairsCompleted;
+						player3Stats.visible = true;
+					}
+					if (players.length > 3)
+					{
+						player4Name.text = players[3].avatar.name;
+						player4Pairs.text = players[3].pairsCompleted;
+						player4Stats.visible = true;
+					}
+
+					// the game duration
+					var durationMillisTotal:int = getTimer() - _gameStartMillis;
+					var durationSecondsTotal:int = durationMillisTotal / 1000;
+					var durationMinutes:int = durationSecondsTotal / 60;
+					var durationSeconds:int = durationSecondsTotal % 60;
+					var strMinutes:String = durationMinutes < 10 ? "0" + durationMinutes : durationMinutes.toString();
+					var strSeconds:String = durationSeconds < 10 ? "0" + durationSeconds : durationSeconds.toString();
+					gameDurationLabel.text = "Game duration: " + strMinutes + ":" + strSeconds;
+
+					// show the 'play again' or exit buttons
+					var gameOwner:Avatar = AvatarPortrait(_players[0]).avatar;
+					if (_userAvatar.avatarId != gameOwner.avatarId)
+					{
+						playAgainLabel.visible = playAgainLabel.includeInLayout = false;
+						playAgainButtons.visible = playAgainButtons.includeInLayout = false;
+
+						endGameLabel.text = "Wait for " + gameOwner.name + " to restart or..";
+						endGameLabel.visible = endGameLabel.includeInLayout = true;
+						endGameButton.visible = endGameButton.includeInLayout = true;
+					}
+
+					// show the stats
+					board.visible = false;
+					statBox.visible = true;
+				}
+
+				private function playAgain(imageUrls:String):void
+				{
+					// turn off the stats box
+					statBox.visible = false;
+
+					// layout the board
+					setupBoard(imageUrls.split(','));
+					_visibleCards = _totalCards;
+
+					// reset the player stats
+					if (_players.length == 1)
+					{
+						// single player
+						var portrait:AvatarPortrait = AvatarPortrait(_players[0]);
+						portrait.data = {avatar:portrait.avatar, isActive:true, pairsMissed:0, pairsCompleted:0};
+					}
+					else
+					{
+						// multi-player
+						setPlayerOnMove(AvatarPortrait(_players[0]).avatar.avatarId);
+
+						for each (portrait in _players)
+							portrait.data = {avatar:portrait.avatar, isActive:portrait.data.isActive, pairsMissed:0, pairsCompleted:0};
+					}
+
+					// make the board visible
+					board.visible = true;
+
+					// reset the start of game time
+					_gameStartMillis = getTimer();
+				}
+
+				private function onResize(event:Event):void
+				{
+					PopUpManager.centerPopUp(this);
+				}
+
+				private function onCloseButtonRollOver(event:Event):void
+				{
+					var swf:Object = event.currentTarget.content as Object;
+					if (!swf)
+						return;
+
+					if (swf.doMouseOverEffect)
+						swf.doMouseOverEffect();
+				}
+
+				private function onCloseButtonRollOut(event:Event):void
+				{
+					var swf:Object = event.currentTarget.content as Object;
+					if (!swf)
+						return;
+
+					if (swf.doMouseOutEffect)
+						swf.doMouseOutEffect();
+				}
+
+				private function onCloseButtonClick(event:Event):void
+				{
+					sendGameAction("leaveGame", _userAvatar.avatarId.toString());
+					close();
+				}
+
+				/**
+				 * Returns a comma delimited list of image urls for given concentration category
+				 */
+				static public function getImages(category:String, difficultyLevel:String):String
+				{
+					var imagesString:String = null;
+
+					var count:int = 16;
+					switch (difficultyLevel.toLowerCase())
+					{
+						case 'normal':
+							count = 4 * 4;
+							break;
+						case 'advanced':
+							count = 6 * 6;
+							break;
+						case 'expert':
+							count = 8 * 8;
+							break;
+						default:
+							break;
+					}
+
+					if (category == "teams")
+					{
+						// get our team logo images
+						var imageIds:Array = new Array();
+						var usedIds:Object = new Object;
+						var imageUrls:QuickList = new QuickList();
+						while (imageUrls.length < count)
+						{
+							// team IDs are between 1 and 63
+							var teamId:int = MathUtil.random(1, 62);
+
+							// only used a given teamId once
+							if (usedIds[teamId] || teamId == 7 || teamId == 8)
+								continue;
+							usedIds[teamId] = true;
+
+							// add two images URLs for this image
+							var imageUrl:String = "/test/static/clipart/teamLogoTemplate?teamId=" + teamId;
+							imageUrls.push(imageUrl);
+							imageUrls.push(imageUrl);
+						}
+
+						// shuffle our images
+						imageUrls.shuffle();
+						imageUrls.shuffle();
+						imageUrls.shuffle();
+
+						// create the image string
+						imagesString = imageUrls.join(',');
+					}
+					else
+						trace("Concentration - unknown category: " + category);
+
+					return imagesString;
+				}
+
+				public function chatMessageSender(message:String):void
+				{
+					sendGameAction("chat", message);
+				}
+
+				private function sendChatIfValid():void
+				{
+					// make sure the user is not in 'warned' mode
+					if (ModelLocator.getInstance().avatar.warned)
+					{
+						//SdgAlert.show("You are limited to scripted chat until your warning period expires.", "Warning Mode");
+						ModeratorAlertChrome.show("You are limited to scripted chat until your warning period expires.", "Warning Mode");
+						return;
+					}
+
+					chatInput.sendChatMessage();
+				}
+
+				private function sendGameAction(actionName:String, actionValue:String):void
+				{
+					// get the avatar ids
+					var avatarIds:Array = new Array();
+					for each (var avatarPortrait:AvatarPortrait in _players)
+					{
+						if (avatarPortrait.data.isActive)
+							avatarIds.push(avatarPortrait.avatar.avatarId);
+					}
+
+					RoomManager.getInstance().userController.boardGameAction(_gameId, _gameSessionId, _level, avatarIds, _userAvatar.avatarId, actionName, actionValue);
+				}
+
+				private function onBoardGameAction(event:BoardGameActionEvent):void
+				{
+					// make sure the sender is in our game
+					// !findPlayer(event.senderAvatarId)
+					if (event.gameSessionId != _gameSessionId)
+						return;
+
+					switch (event.actionName)
+					{
+						case "chat":
+							showChatMessage(event.senderAvatarId, event.actionValue);
+							break;
+						case "flipCard":
+							flipCard(parseInt(event.actionValue));
+							break;
+						case "leaveGame":
+							removePlayer(parseInt(event.actionValue));
+							break;
+						case "playAgain":
+							playAgain(event.actionValue);
+							break;
+						case "setPlayerOnMove":
+							setPlayerOnMove(parseInt(event.actionValue));
+							break;
+						default:
+							break;
+					}
+				}
+
+			]]>
+		</mx:Script>
+
+		<!-- title -->
+		<mx:Canvas width="100%">
+			<mx:Label id="title" text="Concentration!" fontSize="38" verticalCenter="0" horizontalCenter="0" />
+			<mx:Image id="closeButton" source="assets/swfs/closeButton.swf" right="5" top="5" mouseChildren="false" buttonMode="true"
+				rollOver="onCloseButtonRollOver(event)"	rollOut="onCloseButtonRollOut(event)" click="onCloseButtonClick(event)" />
+		</mx:Canvas>
+
+		<!-- avatars and board -->
+		<mx:HBox>
+
+			<!-- avatars on the left side -->
+			<mx:VBox id="leftSide" verticalGap="15" />
+
+			<mx:Canvas id="boardCanvas" >
+
+				<!-- the board -->
+				<mx:VBox id="board" verticalGap="{GAP}" horizontalGap="{GAP}" />
+
+				<!-- the end-of-game stats -->
+				<mx:VBox id="statBox" horizontalCenter="0" verticalCenter="0" horizontalAlign="center" verticalAlign="top" height="{board.height}" width="{board.width}"
+					backgroundColor="#0" backgroundAlpha=".60" borderStyle="solid" borderThickness="0" cornerRadius="12"
+					paddingTop="10" paddingLeft="15" paddingRight="15" paddingBottom="15" visible="false" >
+					<mx:Label text="Game Results" fontSize="30" />
+					<mx:VBox width="100%" height="100%" backgroundColor="#ffffff" borderStyle="solid" borderThickness="0" cornerRadius="12" verticalGap="1"
+						paddingLeft="5" paddingRight="5" paddingTop="5" paddingBottom="5" >
+
+						<!-- the players heading -->
+						<mx:HBox backgroundColor="#244f7c" borderStyle="solid" borderThickness="0" cornerRadius="12" height="55" width="100%" verticalAlign="middle">
+							<mx:Label text="Players" fontSize="25" textAlign="center" width="50%" />
+							<mx:Label text="Pairs" fontSize="25" textAlign="center" width="50%" />
+						</mx:HBox>
+
+						<!-- the actual players and their stats -->
+						<mx:HBox id="player1Stats" backgroundColor="#dbf3ff"  width="100%" verticalAlign="middle">
+							<mx:Label id="player1Name" fontSize="25" fontStyle="italic" text="player1" color="#05224c" textAlign="center" width="50%" />
+							<mx:Label id="player1Pairs" fontSize="25" fontStyle="italic" text="10"  color="#05224c" textAlign="center" width="50%" />
+						</mx:HBox>
+						<mx:HBox id="player2Stats" width="100%" verticalAlign="middle" visible="false">
+							<mx:Label id="player2Name" fontSize="25" fontStyle="italic" text="player2" color="#05224c" textAlign="center" width="50%" />
+							<mx:Label id="player2Pairs" fontSize="25" fontStyle="italic" text="5"  color="#05224c" textAlign="center" width="50%" />
+						</mx:HBox>
+						<mx:HBox id="player3Stats" backgroundColor="#dbf3ff" width="100%" verticalAlign="middle" visible="false">
+							<mx:Label id="player3Name" fontSize="25" fontStyle="italic" text="player3" color="#05224c" textAlign="center" width="50%" />
+							<mx:Label id="player3Pairs" fontSize="25" fontStyle="italic" text="3"  color="#05224c" textAlign="center" width="50%" />
+						</mx:HBox>
+						<mx:HBox id="player4Stats" width="100%" verticalAlign="middle" visible="false">
+							<mx:Label id="player4Name" fontSize="25" fontStyle="italic" text="player4" color="#05224c" textAlign="center" width="50%" />
+							<mx:Label id="player4Pairs" fontSize="25" fontStyle="italic" text="0"  color="#05224c" textAlign="center" width="50%" />
+						</mx:HBox>
+
+						<!-- the game duration -->
+						<mx:Label id="gameDurationLabel" text="Game duration: 5:32" color="#05224c" fontSize="14" width="100%" textAlign="center" />
+
+						<!-- play again box -->
+						<mx:VBox backgroundColor="#ade0ff" borderStyle="solid" borderColor="#244f7c" borderThickness="3" cornerRadius="12"
+							height="112" width="100%" bottom="0" horizontalAlign="center" verticalAlign="middle" >
+
+							<!-- restart game controls - for game owner -->
+							<mx:Label id="playAgainLabel" text="Play Again?" fontSize="20" color="#254e7a" textAlign="center" width="100%" />
+							<mx:HBox id="playAgainButtons" horizontalGap="17">
+								<mx:Button label="Yes" styleName="orange" fontSize="20" width="130" height="45" click="{sendGameAction('playAgain', getImages(_category, _level))}" />
+								<mx:Button label="No" fontSize="20" width="145" height="45" click="onCloseButtonClick(event)" />
+							</mx:HBox>
+
+							<!-- passive end of game controls - for non-game owners -->
+							<mx:Label id="endGameLabel" text="Wait for game to restart or..." fontSize="14" color="#254e7a"
+								textAlign="center" width="100%" includeInLayout="false" visible="false" />
+							<mx:Button id="endGameButton" label="Exit Game" fontSize="20" width="130" height="45" click="onCloseButtonClick(event)"
+								includeInLayout="false" visible="false" />
+						</mx:VBox>
+
+					</mx:VBox>
+				</mx:VBox>
+
+			</mx:Canvas>
+
+			<!-- avatars on the right side -->
+			<mx:VBox id="rightSide" verticalGap="15" />
+		</mx:HBox>
+
+		<!-- chat input -->
+		<mx:HBox id="chatPanel" horizontalAlign="center" verticalAlign="middle" width="100%" height="90">
+			<mx:Canvas id="chat" borderStyle="none" backgroundAlpha="0">
+				<controls:ChatInput id="chatInput" width="400" paddingRight="40" enter="sendChatIfValid()" chatMessageSender="{chatMessageSender}" />
+				<mx:Button verticalCenter="0" styleName="blue" cornerRadius="6" width="36" height="28" buttonMode="true" right="4"
+					click="sendChatIfValid()" icon="@Embed(source='images/roomConsole/chatBarIcon.png')" toolTip="Send Message"/>
+			</mx:Canvas>
+		</mx:HBox>
+	</mx:VBox>
+
+	<!-- effect declarations -->
+	<mx:Fade id="fade" />
+	<viewStackEffects:FlipPapervision3D id="flipPapervision3D" direction="down"/>
+
+	<!-- chat bubble images -->
+	<mx:Image id="bubbleLeft" source="@Embed(source='swfs/bubbleLeft.swf')" visible="false" includeInLayout="false" />
+	<mx:Image id="bubbleRight" source="@Embed(source='swfs/bubbleRight.swf')" visible="false" includeInLayout="false" />
+</mx:Canvas>

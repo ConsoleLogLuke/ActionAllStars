@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<pda:SkinableContainer xmlns:mx="http://www.adobe.com/2006/mxml" xmlns:pda="com.sdg.view.pda.*" backgroundAlpha=".6"
+	verticalScrollPolicy="off" horizontalScrollPolicy="off"
+	height="{buttonsContainer.numChildren == 0 ? 0 :
+			_isExpanded ? menuContainer.height :
+			toggleButton.includeInLayout ? _firstButtonLine.height + paddingTop + paddingBottom + toggleButton.height + menuContainer.getStyle('verticalGap') :
+			_firstButtonLine.height + paddingTop + paddingBottom}">
+	
+	<mx:Script>
+		<![CDATA[
+			import com.sdg.view.pda.interfaces.IPDAButtonBase;
+			import mx.core.UIComponent;
+			import mx.collections.ArrayCollection;
+			import mx.containers.HBox;
+			import mx.containers.VBox;
+			
+			[Bindable]
+			public var paddingLeft:int = 3;
+			[Bindable]
+			public var paddingRight:int = 3;
+			[Bindable]
+			public var paddingTop:int = 3;
+			[Bindable]
+			public var paddingBottom:int = 3;
+			
+			[Bindable]
+			public var lineGap:int = 5;
+			public var buttonGap:int = 5;
+			public var slotsPerLine:int = 5;
+			
+			private var _buttonList:ArrayCollection = new ArrayCollection();
+			[Bindable]
+			private var _isExpanded:Boolean = false;
+			[Bindable]
+			private var _firstButtonLine:HBox;
+			
+			private function setupMenu():void
+			{
+				buttonsContainer.removeAllChildren();
+				
+				for each (var button:IPDAButtonBase in _buttonList)
+					addButtonToStage(button);
+			}
+			
+			override public function addChild(child:DisplayObject):DisplayObject
+			{
+				var button:IPDAButtonBase = child as IPDAButtonBase;
+				if (button)
+					addButton(button);
+				else
+					super.addChild(child);
+				
+				return child;
+			}
+			
+			public function removeAllButtons():void
+			{
+				for each (var button:IPDAButtonBase in _buttonList)
+					button.removeEventListener(MouseEvent.CLICK, onClick);
+				
+				_buttonList.removeAll();
+				buttonsContainer.removeAllChildren();
+			}
+			
+			private function addButtonToStage(button:IPDAButtonBase):IPDAButtonBase
+			{
+				var lastChildBox:HBox;
+				
+				if (buttonsContainer.numChildren > 0)
+					lastChildBox = buttonsContainer.getChildAt(buttonsContainer.numChildren - 1) as HBox;
+				
+				if (lastChildBox == null || lastChildBox.numChildren >= slotsPerLine)
+					lastChildBox = addNewButtonLine();
+				
+				lastChildBox.addChild(UIComponent(button));
+				return button;
+			}
+			
+			public function addButton(button:IPDAButtonBase):IPDAButtonBase
+			{
+				button.addEventListener(MouseEvent.CLICK, onClick);
+				_buttonList.addItem(button);
+				return addButtonToStage(button);
+			}
+			
+			private function addNewButtonLine():HBox
+			{
+				var buttonLine:HBox = buttonsContainer.addChild(new HBox()) as HBox;
+				buttonLine.setStyle("horizontalGap", buttonGap);
+				
+				if (buttonsContainer.numChildren == 1)
+					_firstButtonLine = buttonLine;
+				else if (buttonsContainer.numChildren == 2)
+					toggleButton.includeInLayout = toggleButton.visible = true;
+				
+				return buttonLine;
+			}
+			
+			private function onToggleButtonClicked(event:MouseEvent):void
+			{
+				_isExpanded = !_isExpanded;
+				toggleButton.flipArrow();
+			}
+			
+			private function onClick(event:MouseEvent):void
+			{
+				var callBack:Function = IPDAButtonBase(event.currentTarget).callBack;
+				if (callBack != null)
+					callBack();
+			}
+		]]>
+	</mx:Script>
+	<mx:VBox id="menuContainer" top="0" horizontalCenter="0" width="100%" horizontalAlign="center"
+		paddingLeft="{paddingLeft}" paddingRight="{paddingRight}" paddingBottom="{paddingBottom}" paddingTop="{paddingTop}">
+		<pda:ToggleButton id="toggleButton" includeInLayout="false" visible="false" click="{onToggleButtonClicked(event)}"/>
+		<mx:VBox id="buttonsContainer" verticalGap="{lineGap}" horizontalAlign="center"/>
+	</mx:VBox>
+</pda:SkinableContainer>

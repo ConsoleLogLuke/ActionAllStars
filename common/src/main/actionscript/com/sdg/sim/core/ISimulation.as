@@ -1,0 +1,1 @@
+﻿package com.sdg.sim.core{		public interface ISimulation extends ISimulationManager	{		function addMember(entity:SimEntity):void;				function containsMember(entity:SimEntity):Boolean;				function removeMember(entity:SimEntity):void;				function removeAllMembers():void;				function update(dt:Number, iterations:int):void;	}}

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<controls:SimpleTitlePanel xmlns:mx="http://www.adobe.com/2006/mxml"
+	xmlns:controls="com.sdg.components.controls.*"
+	creationComplete="init();">
+	
+	<mx:Script>
+		<![CDATA[
+			import com.sdg.components.controls.DialogHelpIcon;
+			private var _helpDialogId:int = 2100;
+			private var _helpButtonSize:String = "large";
+			
+			public function set helpId(value:int):void
+			{
+				_helpDialogId = value;
+				this.titleIcon = DialogHelpIcon;
+			}
+			
+			public function set helpButtonSize(size:String):void
+			{
+				_helpButtonSize = size;
+			}
+			
+			private function init():void
+			{
+				var icon:DialogHelpIcon = titleIconObj as DialogHelpIcon;
+				if (icon != null)				
+				{
+					icon.dialogId = _helpDialogId;
+					icon.size = _helpButtonSize;
+					return;
+				}
+			}
+		]]>
+	</mx:Script>
+</controls:SimpleTitlePanel>

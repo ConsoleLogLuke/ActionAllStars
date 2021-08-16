@@ -1,0 +1,6 @@
+type = 'swc'
+
+dependencies {
+    merged fileTree(dir: '../libs', include: ['*.swc'])
+    merged project(':assets')
+}

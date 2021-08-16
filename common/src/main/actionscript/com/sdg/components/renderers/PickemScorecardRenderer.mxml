@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="30" borderStyle="solid" borderThickness="1" borderSides="bottom">
+	<mx:Script>
+		<![CDATA[
+		]]>
+	</mx:Script>
+	<mx:HBox width="100%" height="100%" horizontalAlign="center" verticalAlign="middle">
+		<mx:Label width="100%" text="{data.answer[0]}" color="{data.selected == 0 ? 0xffffff : 0x999999}" textAlign="right"
+			filters="{data.selected == 0 ? [new GlowFilter(0xffffff, .60, 10, 10, 3, 2)] : null}"/>
+		<mx:Label text="vs." color="#999999"/>
+		<mx:Label width="100%" text="{data.answer[1]}" color="{data.selected == 1 ? 0xffffff : 0x999999}" textAlign="left"
+			filters="{data.selected == 1 ? [new GlowFilter(0xffffff, .60, 10, 10, 3, 2)] : null}"/>
+	</mx:HBox>
+	<mx:Image width="20" height="20" horizontalAlign="center" verticalAlign="middle" left="10" verticalCenter="0"
+		source="{data.isCorrect ? 'assets/swfs/pda/thumbsUp.swf' : 'assets/swfs/pda/thumbsDown.swf'}" visible="{data.status == 'resolved'}"/>
+</mx:Canvas>

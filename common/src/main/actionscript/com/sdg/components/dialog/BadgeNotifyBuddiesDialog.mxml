@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml"
+	xmlns:sdgcontrols="com.sdg.components.controls.*" width="300" height="200"
+	xmlns:business="com.sdg.business.*"
+	implements="com.sdg.components.dialog.ISdgDialog" xmlns:store="com.sdg.components.controls.store.*">
+	<mx:Script>
+		<![CDATA[
+			import com.sdg.ui.RoundCornerCloseButton;
+			import com.sdg.net.Environment;
+			import mx.managers.PopUpManager;
+			
+			[Bindable]
+			protected var _title:String = "MESSAGES SENT:";
+			[Bindable]
+			protected var _description:String = "Your friends have been notified about the badge you just earned.";
+			[Bindable]
+			protected var _thumbnailUrl:String;
+			protected var backgroundPath:String = Environment.getAssetUrl() + '/test/gameSwf/gameId/99/gameFile/small_popUpBox.swf';
+			
+			//Add Cancel X in rawchildren and a listener
+
+			public function init(params:Object):void
+			{
+				// Import Parameters
+				_title = params.title as String;
+				
+				// Close Button				
+				var closeBtn:RoundCornerCloseButton = new RoundCornerCloseButton();
+				closeBtn.x = 245;
+				closeBtn.y = 6;
+				closeBtn.buttonMode = true;
+				closeBtn.addEventListener(MouseEvent.CLICK, onCloseClick);
+				this.rawChildren.addChild(closeBtn);
+				
+				this.x = 330;
+				this.y = 360;
+			}
+			
+			public function onCloseClick(e:Event):void
+			{
+				close();
+			}
+
+			public function close():void
+			{
+				PopUpManager.removePopUp(this);
+			}
+		]]>
+	</mx:Script>
+	
+	<mx:Image id="blackBackground" buttonMode="false"  source="{backgroundPath}"/>
+	
+	<mx:VBox borderStyle="solid" borderThickness="0" borderColor="#00ff00" maxWidth="150" horizontalScrollPolicy="off" verticalScrollPolicy="off"
+		paddingLeft="10" paddingRight="20">
+		<mx:Text id="title" color="#ffffff" fontSize="12" text="{_title}" width="148" paddingTop="5"/>
+		<mx:Text id="description" color="#ffffff" fontSize="12" text="{_description}" width="148"/>
+	</mx:VBox>
+</mx:Canvas>

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Box xmlns:mx="http://www.adobe.com/2006/mxml"
+	horizontalAlign="center" verticalAlign="middle"
+	paddingLeft="4" paddingTop="4" paddingRight="4" paddingBottom="4"
+	horizontalGap="4" verticalGap="4"
+	styleName="blue" dropShadowEnabled="false"
+	>
+</mx:Box>

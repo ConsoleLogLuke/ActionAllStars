@@ -1,0 +1,1 @@
+﻿package com.sdg.animation.sequence{	public class SequenceFrame	{		public var events:Array = [];	}}

@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" borderStyle="solid" borderThickness="1" borderColor="#000000"
+	backgroundColor="#252525" alpha=".90" implements="com.sdg.components.dialog.ISdgDialog">
+	<mx:Script>
+		<![CDATA[
+			import mx.managers.SystemManager;
+			import com.sdg.model.InventoryItem;
+			import com.sdg.utils.CurrencyUtil;
+			import com.sdg.display.RoomItemSprite;
+			import com.sdg.model.SdgItem;
+			import mx.managers.PopUpManager;
+			import mx.events.ResizeEvent;
+
+			private var _roomItem:RoomItemSprite;
+			private var _invItem:InventoryItem;
+			
+			private var _selfTimer:Timer;
+
+			public function init(params:Object):void
+			{
+				addEventListener(ResizeEvent.RESIZE, onResize);
+				
+				this.roomItem = params.RoomItem;
+				
+				tipName.text = _roomItem.item.name;
+				var invItem:InventoryItem = _roomItem.item as InventoryItem;
+				if (invItem)
+					turfValueToolTip.text = CurrencyUtil.intFormat(invItem.turfValue);
+				else
+					turfValueToolTip.text = "N/A";
+				
+				initTimer();
+			}
+			
+			public function close():void
+			{
+				PopUpManager.removePopUp(this);
+				destroy();
+			}
+			
+			public function destroy():void
+			{
+				this.killTimer();
+			}
+			
+			public function set roomItem(value:RoomItemSprite):void
+			{
+				_roomItem = value;
+				tipName.text = _roomItem.item.name;
+				
+				// Even though there is no resize, call the resize function
+				onResize(null);
+			}
+			
+			public function get roomItem():RoomItemSprite
+			{
+				return _roomItem;
+			}
+			
+			public function updatePosition():void
+			{
+				this.determineNewPosition();
+			}
+			
+			private function initTimer():void
+			{
+				_selfTimer = new Timer(8000,1);
+				
+				_selfTimer.addEventListener(TimerEvent.TIMER,onTimerComplete);
+				_selfTimer.start();
+			}
+			
+			private function onTimerComplete(te:TimerEvent):void
+			{
+				_selfTimer.removeEventListener(TimerEvent.TIMER,onTimerComplete);
+				this.close();
+			}
+			
+			private function killTimer():void
+			{
+				_selfTimer.stop();
+				_selfTimer.removeEventListener(TimerEvent.TIMER,onTimerComplete);
+			}
+			
+			private function onResize(event:ResizeEvent):void
+			{
+				removeEventListener(ResizeEvent.RESIZE, onResize);
+				
+				this.determineNewPosition();
+			}
+			
+			private function determineNewPosition():void
+			{
+				//Get the full display object for the application, then its width
+				var fullDisplay:DisplayObjectContainer = this.parent;
+				var fullDisplayWidth:uint = fullDisplay.width;
+				// Where Does the ToolTip End
+				var rightEdge:uint = _roomItem.x + + _roomItem.hitArea.x + _roomItem.hitArea.width + this.width;
+
+				if (rightEdge <= fullDisplayWidth)
+				{
+					var point:Point = new Point(_roomItem.x + _roomItem.hitArea.x, _roomItem.y + _roomItem.hitArea.y);
+					this.x = point.x + _roomItem.hitArea.width;
+					this.y = point.y;
+				}
+				else
+				{
+					var point:Point = new Point(_roomItem.x + _roomItem.hitArea.x - 14 - this.width, _roomItem.y + _roomItem.hitArea.y);
+					this.x = point.x + _roomItem.hitArea.width;
+					this.y = point.y;
+				}
+			}
+			
+		]]>
+	</mx:Script>
+	<mx:Label id="tipName" y="3" color="#ebc03f" fontSize="11" fontFamily="EuroStyle" fontWeight="bold" paddingLeft="3" paddingRight="3"/>
+	<mx:Label text="Turf Value:" y="18" fontSize="11" fontFamily="EuroStyle" fontWeight="bold" paddingLeft="3"/>
+	<mx:Label id="turfValueToolTip" x="75" y="18" color="#ebc03f" text="1000" fontSize="11" fontFamily="EuroStyle" fontWeight="bold" paddingRight="3"/>
+</mx:Canvas>

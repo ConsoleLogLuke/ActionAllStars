@@ -1,0 +1,338 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas 
+	xmlns:mx="http://www.adobe.com/2006/mxml"
+	implements="com.sdg.model.ISetAvatar"
+	backgroundImage="assets/swfs/gameBackground.swf"
+    backgroundSize="100%" 
+    horizontalScrollPolicy="off" verticalScrollPolicy="off"
+>
+	<mx:Script>
+		<![CDATA[
+			import com.sdg.collections.QuickList;
+			import com.sdg.model.ModelLocator;
+			import com.sdg.model.InventoryItem;
+			import com.sdg.control.room.RoomManager;
+			import mx.events.ResizeEvent;
+			import com.sdg.utils.MainUtil;
+			import mx.managers.PopUpManager;
+			import com.sdg.events.AvatarEvent;
+			import com.sdg.components.controls.AvatarPortrait;
+			import com.sdg.model.Avatar; 
+			
+			private var _maxPlayers:int = 4;
+			private var _game:InventoryItem;
+			private var _playerAvatarIds:QuickList = new QuickList();
+			private var _level:String;
+			private var _gameSessionId:String;
+			private var _gameId:int;
+			
+			public function init(game:Object, avatarIds:Array, gameId:int, level:String = null, gameSessionId:String = null):void
+			{
+				// styling the title
+				title.filters = [new GlowFilter(0x923131, 1, 4, 4, 10)];
+				
+				// add the game owner's avatar here
+				if (!avatarIds)
+				{
+					this._playerAvatarIds.push(ModelLocator.getInstance().avatar.avatarId);
+					addPlayer(ModelLocator.getInstance().avatar);
+				}
+				else 	
+					playerAvatarIds = avatarIds;
+					
+				_gameId = gameId;	
+					
+				_game = game as InventoryItem;
+				if (_game)
+				{
+					// the master invite panel
+					this.title.text = _game.name;
+					this.levels.dataProvider = ["Normal", "Advanced", "Expert"];
+					this.instructions.text="Click other athletes to invite them to play.\nMax of 4 players."
+					this.levelPanel.visible = levelPanel.includeInLayout = true;
+					this.buttonStartGame.visible = buttonStartGame.includeInLayout = true;
+					this.buttonStartGame.visible = buttonStartGame.includeInLayout = true;
+					this._gameSessionId = ModelLocator.getInstance().currentGameSessionId = ModelLocator.getInstance().avatar.avatarId + "_" + new Date().time;
+				}
+				else
+				{	
+					// info-only invite panel
+					this.title.text = String(game);
+					this.levelPanel.visible = levelPanel.includeInLayout = false;
+					this.buttonStartGame.visible = buttonStartGame.includeInLayout = false;
+					this.buttonStartGame.visible = buttonStartGame.includeInLayout = false;
+					this.instructions.text = "Please wait...";
+					this._level = level;
+					this._gameSessionId = gameSessionId;
+				}	
+			}		
+			
+			public function close():void
+			{
+				// remove any avatars currently loaded
+				players.removeAllChildren();
+				_playerAvatarIds = new QuickList();
+				
+				// clear the panel id
+				_gameSessionId = "";
+				
+				// turn off invite 
+				RoomManager.getInstance().userController.inviteModeOn = false; 
+				RoomManager.getInstance().userController.invitePanelOn = false;
+			}
+			
+			/**
+			 * Adds a player to this control by his/her avatarId
+			 */
+			public function addPlayerByAvatarId(avatarId:int):void
+			{
+				if (_playerAvatarIds.contains(avatarId) || this._maxPlayers == players.getChildren().length)
+					return;
+				
+				// the avatar to our playerAvatarIds
+				_playerAvatarIds.push(avatarId);
+						
+				// go get the avatar		
+	     		dispatchEvent(new AvatarEvent(avatarId, this)); 
+			}
+			
+			/**
+			 * This setter simply calls addPlayer.  It is here privarly
+			 * for AvatarCommand to command to call in response to an
+			 * addPlayerbyAvatarId request.
+			 */ 
+			public function set avatar(value:Avatar):void
+			{
+				addPlayer(value);
+			}
+			
+			public function get game():InventoryItem
+			{
+				return _game;
+			}
+			
+			public function get playerAvatarIds():Array
+			{
+				return _playerAvatarIds.toArray();
+			}
+			
+			public function get isMasterPanel():Boolean
+			{
+				return _game is InventoryItem;
+			}
+			
+			public function get gameSessionId():String
+			{
+				return _gameSessionId;
+			}
+			
+			public function get gameId():int
+			{
+				return _gameId;
+			}
+			
+			/**
+			 * This setter brings the invite panel up to date by doing the following:
+			 *  - using avatarIds as the player sort order
+			 *  - removes players as necessary
+			 *  - adds players as necessary
+			 */ 
+			public function set playerAvatarIds(avatarIds:Array):void
+			{
+				// first remove players as necessary
+				for each (var avatarPortrait:AvatarPortrait in players.getChildren())
+				{
+					// is this player in the given avatarIds?
+					var isInPlayerList:Boolean = false;
+					for each (var avatarId:int in avatarIds)
+					{
+						if (avatarId == avatarPortrait.avatar.avatarId)
+							isInPlayerList = true;
+					}
+					
+					if (!isInPlayerList)
+					{
+						players.removeChild(avatarPortrait);
+						_playerAvatarIds.removeValue(avatarPortrait.avatar.avatarId);
+					}					
+				}
+				
+				// next add players as necessary
+				for each (avatarId in avatarIds)
+					addPlayerByAvatarId(avatarId);
+			}
+			
+			/**
+			 * Adds a player (an avatar) to this control
+			 */ 
+			public function addPlayer(avatar:Avatar):void
+			{
+				// make sure this playing is in our list of avatars ids
+				if (!_playerAvatarIds.contains(avatar.avatarId))
+					return;
+				
+				// make sure this avatar isn't already loaded
+				for each (var avatarPortrait:AvatarPortrait in players)
+				{
+					if (avatarPortrait.avatar.avatarId == avatar.avatarId)
+						return;
+				}
+				
+				// add it to our players array if necessar
+				if (!_playerAvatarIds.contains(avatar.avatarId))
+					_playerAvatarIds.push(avatar.avatarId);
+					
+				// create a portrait for this avatar
+				avatarPortrait = new AvatarPortrait();
+				avatarPortrait.avatar = avatar;
+				players.addChild(avatarPortrait);
+				
+				// make sure the players are in the right order
+				sortPlayers();
+				
+				// dispatch an Event.COMPLETE to indicate that the players are added
+				if (players.getChildren().length == _playerAvatarIds.length)
+				{
+					dispatchEvent(new Event(Event.COMPLETE));
+				}
+				
+				// adjust the invite text
+				setSpotsLeftText();
+			}
+			
+			public function hasPlayer(avatarId:int):Boolean
+			{
+				return _playerAvatarIds.contains(avatarId);
+			}
+			
+			public function closeAndUpdatePanels():void
+			{
+				// let the other players know the other panels 
+				if (isMasterPanel)
+				{
+					RoomManager.getInstance().userController.updateInvitePanels(title.text, [0], _level, _gameSessionId, _gameId);
+				}
+				else
+				{
+					_playerAvatarIds.removeValue(ModelLocator.getInstance().avatar.avatarId); 
+					RoomManager.getInstance().userController.updateInvitePanels(title.text, _playerAvatarIds, _level, _gameSessionId, _gameId);
+				}
+				
+				close();
+			}
+			
+			public function removePlayerLocal(avatarId:int):void
+			{
+				if (_playerAvatarIds.contains(avatarId))
+				{
+					_playerAvatarIds.removeValue(avatarId);
+			    	playerAvatarIds = _playerAvatarIds;
+		  		}
+			}
+			
+			private function sortPlayers():void
+			{	
+				// use the order of _playerAvatarIds to sort the players
+				var playerList:Array = players.getChildren();
+				if (_playerAvatarIds.length != playerList.length)
+					return;
+					
+				for (var i:int = 0; i < _playerAvatarIds.length; i++)
+				{
+					var currentPlayerId:int = _playerAvatarIds[i];
+					
+					// find this player in players set the playerOrder
+					for each (var avatarPortrait:AvatarPortrait in playerList)
+					{
+						if (avatarPortrait.avatar.avatarId == currentPlayerId)
+						{
+							// if this is an info only panel, show the waiting text
+							// the game owner is the first avatar in this list
+							if (i == 0 && this.levelPanel.visible == false)
+							{
+								instructions.text = "Level: " + _level;
+								instructions.text += "\n\n" + title.text + " will begin once " + avatarPortrait.avatar.name + " starts the game.\n\nPlease wait..."
+							}
+								
+							avatarPortrait.parent.setChildIndex(avatarPortrait, i);
+							break;
+						}
+					}
+				}
+			}
+			
+			private function setSpotsLeftText():void
+			{
+				var spotsLeft:int = _maxPlayers - players.getChildren().length;
+			}
+			
+			private function onCloseButtonRollOver(event:Event):void
+			{
+				var swf:Object = event.currentTarget.content as Object;
+				if (!swf)
+					return;
+					
+				if (swf.doMouseOverEffect)
+					swf.doMouseOverEffect();	
+			}
+			
+			private function onCloseButtonRollOut(event:Event):void
+			{
+				var swf:Object = event.currentTarget.content as Object;
+				if (!swf)
+					return;
+					
+				if (swf.doMouseOutEffect)
+					swf.doMouseOutEffect();	
+			}
+			
+			private function onCloseButtonClick(event:Event):void
+			{
+				closeAndUpdatePanels();
+			}
+		
+			private function onStartGameClick(event:Event):void
+			{
+				switch (game.name)
+				{
+					case "Concentration!":
+						launchConcentration();
+						break;
+					default:
+						break;	
+				}
+			}
+			
+			private function launchConcentration():void
+			{	
+				var level:String = levels.selectedLabel;
+				var category:String = "teams";
+				var imagesUrls:String = Concentration.getImages(category, level);
+				var gameAttributes:String = "category;" + category + "|" +"level;" + level.toLowerCase() + "|" + "imageUrls;" + imagesUrls;
+				RoomManager.getInstance().userController.startBoardGame(1, _gameSessionId, title.text, _playerAvatarIds.join(','), gameAttributes, level);
+			}
+			
+		]]>
+	</mx:Script>
+	
+	<mx:Image id="closeButton" width="20" height="20" source="assets/swfs/closeButton.swf" right="10" top="10" mouseChildren="false" buttonMode="true" 
+		rollOver="onCloseButtonRollOver(event)"	rollOut="onCloseButtonRollOut(event)" click="onCloseButtonClick(event)" /> 
+	<mx:HBox paddingTop="15" paddingBottom="15" paddingLeft="15" paddingRight="15" verticalAlign="middle" horizontalScrollPolicy="off" verticalScrollPolicy="off">
+		<mx:VBox horizontalAlign="center">
+			<mx:Label id="title" text="Concentration!" fontSize="20"/>
+			<mx:VBox backgroundColor="#222222" backgroundAlpha=".6" borderStyle="solid" borderThickness="0" cornerRadius="10" height="155" width="220" 
+				paddingTop="10" paddingBottom="10" paddingRight="10" paddingLeft="10" horizontalAlign="center" verticalAlign="middle" verticalGap="10" >
+				<mx:Text id="instructions" textAlign="center" width="92%" />
+				<mx:HBox id="levelPanel" verticalAlign="middle">
+					<mx:Label text="Level:" />
+					<mx:ComboBox id="levels" />
+				</mx:HBox>
+				<mx:Button id= "buttonStartGame" visible="false" label="Start Game!" width="120" click="onStartGameClick(event)" />
+			</mx:VBox>
+			<mx:VBox>
+				
+			</mx:VBox>
+		</mx:VBox>
+		<mx:HBox id="players" />
+	</mx:HBox>
+</mx:Canvas>

@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Label xmlns:mx="http://www.adobe.com/2006/mxml" selectable="true">
+		<mx:Script>
+		<![CDATA[
+		
+		    private var _crumbs:Array = new Array();
+		
+		    /**
+		    * Adds a link to the breadcrumb.
+		    * 
+		    * @param  linkName  the link that is displayed as a breadcrumb
+		    * @param  linkId    a unique value for the link   
+		    */
+			public function addLink(linkName:String, linkId:int):void
+			{
+				// add a crumb to our internal list
+				_crumbs.push({name:linkName, id:linkId});
+				
+				// now create the display html for the link	
+			 	createHtml();
+			}
+			
+			/**
+			 * Truncates the breadcrumb to the link identified by linkId
+			 */
+			public function trunkateToLink(linkId:int):void
+			{
+				// find the index of the link we are trunkating to
+				var index:int = 0;
+				for each(var link:Object in _crumbs)
+				{
+					index++;
+					
+					if (link.id == linkId)
+						_crumbs = _crumbs.splice(0, index);
+				}
+								
+				// now re-create our breadcrumb html
+				createHtml();
+			}
+			
+			/**
+			 *  Creates the html display for the breadcrumbs
+			 */
+			private function createHtml():void
+			{
+				var html:String = "";
+				for each (var link:Object in _crumbs)
+				{
+					// add the ' > ' if there is on or more links already
+					if (html.length > 0)
+						html += " > ";
+						
+				    // add the html for this link
+				    html += "<u><a href='event:" + link.id + "'>" + link.name + "</a></u>";
+				}
+				
+				this.htmlText = html;
+			}
+			
+		]]>
+    </mx:Script>			    
+
+</mx:Label>

@@ -1,0 +1,289 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas
+	xmlns:mx="http://www.adobe.com/2006/mxml"
+    xmlns:sdgcontrols="com.sdg.components.controls.*"
+	horizontalScrollPolicy="off"
+	verticalScrollPolicy="off" implements="com.sdg.components.dialog.ISdgDialog">
+
+	<mx:Script>
+		<![CDATA[
+			import mx.collections.ArrayCollection;
+			import mx.core.Container;
+			import mx.managers.PopUpManager;
+			import com.sdg.events.ModeratorSaveReportEvent;
+			import com.sdg.model.ModelLocator;
+			import com.sdg.model.Avatar;
+			import com.sdg.control.room.RoomManager;
+			import com.sdg.model.Server;
+
+			private var _subReason:String;
+			private var _primaryReason:String;
+
+			//private var _reporter:Avatar;
+			[Bindable]
+			private var _accused:Avatar;
+
+			public function init(params:Object):void
+			{
+				//_reporter = params.reporter;
+				_accused = params.accused;
+
+				//in case there is no subreason
+				_subReason = "";
+			}
+
+			private function goTo(id:Container):void
+			{
+				steps.selectedChild = id;
+			}
+            public function close():void
+            {
+            	PopUpManager.removePopUp(this);
+            }
+            private function selectSubReason(reason:String,id:Container):void
+            {
+            	_subReason = reason;
+            	goTo(id);
+            }
+            private function selectPrimaryReason(reason:String,id:Container):void
+            {
+            	_primaryReason = reason;
+            	goTo(id);
+            }
+            private function showUnderline(e:MouseEvent):void
+            {
+            	Text(e.currentTarget).styleName = "redLinkUnderline";
+            }
+
+            private function removeUnderline(e:MouseEvent):void
+            {
+            	Text(e.currentTarget).styleName = "redLinkNone";
+            }
+
+            private function send():void
+            {
+            	// if avatar is not a guest
+            	if (Server.getCurrent().chatMode != 2)
+            	{
+	            	var params:Object = {
+		            	reportTypeId:1,
+		            	reporterId:ModelLocator.getInstance().avatar.avatarId,
+		            	accusedId:_accused.avatarId,
+		            	primaryReason:_primaryReason,
+		            	subReason:_subReason,
+		             	roomId:String(RoomManager.getInstance().currentRoomId),
+		            	serverId:String(Server.getCurrentId())
+
+	            	};
+	            	dispatchEvent(new ModeratorSaveReportEvent(params));
+	            }
+            	close();
+            }
+		]]>
+	</mx:Script>
+	<!--
+	<business:Services/>
+	<mx:Style source="styles/style.css"/>
+	-->
+	<mx:Style>
+		Text.redLinkUnderline
+		{
+			color:#881e1e;
+			textDecoration:underline;
+		}
+		Text.redLinkNone
+		{
+			color:#881e1e;
+			textDecoration:none;
+		}
+	</mx:Style>
+
+
+	<sdgcontrols:TitlePanel title="Report Behavior" id="titleBox" width="426" height="350" showCloseButton="true" close="close()" helpId="2113">
+		<sdgcontrols:BoxContainer styleName="white" width="100%" height="100%" verticalGap="30" verticalScrollPolicy="off" horizontalScrollPolicy="off">
+			<mx:ViewStack id="steps" width="100%" height="100%">
+				<mx:VBox id="confirmation" horizontalAlign="center" height="100%" verticalGap="60">
+					<mx:Text styleName="redLinkNone" width="100%" horizontalCenter="0" textAlign="center">
+						<mx:text>Do you want to report
+"{_accused.name}"
+to the Moderators?</mx:text>
+					</mx:Text>
+					<mx:HBox verticalAlign="bottom">
+						<mx:Button styleName="blue" label="No" buttonMode="true" click="close()"/>
+
+						<mx:Button styleName="orange" label="Yes" buttonMode="true" click="goTo(primaryReasons)"/>
+					</mx:HBox>
+				</mx:VBox>
+
+				<mx:VBox id="primaryReasons" width="100%" horizontalAlign="center" verticalGap="15">
+					<mx:Text styleName="redLinkNone" fontWeight="bold" text="What is your reason for reporting?"  width="100%" textAlign="center"/>
+					<mx:Grid width="80%">
+						<mx:GridRow width="100%" height="100%" click="selectPrimaryReason(r1.text,personalInformation)">
+							<mx:GridItem height="100%">
+								<mx:Button styleName="darkRed" label="A" buttonMode="true" />
+							</mx:GridItem>
+							<mx:GridItem width="100%" height="100%" verticalAlign="middle">
+								<mx:Text id="r1" mouseOver="showUnderline(event)" mouseOut="removeUnderline(event)" selectable="false" styleName="redLinkNone" text="Personal Information"  useHandCursor="true"/>
+							</mx:GridItem>
+						</mx:GridRow>
+						<mx:GridRow width="100%" height="100%" click="selectPrimaryReason(r2.text,badWords)">
+							<mx:GridItem height="100%">
+								<mx:Button styleName="darkRed" label="B" buttonMode="true"/>
+							</mx:GridItem>
+							<mx:GridItem width="100%" height="100%" verticalAlign="middle">
+								<mx:Text id="r2" mouseOver="showUnderline(event)" mouseOut="removeUnderline(event)" selectable="false" styleName="redLinkNone" text="Bad Words"  useHandCursor="true"/>
+							</mx:GridItem>
+						</mx:GridRow>
+						<mx:GridRow width="100%" height="100%" click="selectPrimaryReason(r3.text,rudeBehavior)">
+							<mx:GridItem height="100%">
+								<mx:Button styleName="darkRed" label="C" buttonMode="true"/>
+							</mx:GridItem>
+							<mx:GridItem width="100%" height="100%" verticalAlign="middle">
+								<mx:Text id="r3" mouseOver="showUnderline(event)" mouseOut="removeUnderline(event)" selectable="false" styleName="redLinkNone" text="Rude Behavior"  useHandCursor="true"/>
+							</mx:GridItem>
+						</mx:GridRow>
+						<mx:GridRow width="100%" height="100%" click="selectPrimaryReason(r4.text,complete)" >
+							<mx:GridItem height="100%">
+								<mx:Button styleName="darkRed" label="D" buttonMode="true"/>
+							</mx:GridItem>
+							<mx:GridItem width="100%" height="100%" verticalAlign="middle">
+								<mx:Text id="r4" mouseOver="showUnderline(event)" mouseOut="removeUnderline(event)" selectable="false" styleName="redLinkNone" text="Bad Player Name"  useHandCursor="true"/>
+							</mx:GridItem>
+						</mx:GridRow>
+					</mx:Grid>
+						<mx:Button label="Back" buttonMode="true" click="goTo(confirmation)"/>
+				</mx:VBox>
+
+				<mx:VBox id="personalInformation" width="100%" horizontalAlign="center" verticalGap="15">
+					<mx:Text styleName="redLinkNone" fontWeight="bold" text="What kind of personal information?"  textAlign="center" width="100%"/>
+					<mx:Grid width="80%">
+						<mx:GridRow width="100%" height="100%" click="selectSubReason(personalInformation_1.text,complete)">
+							<mx:GridItem height="100%">
+								<mx:Button styleName="darkRed" label="A" buttonMode="true"/>
+							</mx:GridItem>
+							<mx:GridItem width="100%" height="100%" verticalAlign="middle">
+								<mx:Text id="personalInformation_1" mouseOver="showUnderline(event)" mouseOut="removeUnderline(event)" selectable="false" styleName="redLinkNone" text="Home Address or School" />
+							</mx:GridItem>
+						</mx:GridRow>
+						<mx:GridRow width="100%" height="100%" click="selectSubReason(personalInformation_2.text,complete)">
+							<mx:GridItem height="100%">
+								<mx:Button styleName="darkRed" label="B" buttonMode="true"/>
+							</mx:GridItem>
+							<mx:GridItem width="100%" height="100%" verticalAlign="middle">
+								<mx:Text id="personalInformation_2" mouseOver="showUnderline(event)" mouseOut="removeUnderline(event)" selectable="false" styleName="redLinkNone" text="Email Address Or Phone" />
+							</mx:GridItem>
+						</mx:GridRow>
+						<mx:GridRow width="100%" height="100%" click="selectSubReason(personalInformation_3.text,complete)">
+							<mx:GridItem height="100%">
+								<mx:Button styleName="darkRed" label="C" buttonMode="true"/>
+							</mx:GridItem>
+							<mx:GridItem width="100%" height="100%" verticalAlign="middle">
+								<mx:Text id="personalInformation_3" mouseOver="showUnderline(event)" mouseOut="removeUnderline(event)" selectable="false" styleName="redLinkNone" text="Real Name" />
+							</mx:GridItem>
+						</mx:GridRow>
+						<mx:GridRow width="100%" height="100%" click="selectSubReason(personalInformation_4.text,complete)">
+							<mx:GridItem height="100%">
+								<mx:Button styleName="darkRed" label="D" buttonMode="true" />
+							</mx:GridItem>
+							<mx:GridItem width="100%" height="100%" verticalAlign="middle">
+								<mx:Text id="personalInformation_4" mouseOver="showUnderline(event)" mouseOut="removeUnderline(event)" selectable="false" styleName="redLinkNone" text="None Of These" />
+							</mx:GridItem>
+						</mx:GridRow>
+					</mx:Grid>
+					<mx:Button label="Back" buttonMode="true" click="goTo(primaryReasons)"/>
+				</mx:VBox>
+
+				<mx:VBox id="badWords" width="100%" horizontalAlign="center" verticalGap="15">
+					<mx:Text styleName="redLinkNone" fontWeight="bold" text="What kind of bad words?"  width="100%" textAlign="center"/>
+					<mx:Grid width="80%">
+						<mx:GridRow width="100%" height="100%" click="selectSubReason(badWords_1.text,complete)">
+							<mx:GridItem height="100%">
+								<mx:Button styleName="darkRed" label="A" buttonMode="true"/>
+							</mx:GridItem>
+							<mx:GridItem width="100%" height="100%" verticalAlign="middle">
+								<mx:Text id="badWords_1" mouseOver="showUnderline(event)" mouseOut="removeUnderline(event)" selectable="false" styleName="redLinkNone" text="Swearing Or Cursing" />
+							</mx:GridItem>
+						</mx:GridRow>
+						<mx:GridRow width="100%" height="100%" click="selectSubReason(badWords_2.text,complete)">
+							<mx:GridItem height="100%">
+								<mx:Button styleName="darkRed" label="B" buttonMode="true"/>
+							</mx:GridItem>
+							<mx:GridItem width="100%" height="100%" verticalAlign="middle">
+								<mx:Text id="badWords_2" mouseOver="showUnderline(event)" mouseOut="removeUnderline(event)" selectable="false" styleName="redLinkNone" text="Gender or Racial Insults" />
+							</mx:GridItem>
+						</mx:GridRow>
+						<mx:GridRow width="100%" height="100%" click="selectSubReason(badWords_3.text,complete)">
+							<mx:GridItem height="100%">
+								<mx:Button styleName="darkRed" label="C" buttonMode="true"/>
+							</mx:GridItem>
+							<mx:GridItem width="100%" height="100%" verticalAlign="middle">
+								<mx:Text id="badWords_3" mouseOver="showUnderline(event)" mouseOut="removeUnderline(event)" selectable="false" styleName="redLinkNone" text="Sexual Language" />
+							</mx:GridItem>
+						</mx:GridRow>
+						<mx:GridRow width="100%" height="100%" click="selectSubReason(badWords_4.text,complete)" >
+							<mx:GridItem height="100%">
+								<mx:Button styleName="darkRed" label="D" buttonMode="true" />
+							</mx:GridItem>
+							<mx:GridItem width="100%" height="100%" verticalAlign="middle">
+								<mx:Text id="badWords_4" mouseOver="showUnderline(event)" mouseOut="removeUnderline(event)" selectable="false" styleName="redLinkNone" text="None Of These" />
+							</mx:GridItem>
+						</mx:GridRow>
+					</mx:Grid>
+					<mx:Button label="Back"  buttonMode="true" click="goTo(primaryReasons)"/>
+				</mx:VBox>
+
+				<mx:VBox id="rudeBehavior" width="100%" horizontalAlign="center" verticalGap="15">
+					<mx:Text styleName="redLinkNone" fontWeight="bold" text="What kind of rude or mean behavior?"  textAlign="center" width="100%"/>
+					<mx:Grid width="80%">
+						<mx:GridRow width="100%" height="100%" click="selectSubReason(rudeBehavior_1.text,complete)">
+							<mx:GridItem height="100%">
+								<mx:Button styleName="darkRed" label="A" buttonMode="true"/>
+							</mx:GridItem>
+							<mx:GridItem width="100%" height="100%" verticalAlign="middle">
+								<mx:Text id="rudeBehavior_1" mouseOver="showUnderline(event)" mouseOut="removeUnderline(event)" selectable="false" styleName="redLinkNone" text="Cheating or Lying" />
+							</mx:GridItem>
+						</mx:GridRow>
+						<mx:GridRow width="100%" height="100%" click="selectSubReason(rudeBehavior_2.text,complete)">
+							<mx:GridItem height="100%">
+								<mx:Button styleName="darkRed" label="B" buttonMode="true" />
+							</mx:GridItem>
+							<mx:GridItem width="100%" height="100%" verticalAlign="middle">
+								<mx:Text id="rudeBehavior_2" mouseOver="showUnderline(event)" mouseOut="removeUnderline(event)" selectable="false" styleName="redLinkNone" text="Bullying" />
+							</mx:GridItem>
+						</mx:GridRow>
+						<mx:GridRow width="100%" height="100%" click="selectSubReason(rudeBehavior_3.text,complete)">
+							<mx:GridItem height="100%">
+								<mx:Button styleName="darkRed" label="C" buttonMode="true" />
+							</mx:GridItem>
+							<mx:GridItem width="100%" height="100%" verticalAlign="middle">
+								<mx:Text id="rudeBehavior_3" mouseOver="showUnderline(event)" mouseOut="removeUnderline(event)" selectable="false" styleName="redLinkNone" text="Name Calling" />
+							</mx:GridItem>
+						</mx:GridRow>
+						<mx:GridRow width="100%" height="100%" click="selectSubReason(rudeBehavior_4.text,complete)">
+							<mx:GridItem height="100%">
+								<mx:Button styleName="darkRed" label="D" buttonMode="true" />
+							</mx:GridItem>
+							<mx:GridItem width="100%" height="100%" verticalAlign="middle">
+								<mx:Text id="rudeBehavior_4" mouseOver="showUnderline(event)" mouseOut="removeUnderline(event)" selectable="false" styleName="redLinkNone" text="None Of These" />
+							</mx:GridItem>
+						</mx:GridRow>
+					</mx:Grid>
+					<mx:Button label="Back" buttonMode="true" click="goTo(primaryReasons)"/>
+				</mx:VBox>
+
+				<mx:VBox id="complete" horizontalAlign="center" height="100%" verticalAlign="top" verticalGap="50">
+
+					<mx:Text width="100%" textAlign="center" styleName="redLinkNone">
+						<mx:text>Your report has been sent to the Moderators.
+While they check your report, we suggest that you use the IGNORE button on "{_accused.name}’s" Athlete card.
+
+Thanks for doing your part in keeping ACTION ALLSTARS the best place for everyone!</mx:text>
+					</mx:Text>
+
+					<mx:Button styleName="orange" label="Okay" buttonMode="true" click="send()"/>
+
+				</mx:VBox>
+			</mx:ViewStack>
+		</sdgcontrols:BoxContainer>
+	</sdgcontrols:TitlePanel>
+</mx:Canvas>

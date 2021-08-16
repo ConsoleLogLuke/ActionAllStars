@@ -1,0 +1,3 @@
+﻿package com.sdg.display.render{	import flash.display.DisplayObject;
+	import flash.events.Event;
+	import flash.events.EventDispatcher;		public class RenderData extends EventDispatcher	{		public static const MOVE:String = 'move';		public static const INVALID_FLAG:int = 0x01;		public static const RENDER_FLAG:int = 0x02;				public var display:DisplayObject;		public var depth:int;		public var depthAndIndex:int;		public var originX:Number;		public var originY:Number;		public var flags:int;				public function RenderData(display:DisplayObject = null):void		{			this.display = display;		}				public function positionDisplay(x:Number, y:Number):void		{			display.x = x;			display.y = y;			dispatchEvent(new Event(MOVE));		}	}}

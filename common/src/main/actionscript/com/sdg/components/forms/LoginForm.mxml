@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas
+	xmlns:mx="http://www.adobe.com/2006/mxml"
+	xmlns:sdgcontrols="com.sdg.components.controls.*"
+	width="925" height="665"
+	creationComplete="init()">
+	<mx:Image id="bg" width="100%" height="100%"/>
+
+	<mx:Script>
+		<![CDATA[
+			import com.sdg.model.ModelLocator;
+			import com.sdg.utils.MainUtil;
+			import com.sdg.events.LoginEvent;
+			import com.sdg.net.Environment;
+
+			import mx.events.ValidationResultEvent;
+			import mx.validators.Validator;
+			import mx.controls.Text;
+
+			private var _sharedObject:SharedObject;
+
+			private function init():void
+			{
+				username.addEventListener("enter", returnListener);
+			 	password.addEventListener("enter", returnListener);
+			 	loginButton.addEventListener("enter", returnListener);
+			 	username.setFocus();
+
+				_sharedObject = SharedObject.getLocal("loginData");
+				if (_sharedObject.data.username != undefined && _sharedObject.data.password != undefined)
+				{
+					rememberMe.selected = true;
+					username.text = _sharedObject.data.username;
+					password.text = _sharedObject.data.password;
+				}
+			}
+
+			public function setBackground():void
+			{
+				bg.source = Environment.getApplicationUrl() + "/test/static/upsell/loginPage?partnerId=0";
+			}
+
+			private function returnListener(evt_obj:Event):void
+			{
+				if((username.length > 0) && (password.length > 0 ))
+				{
+					login();
+				}
+			}
+
+			private function login():void
+			{
+				if (!loginButton.enabled)
+					return;
+
+				dispatchEvent(new LoginEvent(username.text, password.text));
+				if (rememberMe.selected)
+				{
+					_sharedObject.data.username = username.text;
+					_sharedObject.data.password = password.text;
+					_sharedObject.flush();
+				}
+				else
+				{
+					_sharedObject.clear();
+				}
+				loginButton.enabled = false;
+				loginButton.label = "Logging in";
+			}
+
+			public function reEnableLogin():void
+			{
+				loginButton.enabled = true;
+				loginButton.label = "Login";
+			}
+
+			public function cleanup():void
+			{
+				username.removeEventListener("enter", returnListener);
+			 	password.removeEventListener("enter", returnListener);
+			 	loginButton.removeEventListener("enter", returnListener);
+			}
+
+			private function createAthlete():void
+			{
+				if (ModelLocator.getInstance().affiliate != 53 && ModelLocator.getInstance().affiliate != 64)
+					MainUtil.postAvatarIdToURL('register.jsp', 0, 4);
+				else
+					MainUtil.navigateToMonthFreePage(15);
+			}
+
+			public function set partner(value:int):void
+			{
+				// partnerId
+				if (value == 53 || value == 64)
+					createAthleteButton.source = "assets/swfs/monthFreeShield.swf";
+				else
+					createAthleteButton.source = "assets/images/createFreeAccount_button.png";
+			}
+		]]>
+	</mx:Script>
+
+	<!--<mx:Style source="styles/style2.css"/>-->
+	<mx:Style>
+		TextInput.input
+		{
+			borderColor: #06193c;
+			borderThickness: 3;
+			textAlign: center;
+			cornerRadius: 10;
+			fontSize: 18;
+			fontWeight: bold;
+		}
+
+		Button.login
+		{
+			fillColors: #dc8100, #fed36e;
+			borderColor: #8f4d00;
+			selectionColor: #f0b242;
+			textSelectedColor: #dc8100;
+			borderThickness: 3;
+			cornerRadius: 12;
+			fontSize: 20;
+			fontWeight: bold;
+			fontThickness: 200;
+		}
+	</mx:Style>
+	<mx:Canvas width="700" height="380" x="40" y="175" backgroundColor="#ecf4ff" borderStyle="solid" borderThickness="10" borderColor="#03315b" cornerRadius="35">
+
+		<mx:HBox width="677" height="300" verticalCenter="0" horizontalCenter="0" horizontalAlign="center" verticalAlign="middle" horizontalGap="0">
+			<mx:VBox width="50%" height="100%" borderStyle="solid" borderThickness="1" borderSides="right"
+				horizontalAlign="center" verticalAlign="middle">
+				<mx:Text text="Don't have&#xa;an Athlete?" color="#172d5f"
+					fontSize="30" fontThickness="150" selectable="false"/>
+				<mx:Image id="createAthleteButton" click="createAthlete()" buttonMode="true"/>
+			</mx:VBox>
+			<mx:Canvas width="50%" height="100%" borderStyle="solid" borderThickness="1" borderSides="left">
+				<mx:Text text="My Athlete's Name is" color="#4c6fa4"
+					horizontalCenter="0"
+					fontSize="18" fontThickness="200" letterSpacing="1" selectable="false"/>
+				<mx:TextInput id="username" width="220" styleName="input" maxChars="13" horizontalCenter="0" y="25"/>
+				<mx:Text text="My Password is" color="#4c6fa4"
+					horizontalCenter="0" y="70"
+					fontSize="18" fontThickness="200" letterSpacing="1" selectable="false"/>
+				<mx:TextInput id="password" width="220" styleName="input" displayAsPassword="true" maxChars="10" horizontalCenter="0" y="95"/>
+
+				<mx:Text text="I Forgot My Athlete Name" selectable="false" fontSize="14" color="#4c6fa4"
+					horizontalCenter="0" y="140"
+					textDecoration="underline" mouseChildren="false" buttonMode="true"
+					click="navigateToURL(new URLRequest('retrieveInformation.jsp'),'_self')"/>
+				<mx:Text text="I Forgot My Password" selectable="false" fontSize="14" color="#4c6fa4"
+					horizontalCenter="0" y="160"
+					textDecoration="underline" mouseChildren="false" buttonMode="true"
+					click="navigateToURL(new URLRequest('retrieveInformation.jsp'),'_self')"/>
+				<mx:CheckBox id="rememberMe" label="Remember me on this computer" horizontalCenter="0" y="180"
+					fontSize="14" color="#4c6fa4" textRollOverColor="#4c6fa4" horizontalGap="1" buttonMode="true"
+					icon="@Embed('images/registration/checkBox_default.png')"
+					selectedUpIcon="@Embed('images/registration/checkBox_selected.png')"
+					selectedOverIcon="@Embed('images/registration/checkBox_selected.png')"/>
+				<mx:Button id="loginButton" label="Login" width="204" height="65" horizontalCenter="0" y="230"
+					styleName="login" click="login()" focusEnabled="false" buttonMode="true" disabledColor="#dc8100"/>
+			</mx:Canvas>
+		</mx:HBox>
+
+		<!--<mx:Canvas width="677" height="148" x="13" y="12" cornerRadius="10" buttonMode="true"
+			click="navigateToURL(new URLRequest('specialOffer.jsp'), '_self')">
+
+			<mx:Image source="@Embed('images/monthFree/goProButton.swf')" x="542" y="18"/>
+		</mx:Canvas>-->
+
+
+	</mx:Canvas>
+</mx:Canvas>

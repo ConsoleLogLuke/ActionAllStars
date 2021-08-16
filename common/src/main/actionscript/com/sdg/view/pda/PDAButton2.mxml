@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml"
+	implements="com.sdg.view.pda.interfaces.IPDAButton" borderStyle="solid" borderThickness="2" borderColor="#003366"
+	buttonMode="true" mouseChildren="false"
+	mouseOver="{if (_mouseOverSound != null) _mouseOverSound.play(); highlighted = true}" mouseOut="{highlighted = false}"
+	click="{if (_clickSound != null) _clickSound.play()}">
+	
+	<mx:Label id="buttonLabel" horizontalCenter="0" verticalCenter="0"
+		text="{label}" fontSize="{getStyle('fontSize')}" color="{getStyle('color')}"
+		fontWeight="{getStyle('fontWeight')}" fontStyle="{getStyle('fontStyle')}"
+		fontThickness="{getStyle('fontThickness')}" fontFamily="{getStyle('fontFamily')}"/>
+	
+	<mx:Script>
+		<![CDATA[
+			private var _labelText:String;
+			private var _selected:Boolean = false;
+			private var _toggleOn:Boolean = true;
+			private var _callBack:Function;
+			private var _mouseOverSound:Sound;
+			private var _clickSound:Sound;
+			private var _params:Object;
+			
+			override protected function updateDisplayList(w:Number, h:Number):void
+			{
+				super.updateDisplayList(w, h);
+				
+				var borderThickness:Number = getStyle("borderThickness");
+				var widthNoBorder:Number = w - (borderThickness * 2);
+				var heightNoBorder:Number = h - (borderThickness * 2);
+				var gradientBoxMatrix:Matrix = new Matrix();
+				
+				gradientBoxMatrix.createGradientBox(widthNoBorder, heightNoBorder, Math.PI/2, 0, 0);
+				
+				graphics.clear();
+				graphics.beginGradientFill(GradientType.LINEAR, [0x2a7aef, 0x003f7b], [1, 1], [0, 255], gradientBoxMatrix);
+				//graphics.beginFill(0xfff000);
+				graphics.drawRoundRect(borderThickness, borderThickness , widthNoBorder, heightNoBorder, getStyle('cornerRadius') - 1);
+				graphics.endFill();				
+			}
+			
+			public function get params():Object
+			{
+				return _params;
+			}
+			
+			public function set params(value:Object):void
+			{
+				_params = value;
+			}
+			
+			public function set mouseOverSound(value:Sound):void
+			{
+				_mouseOverSound = value;
+			}
+			
+			public function set clickSound(value:Sound):void
+			{
+				_clickSound = value;
+			}
+			
+			private function set highlighted(value:Boolean):void
+			{
+				if (value)
+					setStyle("borderColor", 0xffffff);
+				else
+					setStyle("borderColor", 0x003366);
+			}
+			
+			public function set labelText(value:String):void
+			{
+				_labelText = value;
+			}
+			
+			public function get labelText():String
+			{
+				return _labelText;
+			}
+			
+			[Bindable]
+			public function set selected(value:Boolean):void
+			{
+				_selected = value;
+			}
+			
+			public function get selected():Boolean
+			{
+				return _selected;
+			}
+			
+			public function set callBack(value:Function):void
+			{
+				_callBack = value;
+			}
+			
+			public function get callBack():Function
+			{
+				return _callBack;
+			}
+			
+			public function set toggleOn(value:Boolean):void
+			{
+				_toggleOn = value;
+			}
+			
+			public function get toggleOn():Boolean
+			{
+				return _toggleOn;
+			}
+		]]>
+	</mx:Script>
+</mx:Canvas>

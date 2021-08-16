@@ -1,0 +1,560 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" implements="com.sdg.components.dialog.ISdgDialog" width="450" height="640"
+	backgroundImage="assets/swfs/registration/bg_saveReg.swf">
+	<mx:Script>
+		<![CDATA[
+			import mx.core.Application;
+			import com.sdg.net.socket.SocketClient;
+			import com.sdg.ui.RoundCornerCloseButton;
+			import mx.controls.Image;
+			import com.sdg.model.ModelLocator;
+			import com.sdg.events.RegistrationSaveEvent;
+			import com.sdg.model.Avatar;
+			import mx.controls.Text;
+			import com.sdg.graphics.GradientStyle;
+			import com.sdg.display.LineStyle;
+			import com.sdg.graphics.RoundRectStyle;
+			import com.sdg.components.controls.store.StoreNavBar;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			import com.sdg.events.ValidateUsernameEvent;
+			import com.sdg.utils.MainUtil;
+			import mx.collections.ArrayCollection;
+			import mx.managers.PopUpManager;
+
+			private var _isUnder13:Boolean = false;
+			private var _saveButton:StoreNavBar;
+			private var _avatar:Avatar = ModelLocator.getInstance().avatar;
+
+			[Embed(source="images/registration/checkBox_default.png")]
+			public var checkBox_default:Class;
+			[Embed(source="images/registration/checkBox_selected.png")]
+			public var checkBox_selected:Class;
+
+			public function init(params:Object):void
+			{
+				Application.application.stage.displayState = StageDisplayState.NORMAL;
+
+				var i:int;
+
+				var months:ArrayCollection = new ArrayCollection();
+				for (i = 1; i <= 12; i++)
+					months.addItem({label:zeroPad(i, 2), data:i-1});
+
+				monthsComboBox.dataProvider = months;
+
+				var days:ArrayCollection = new ArrayCollection();
+				for (i = 1; i <= 31; i++)
+					days.addItem({label:zeroPad(i, 2), data:i});
+
+				daysComboBox.dataProvider = days;
+
+				var years:ArrayCollection = new ArrayCollection();
+				for (i = 2009; i >= 1900; i--)
+					years.addItem({label:i, data:i});
+
+				yearsComboBox.dataProvider = years;
+
+				// Save button.
+				_saveButton = new StoreNavBar(150, 30);
+				_saveButton.roundRectStyle = new RoundRectStyle(10, 10);
+				_saveButton.buttonMode = true;
+				setDefaultSaveButton();
+				saveButtonLabel = "Save";
+				saveButtonEnabled = true;
+
+				this.rawChildren.addChild(_saveButton);
+
+				_saveButton.x = this.width/2 - _saveButton.width/2;
+				_saveButton.y = this.height - _saveButton.height - 78;
+
+				// close button
+				var closeBtn:RoundCornerCloseButton = new RoundCornerCloseButton();
+				closeBtn.x = this.width - closeBtn.width - 15;
+				closeBtn.y = 82;
+				closeBtn.buttonMode = true;
+				closeBtn.addEventListener(MouseEvent.CLICK, onCloseClick);
+				this.rawChildren.addChild(closeBtn);
+
+				function onCloseClick(event:MouseEvent):void
+				{
+					close();
+				}
+			}
+
+			private function set saveButtonLabel(buttonLabel:String):void
+			{
+				_saveButton.label = buttonLabel;
+				_saveButton.labelX = _saveButton.width/2 - _saveButton.labelWidth/2;
+			}
+
+			private function setDefaultSaveButton():void
+			{
+				_saveButton.labelFormat = new TextFormat('EuroStyle', 22, 0x913300, true);
+				_saveButton.borderStyle = new LineStyle(0x913300, 1, 1);
+
+				var gradientBoxMatrix:Matrix = new Matrix();
+				gradientBoxMatrix.createGradientBox(_saveButton.width, _saveButton.height, Math.PI/2, 0, 0);
+				_saveButton.gradient = new GradientStyle(GradientType.LINEAR, [0xf8db5c, 0xd28602], [1, 1], [0, 255], gradientBoxMatrix);
+			}
+
+			private function setMouseOverSaveButton():void
+			{
+				_saveButton.labelFormat = new TextFormat('EuroStyle', 22, 0xffcc33, true);
+				_saveButton.borderStyle = new LineStyle(0xff9900, 1, 1);
+
+				var gradientBoxMatrix:Matrix = new Matrix();
+				gradientBoxMatrix.createGradientBox(_saveButton.width, _saveButton.height, Math.PI/2, 0, 0);
+				_saveButton.gradient = new GradientStyle(GradientType.LINEAR, [0xd18500, 0xa54c0a], [1, 1], [0, 255], gradientBoxMatrix);
+			}
+
+			private function set saveButtonEnabled(value:Boolean):void
+			{
+				if (value)
+				{
+					_saveButton.addEventListener(MouseEvent.CLICK, onSaveClick);
+					_saveButton.addEventListener(MouseEvent.MOUSE_OVER, onSaveButtonMouseOver);
+					_saveButton.addEventListener(MouseEvent.MOUSE_OUT, onSaveButtonMouseOut);
+					monthsComboBox.enabled = true;
+					daysComboBox.enabled = true;
+					yearsComboBox.enabled = true;
+					athleteName.enabled = true;
+					password.enabled = true;
+					password2.enabled = true;
+					email.enabled = true;
+					chatGroup.enabled = true;
+					tosCheckBox.enabled = true;
+				}
+				else
+				{
+					_saveButton.removeEventListener(MouseEvent.CLICK, onSaveClick);
+					_saveButton.removeEventListener(MouseEvent.MOUSE_OVER, onSaveButtonMouseOver);
+					_saveButton.removeEventListener(MouseEvent.MOUSE_OUT, onSaveButtonMouseOut);
+					monthsComboBox.enabled = false;
+					daysComboBox.enabled = false;
+					yearsComboBox.enabled = false;
+					athleteName.enabled = false;
+					password.enabled = false;
+					password2.enabled = false;
+					email.enabled = false;
+					chatGroup.enabled = false;
+					tosCheckBox.enabled = false;
+				}
+			}
+
+			private function onSaveButtonMouseOver(event:MouseEvent):void
+			{
+				setMouseOverSaveButton();
+			}
+
+			private function onSaveButtonMouseOut(event:MouseEvent):void
+			{
+				setDefaultSaveButton();
+			}
+
+			private	function onSaveClick(event:MouseEvent):void
+			{
+				saveGame();
+			}
+
+			private function zeroPad(number:int, minLength:int):String
+			{
+				var paddedValue:String = number.toString();
+
+				while(paddedValue.length < minLength)
+					paddedValue = "0" + paddedValue;
+
+				return paddedValue;
+			}
+
+			private function updateBirthday(birthdate:Date):void
+			{
+				var today:Date = new Date();
+				var thirteenBDay:Date = new Date(birthdate.fullYear + 13, birthdate.month, birthdate.date);
+
+				// set _isUnder13 to true if the thirteenth birthday is later than today
+				if (thirteenBDay > today)
+				{
+					_isUnder13 = true;
+					emailText.text = "Parent Email";
+					selectChatMode.visible = true;
+					parentMessage.visible = false;
+				}
+				else
+				{
+					_isUnder13 = false;
+					emailText.text = "Email";
+					selectChatMode.visible = false;
+					parentMessage.visible = false;
+				}
+			}
+
+			private function onBirthdayChange():void
+			{
+				var selectedMonth:Object = monthsComboBox.selectedItem;
+				var selectedDay:Object = daysComboBox.selectedItem;
+				var selectedYear:Object = yearsComboBox.selectedItem;
+
+				if (selectedMonth != null && selectedDay != null && selectedYear != null)
+					updateBirthday(new Date(selectedYear.data, selectedMonth.data, selectedDay.data));
+			}
+
+			private function saveGame():void
+			{
+				saveButtonEnabled = false;
+				saveButtonLabel = "Validating...";
+
+				errorArea.removeAllChildren();
+				errorArea.visible = false;
+				if (checkBirthday() && checkName() && checkPassword() && checkEmail() && checkTOS())
+					validateName();
+			}
+
+			private function checkBirthday():Boolean
+			{
+				var success:Boolean = true;
+
+				var selectedMonth:Object = monthsComboBox.selectedItem;
+				var selectedDay:Object = daysComboBox.selectedItem;
+				var selectedYear:Object = yearsComboBox.selectedItem;
+
+				if (selectedMonth == null || selectedDay == null || selectedYear == null)
+				{
+					addError("Please select your birthday.");
+					success = false;
+				}
+
+				return success;
+			}
+
+			private function checkName():Boolean
+			{
+				var success:Boolean = true;
+
+				// check that username starts with a letter
+				if (!checkTextStartsWithLetter(athleteName.text))
+				{
+					addError("Athlete name must start with a letter.");
+					success = false;
+				}
+				// check that username has only letters and numbers
+				if (!checkTextCharacters(athleteName.text))
+				{
+					addError("Athlete name must contain only letters and numbers.");
+					success = false;
+				}
+				// check that username is not less than 4 characters
+				if (!checkTextLength(athleteName.text, 4))
+				{
+					addError("Athlete name must be at least 4 characters.");
+					success = false;
+				}
+
+				return success;
+			}
+
+			private function checkPassword():Boolean
+			{
+				var success:Boolean = true;
+
+				// check that password is not less than 5 characters
+				if (!checkTextLength(password.text, 5))
+				{
+					addError("Password should be at least 5 characters.");
+					success = false;
+				}
+				// check that password has only letters and numbers
+				if (!checkTextCharacters(password.text))
+				{
+					addError("Password must contain only letters and numbers.");
+					success = false;
+				}
+				// check that password is not same as username
+				if (checkMatchingFields(password.text, athleteName.text))
+				{
+					addError("Password can not be the same as Athlete name.");
+					success = false;
+				}
+				// check that the password inputs match
+				if (!checkMatchingFields(password.text, password2.text))
+				{
+					addError("Passwords do not match.");
+					success = false;
+				}
+
+				return success;
+			}
+
+			private function checkEmail():Boolean
+			{
+				var success:Boolean = true;
+
+				// check that email is valid
+				if (!checkValidEmail(email.text))
+				{
+					addError("Invalid email address.");
+					success = false;
+				}
+
+				return success
+			}
+
+			private function checkTOS():Boolean
+			{
+				var success:Boolean = true;
+
+				if (tosCheckBox.selected == false)
+				{
+					addError("You must agree to the Terms of Use in order to save your game.");
+					success = false;
+				}
+
+				return success;
+			}
+
+			private function onRegistrationSaved(event:RegistrationSaveEvent):void
+			{
+				_avatar = ModelLocator.getInstance().avatar;
+
+				if (event.status == 1 || event.status == 411)
+				{
+					_avatar.membershipStatus = 0;
+					_avatar.name = "User" + _avatar.avatarId;
+					SocketClient.getInstance().sendPluginMessage("avatar_handler", "uiEvent", { uiEvent:"<uiEvent><uiId>5</uiId><avUp>1</avUp></uiEvent>" });
+					MainUtil.showDialog(WelcomeDialog, {name:athleteName.text, level:_avatar.levelName});
+					close();
+
+//					// success
+//					if (_isUnder13)
+//					{
+//						navigateToURL(new URLRequest('ActivationEmailCheck.jsp?avatarId=' + _avatar.avatarId), '_self');
+//					}
+//					else
+//					{
+//						_avatar.membershipStatus = 0;
+//						_avatar.name = "User" + _avatar.avatarId;
+//						SocketClient.getInstance().sendPluginMessage("avatar_handler", "uiEvent", { uiEvent:"<uiEvent><uiId>5</uiId><avUp>1</avUp></uiEvent>" });
+//						MainUtil.showDialog(WelcomeDialog, {name:athleteName.text, level:_avatar.levelName});
+//						close();
+//					}
+				}
+				//else if (event.status == 411)
+				//{
+				//	addError("Invalid email address.");
+				//}
+				else
+				{
+					// failed
+					addError("Error connecting to server. Please try again later.");
+				}
+			}
+
+			private function createAvatar():void
+			{
+				saveButtonLabel = "Saving...";
+
+				CairngormEventDispatcher.getInstance().addEventListener(RegistrationSaveEvent.REGISTRATION_SAVED, onRegistrationSaved);
+				var params:Object = {};
+				params.userId = _avatar.userId;
+				params.birthdate = yearsComboBox.selectedLabel + "" + monthsComboBox.selectedLabel + "" + daysComboBox.selectedLabel;
+				params.userName = athleteName.text;
+				params.password = password.text;
+				params.parentEmail = email.text;
+				params.chatmode = chatGroup.selectedValue;
+				params.newsletterFlag = newsletterCheckBox.selected ? 1 : 0;
+
+				dispatchEvent(new RegistrationSaveEvent(params));
+			}
+
+			private function onUsernameValidate(event:ValidateUsernameEvent):void
+			{
+				CairngormEventDispatcher.getInstance().removeEventListener(ValidateUsernameEvent.USERNAME_VALIDATED, onUsernameValidate);
+				if (event.status == "available")
+				{
+					createAvatar();
+				}
+				else if (event.status == "unvalidated" || event.status == "unacceptable")
+				{
+					addError("Username is " + event.status + ". Please try again.");
+				}
+				else
+				{
+					addError("Username is " + event.status +
+						".\nHow about this one? <FONT color='#cccccc' size='+2'><u>" +
+						event.suggestion.toUpperCase() + "</u></FONT>");
+				}
+			}
+
+			private function addError(message:String):void
+			{
+				var errorText:Text = new Text();
+				errorText.htmlText = message;
+				errorText.setStyle("fontSize", 12);
+				errorText.width = 160;
+
+				errorArea.addChild(errorText);
+				errorArea.visible = true;
+
+				setDefaultSaveButton();
+				saveButtonEnabled = true;
+				saveButtonLabel = "Save";
+			}
+
+			private function validateName():void
+			{
+				CairngormEventDispatcher.getInstance().addEventListener(ValidateUsernameEvent.USERNAME_VALIDATED, onUsernameValidate);
+				dispatchEvent(new ValidateUsernameEvent(athleteName.text));
+			}
+
+			private function checkTextLength(input:String, minLength:int):Boolean
+			{
+				return input.length >= minLength;
+			}
+
+			private function checkTextCharacters(input:String):Boolean
+			{
+				var pattern:RegExp = /^[a-zA-Z0-9]+$/;
+
+				if (!pattern.test(input))
+					return false;
+
+				return true;
+			}
+
+			private function checkTextStartsWithLetter(input:String):Boolean
+			{
+				var pattern:RegExp = /^[a-zA-Z]/;
+
+				if (!pattern.test(input))
+					return false;
+
+				return true;
+			}
+
+			private function checkMatchingFields(input1:String, input2:String):Boolean
+			{
+				if (input1 != input2)
+					return false;
+
+				return true;
+			}
+
+			private function checkValidEmail(input:String):Boolean
+			{
+				// verify the email syntax with a regular expression
+				// got this regular expression from http://www.webdeveloper.com/forum/archive/index.php/t-9970.html
+				var pattern:RegExp = /^[^\x00-\x20()<>@,;:\\".[\]\x7f-\xff]+(?:\.[^\x00-\x20()<>@,;:\\".[\]\x7f-\xff]+)*\@[^\x00-\x20()<>@,;:\\".[\]\x7f-\xff]+(?:\.[^\x00-\x20()<>@,;:\\".[\]\x7f-\xff]+)+$/i;
+				if (!pattern.test(input))
+					return false;
+
+				return true;
+			}
+
+			private function openChatTypeInfo():void
+			{
+				var array:ArrayCollection = new ArrayCollection();
+				array.addItem({header:"Open Chat", body:"Open Chat allows Athletes to type messages" +
+						" to other users. Each message is filtered prior to being transmitted to" +
+						" allow for pre-approved words and phrases to be used, and to block" +
+						" attempts to send non-approved words, phrases, phone numbers, or other" +
+						" personal information."});
+				array.addItem({header:"Safe Chat Plus", body:"Safe Chat Plus restricts what Athletes can say to each" +
+						" other by using a predefined set of choices, including: general statements," +
+						" greetings, and questions.  When it comes to conversations, these users can" +
+						" only view messages sent by other Safe Chat Plus users."});
+				var dialog:ISdgDialog = MainUtil.showDialog(WhatIsThisDialog, array, false, false);
+			}
+
+			public function close():void
+			{
+				PopUpManager.removePopUp(this);
+			}
+
+			private function viewTOS():void
+			{
+				if (ExternalInterface.available)
+					ExternalInterface.call("window.open('termsTextPopup.jsp?','Terms','height='+250+',width='+250+',top='+25+',left='+25+',scrollbars=1,location=0,resizable=0')");
+			}
+		]]>
+	</mx:Script>
+	<mx:Style>
+		Combo.dropdown
+		{
+			color: #666666;
+		}
+	</mx:Style>
+	<mx:Form id="form" x="10" y="170" verticalGap="4">
+		<mx:FormItem verticalGap="0">
+			<mx:Label text="Birthday" paddingTop="0" paddingBottom="0"/>
+			<mx:HBox>
+				<mx:ComboBox id="monthsComboBox" prompt="mm" change="onBirthdayChange()" color="#666666" fillColors="[0xffffff, 0xffffff]"
+					paddingLeft="0" paddingRight="0" height="20" textAlign="center" borderColor="#999999" iconColor="#999999" dropDownStyleName="dropdown"/>
+				<mx:ComboBox id="daysComboBox" prompt="dd" change="onBirthdayChange()" color="#666666" fillColors="[0xffffff, 0xffffff]"
+					paddingLeft="0" paddingRight="0" height="20" textAlign="center" borderColor="#999999" iconColor="#999999" dropDownStyleName="dropdown"/>
+				<mx:ComboBox id="yearsComboBox" prompt="yyyy" change="onBirthdayChange()" color="#666666" fillColors="[0xffffff, 0xffffff]"
+					paddingLeft="0" paddingRight="0" height="20" textAlign="center" borderColor="#999999" iconColor="#999999" dropDownStyleName="dropdown"/>
+			</mx:HBox>
+		</mx:FormItem>
+
+		<mx:FormItem verticalGap="0">
+			<mx:Label text="Athlete Name" paddingTop="0" paddingBottom="0"/>
+			<mx:TextInput id="athleteName" borderStyle="solid" borderThickness="2" borderColor="#999999"
+				fontSize="12" paddingTop="0" paddingBottom="0" cornerRadius="0" width="200" maxChars="13"/>
+		</mx:FormItem>
+
+		<mx:FormItem verticalGap="0">
+			<mx:Label text="Password" paddingTop="0" paddingBottom="0"/>
+			<mx:TextInput id="password" borderStyle="solid" borderThickness="2" borderColor="#999999"
+				fontSize="12" paddingTop="0" paddingBottom="0" cornerRadius="0" width="200" displayAsPassword="true" maxChars="10"/>
+		</mx:FormItem>
+
+		<mx:FormItem verticalGap="0">
+			<mx:Label text="Confirm Password" paddingTop="0" paddingBottom="0"/>
+			<mx:TextInput id="password2" borderStyle="solid" borderThickness="2" borderColor="#999999"
+				fontSize="12" paddingTop="0" paddingBottom="0" cornerRadius="0" width="200" displayAsPassword="true" maxChars="10"/>
+		</mx:FormItem>
+
+		<mx:FormItem verticalGap="0">
+			<mx:Label id="emailText" text="Email" paddingTop="0" paddingBottom="0"/>
+			<mx:TextInput id="email" borderStyle="solid" borderThickness="2" borderColor="#999999"
+				fontSize="12" paddingTop="0" paddingBottom="0" cornerRadius="0" width="200"/>
+		</mx:FormItem>
+
+		<mx:FormItem verticalGap="0" id="selectChatMode" visible="false">
+			<mx:HBox verticalAlign="middle" paddingTop="0" paddingBottom="0">
+				<mx:Label text="Select Chat Type" paddingTop="0" paddingBottom="0"/>
+				<mx:Label id="question" text="?" textDecoration="underline" buttonMode="true" mouseChildren="false" fontSize="15"
+					mouseOut="{question.setStyle('textDecoration', 'underline')}" mouseOver="{question.setStyle('textDecoration', 'none')}"
+					color="#fff000" click="openChatTypeInfo()" paddingTop="0" paddingBottom="0"/>
+			</mx:HBox>
+			<mx:HBox paddingTop="0" paddingBottom="0" verticalAlign="top">
+				<mx:RadioButtonGroup id="chatGroup"/>
+				<mx:RadioButton label="Open Chat" paddingTop="0" paddingBottom="0" groupName="chatGroup" selected="true" value="{Avatar.SAFE_CHAT}"
+					icon="{checkBox_default}" selectedUpIcon="{checkBox_selected}" selectedOverIcon="{checkBox_selected}" textSelectedColor="#ffffff"/>
+				<mx:RadioButton label="Safe Chat Plus" paddingTop="0" paddingBottom="0" groupName="chatGroup" value="{Avatar.ULTRA_SAFE_CHAT}"
+					icon="{checkBox_default}" selectedUpIcon="{checkBox_selected}" selectedOverIcon="{checkBox_selected}" textSelectedColor="#ffffff"/>
+			</mx:HBox>
+		</mx:FormItem>
+	</mx:Form>
+
+	<mx:CheckBox id="newsletterCheckBox" label="Yes, please send me the Action AllStars newsletter!"
+		horizontalCenter="0" bottom="122" textSelectedColor="#ffffff"
+		icon="{checkBox_default}" selectedUpIcon="{checkBox_selected}" selectedOverIcon="{checkBox_selected}" selected="true"/>
+
+	<mx:HBox bottom="102" horizontalCenter="0" verticalAlign="middle" horizontalGap="0">
+		<mx:CheckBox id="tosCheckBox" label="I agree to the" textSelectedColor="#ffffff"
+			icon="{checkBox_default}" selectedUpIcon="{checkBox_selected}" selectedOverIcon="{checkBox_selected}"/>
+		<mx:Label id="termsOfUse" text="Terms of Use" textDecoration="underline" buttonMode="true" mouseChildren="false"
+			mouseOut="{termsOfUse.setStyle('textDecoration', 'underline')}" mouseOver="{termsOfUse.setStyle('textDecoration', 'none')}"
+			color="#fff000" click="viewTOS()"/>
+	</mx:HBox>
+
+	<mx:VBox id="errorArea" backgroundColor="#A92036" backgroundAlpha=".9" visible="false"
+		x="265" y="{form.y + form.height/2 - errorArea.height/2 - 50}" paddingLeft="5" paddingRight="5" paddingTop="5" paddingBottom="5"
+		borderColor="#820B1E" borderStyle="solid" borderThickness="2" cornerRadius="5"/>
+
+	<mx:VBox id="parentMessage" backgroundColor="#000000" backgroundAlpha=".9" x="265" y="400"
+		paddingLeft="5" paddingRight="5" paddingTop="5" paddingBottom="5" visible="false"
+		borderColor="#999999" borderStyle="solid" borderThickness="2" cornerRadius="5">
+		<mx:Text text="A parent email is required for users under the age of 13." width="160"/>
+	</mx:VBox>
+</mx:Canvas>

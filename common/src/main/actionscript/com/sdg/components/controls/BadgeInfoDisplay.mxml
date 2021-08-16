@@ -1,0 +1,315 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="340" height="500" xmlns:pda="com.sdg.view.pda.*"
+	xmlns:controls="com.sdg.components.controls.*">
+	<mx:Script>
+		<![CDATA[
+			import org.efflex.mx.core.MovieClipCore;
+			import badgeUIassets_fla.shield5_8;
+			import badgeUIassets_fla.shield4_7;
+			import badgeUIassets_fla.shield3_6;
+			import badgeUIassets_fla.shield2_5;
+			import badgeUIassets_fla.shield1_2;
+			import com.sdg.model.Reward;
+			import com.sdg.model.RewardCollection;
+			import mx.events.ResizeEvent;
+			import com.sdg.control.PDAController;
+			import com.sdg.net.Environment;
+			import com.sdg.model.ModelLocator;
+			import com.sdg.manager.BadgeManager;
+			import mx.controls.Image;
+			import com.sdg.model.BadgeLevel;
+			import com.sdg.model.BadgeLevelCollection;
+			import com.sdg.model.Badge;
+			
+			private var levels:BadgeLevelCollection;
+			//private var _selectedShield:DisplayObject;
+			private var _badge:Badge;
+			private var _badgeShield:BadgeShield;
+			private var _levelValue:int;
+			
+			// The Badge Level Icons
+			//protected var _s1:shield1_2;
+			//protected var _s2:shield2_5;
+			//protected var _s3:shield3_6;
+			//protected var _s4:shield4_7;
+			//protected var _s5:shield5_8;
+			protected var _s1:shield1_2 = new shield1_2();
+			protected var _s2:shield2_5 = new shield2_5();
+			protected var _s3:shield3_6 = new shield3_6();
+			protected var _s4:shield4_7 = new shield4_7();
+			protected var _s5:shield5_8 = new shield5_8();
+			
+			public function set badge(value:Badge):void
+			{
+				_badge = value;
+				badgeName.text = value.name.toUpperCase();
+				// Deal with over-long badge names
+				if (value.name == "Hoopsmaster")
+				{
+					badgeName.text = "HOOPS- MASTER";
+				}
+				else if (value.name == "Threemendous")
+				{
+					badgeName.text = "THREE- MENDOUS";
+				}
+				else
+				{
+					badgeName.text = value.name.toUpperCase();
+				}
+
+				levels = value.levels;
+				
+				var highestLevelIndex:int = -1;
+				for (var i:int = levels.length - 1; i >= 0; i--)
+				{
+					var level:BadgeLevel = levels.getAt(i);
+					if (BadgeManager.DoesAvatarOwnBadgeLevel(ModelLocator.getInstance().avatar.avatarId, value.id, level.id))
+					{
+						highestLevelIndex = i;
+						break;
+					}
+				}
+				
+				shield1.source = _s1;
+				shield2.source = _s2;
+				shield3.source = _s3;
+				shield4.source = _s4;
+				shield5.source = _s5;
+				
+				/*
+				shield1.source = _s1 as DisplayObject;
+				shield2.source = _s2 as DisplayObject;
+				shield3.source = _s3 as DisplayObject;
+				shield4.source = _s4 as DisplayObject;
+				shield5.source = _s5 as DisplayObject;
+				*/
+				
+				drawBackgroundObjects();
+				
+				drawShieldBackground(highestLevelIndex);
+				
+				setLevelShields(levels.length, highestLevelIndex);
+				//badgeIcon.badgeId = value.id;
+				
+				//badgeIcon.source = Environment.getApplicationUrl() + "/test/static/badgeLg?badgeId=" + value.id;
+				//badgeLevelLabel.text = levels.length
+			}
+			
+			private function set badgeLevel(value:int):void
+			{
+				_levelValue = value;
+				
+				var level:BadgeLevel = levels.getAt(value);
+				badgeLevelName.text = level.name;
+				badgeLevelDescription.text = level.description;
+				
+				/*
+				var dateAcquired:Date = BadgeManager.GetAvatarBadgeLevelDateAcquired(ModelLocator.getInstance().avatar.avatarId, _badge.id, level.id);
+				if (dateAcquired == null)
+				{
+					badgeDate.visible = badgeDate.includeInLayout = false;
+				}
+				if (dateAcquired != null)
+				{
+					badgeDate.text = "Date Earned:		" + (dateAcquired.getMonth()+1) + "." + dateAcquired.getDate() + "." + dateAcquired.getFullYear();
+					badgeDate.visible = badgeDate.includeInLayout = true;
+				}
+				*/
+				
+				var rewards:RewardCollection = level.rewards;
+				for (var i:int = 0; i < rewards.length; i++)
+				{
+					var reward:Reward = rewards.getAt(i);
+					
+					if (reward.rewardTypeId == Reward.CURRENCY)
+						badgeXP.text = ""+reward.rewardValue as String;
+					else if (reward.rewardTypeId == Reward.EXPERIENCE)
+						badgeTokens.text = ""+reward.rewardValue as String;
+				}
+				
+				if (_badgeShield == null)
+				{
+					_badgeShield = new BadgeShield();
+					badgeContainer.addChild(_badgeShield);
+				}
+				
+				_badgeShield.badgeWidth = 180; //150
+				_badgeShield.badgeHeight = 180; //150
+				_badgeShield.level = value;
+				_badgeShield.badgeId = _badge.id;
+				//_badgeShield.filters = [new GlowFilter(0x319fc6, .85, 10, 10, 2, 7)];
+				_badgeShield.filters = [new GlowFilter(0xffffff, 1, 64, 64, 2, 7)];
+				
+				_badgeShield.addEventListener("badge_completed", onBadgeCompleted);
+				
+				drawShieldBackground(value);
+				
+				function onResize(event:Event):void
+				{
+					var image:Image = event.currentTarget as Image;
+					image.removeEventListener(Event.RENDER, onResize);
+					image.visible = true;
+				}
+								
+				function onBadgeCompleted(event:Event):void
+				{
+					_badgeShield.removeEventListener("badge_completed", onBadgeCompleted);
+					badgeContainer.width = _badgeShield.width;
+					badgeContainer.height = _badgeShield.height;
+					
+				}
+			}
+			
+			private function onLevelMouseOver(event:MouseEvent):void
+			{
+				//var shield:Image = event.currentTarget as Image;
+
+				//shield.scaleX = shield.scaleY = 1.16;
+				//shield.x -= 2;
+			}
+			
+			private function onLevelMouseOut(event:MouseEvent):void
+			{
+				//var shield:Image = event.currentTarget as Image;
+
+				//shield.scaleX = shield.scaleY = 1;
+				//shield.x += 2;/
+			}
+			
+			private function drawBackgroundObjects():void
+			{
+				
+				// Draw background for badge title
+				graphics.clear();
+				graphics.beginFill(0xFFFFFF,.2);
+				graphics.drawRoundRect(20,0,300,50,10,10);
+				graphics.endFill();
+				
+				// Draw Main Area Background
+				graphics.beginFill(0xFFFFFF,.2);
+				graphics.drawRoundRect(20,305,300,100,10,10);
+				graphics.endFill();
+				
+				// Draw XP Background
+				graphics.beginFill(0xFFFFFF,.2);
+				graphics.drawRoundRect(20,425,125,42,37,37);
+				graphics.endFill();
+				
+				// Draw Coin Background
+				graphics.beginFill(0xFFFFFF,.2);
+				graphics.drawRoundRect(195,425,125,42,37,37);
+				graphics.endFill();
+				
+			}
+			
+			private function onLevelClick(event:MouseEvent):void
+			{
+				badgeLevel = badgeLevelShields.getChildIndex(Image(event.currentTarget));
+			}
+			
+			// Determines which shields to show and their status
+			private function setLevelShields(numShields:int, highestLevel:int):void
+			{
+				var shieldsVisible:int = 0;
+				
+				for (var i:int = 0; i < badgeLevelShields.numChildren; i++)
+				{
+					var shieldImage:DisplayObject = badgeLevelShields.getChildAt(i) as DisplayObject;
+					var x:Image =  badgeLevelShields.getChildAt(i) as Image;
+					var shieldMovie:MovieClip = x.source as MovieClip;
+					
+					if (shieldsVisible++ < numShields)
+					{
+						shieldImage.visible = true;
+						
+						if (i > highestLevel)
+							shieldMovie.gotoAndStop(1);
+						else
+							shieldMovie.gotoAndStop(2);
+					}
+					else
+						shieldImage.visible = false;
+				}
+				
+				badgeLevel = highestLevel < 0 ? 0 : highestLevel;
+			}
+			
+			private function drawShieldBackground(index:int):void
+			{
+				// Clear Graphics and set color
+				shieldContainer.graphics.clear();
+				shieldContainer.graphics.beginFill(0xFFFFFF,.2);
+				
+				switch (index)
+				{
+					case 0:
+						shieldContainer.graphics.drawRoundRectComplex(18,0,36,50,6,6,0,0);
+						return;
+					case 1:
+						shieldContainer.graphics.drawRoundRectComplex(54,0,36,50,6,6,0,0);
+						return;
+					case 2:
+						shieldContainer.graphics.drawRoundRectComplex(90,0,36,50,6,6,0,0);
+						return;
+					case 3:
+						shieldContainer.graphics.drawRoundRectComplex(126,0,36,50,6,6,0,0);
+						return;
+					case 4:
+						shieldContainer.graphics.drawRoundRectComplex(162,0,36,50,6,6,0,0);
+						return;
+					default:
+						return;
+					}
+				
+				shieldContainer.graphics.endFill();
+			}
+			
+//			private function equipBadge():void
+//			{
+//				var level:BadgeLevel = levels.getAt(_levelValue);
+//				
+//				PDAController.getInstance().equipBadge(_badge.id, _badge.name, level.id, level.name, _levelValue);
+//			}
+		]]>
+	</mx:Script>
+	
+	<mx:Canvas id="nameBg" height="49" x="0" y="0" horizontalCenter="0" >
+		<mx:Text id="badgeName" fontSize="19" x="0" y="10" fontFamily="EuroStyle" fontWeight="bold" fontThickness="100"
+			selectable="false" mouseChildren="false" filters="{[new GlowFilter(0x000000, 1, 4, 4, 10)]}" />
+	</mx:Canvas>
+	
+	<mx:Canvas horizontalCenter="0" y="80" >
+		<mx:UIComponent id="badgeContainer" />
+	</mx:Canvas>
+	
+	<mx:Canvas id="shieldContainer" horizontalCenter="0" y="255" width="300" height="200">
+	
+		<mx:HBox id="badgeLevelShields" x="35" y="25" paddingRight="2">
+			<mx:Image id="shield1" click="onLevelClick(event)" buttonMode="true" mouseOver="onLevelMouseOver(event)" mouseOut="onLevelMouseOut(event)"/>
+			<mx:Image id="shield2" click="onLevelClick(event)" buttonMode="true" mouseOver="onLevelMouseOver(event)" mouseOut="onLevelMouseOut(event)"/>
+			<mx:Image id="shield3" click="onLevelClick(event)" buttonMode="true" mouseOver="onLevelMouseOver(event)" mouseOut="onLevelMouseOut(event)"/>
+			<mx:Image id="shield4" click="onLevelClick(event)" buttonMode="true" mouseOver="onLevelMouseOver(event)" mouseOut="onLevelMouseOut(event)"/>
+			<mx:Image id="shield5" click="onLevelClick(event)" buttonMode="true" mouseOver="onLevelMouseOver(event)" mouseOut="onLevelMouseOut(event)"/>
+		</mx:HBox>
+
+		<mx:Label id="badgeLevelName" x="8" y="60" fontSize="18" fontWeight="bold"
+			fontFamily="EuroStyle" filters="{[new GlowFilter(0x000000, 1, 4, 4, 10)]}" maxWidth="284"  />
+
+		<mx:Text id="badgeLevelDescription" fontSize="14" x="8" y="90" textAlign="left" selectable="false"
+			width="283" filters="{[new GlowFilter(0x000000, 1, 4, 4, 10)]}"  maxWidth="284" />
+		
+	</mx:Canvas>
+	
+	<mx:Canvas x="45" y="427">
+		<mx:Image y="19" id="xpIcon" source="assets/swfs/point_icon.swf"  scaleX="1.3" scaleY="1.3" />
+		<mx:Label x="48" y="6" id="badgeXP" fontSize="16" fontWeight="bold" fontFamily="EuroStyle"
+			height="22" filters="{[new GlowFilter(0x000000, 1, 4, 4, 10)]}" textAlign="right"/>
+	</mx:Canvas>	
+		
+	<mx:Canvas x="221" y="427">
+		<mx:Image y="19" id="coinIcon" source="assets/swfs/token_icon.swf" scaleX="1.3" scaleY="1.3" />
+		<mx:Label x="26" y="6" id="badgeTokens" fontSize="16" fontWeight="bold" fontFamily="EuroStyle"
+			height="22" filters="{[new GlowFilter(0x000000, 1, 4, 4, 10)]}" textAlign="right"/>
+	</mx:Canvas>
+	
+</mx:Canvas>

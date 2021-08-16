@@ -1,0 +1,333 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" visible="false" >
+
+<mx:Metadata>
+	[Style(name="bubbleBorderColor", type="Color", inherit="no")]
+	[Style(name="bubbleBackgroundColor", type="Color", inherit="no")]
+</mx:Metadata>
+
+<mx:Script>
+	<![CDATA[
+		import com.adobe.utils.StringUtil;
+		import mx.containers.HBox;
+		import mx.events.ResizeEvent;
+		import com.sdg.model.ModelLocator;
+		import com.sdg.net.Environment;
+		import mx.controls.Button;
+		import com.sdg.model.Jab;
+	
+		protected const BUTTON_GAP:int = 4;
+		//protected const PADDING:int = 8;
+		
+		protected var _columns:int = 4;
+		protected var _rows:int = 2;
+		protected var _buttonWidth:int = 0;
+		protected var _buttonHeight:int = 0;
+		protected var _buttonCount:int = 0;
+		protected var _bubbleWidth:int = 0;
+		protected var _bubbleHeight:int = 0;
+		protected var _buttonSizeKnown:Boolean = false;
+		protected var _text:String = null;
+		protected var _waitForTextResize:Boolean = false;
+		protected var _textHeight:int = 0;
+		protected var _textOnly:Boolean = false;
+
+		[Bindable]
+		protected var _padding:int = 8;
+		
+		// define a static variable - for default bubbles styles
+        private static var classConstructed:Boolean = classConstruct();
+    
+		// define a static variable - for default bubbles styles
+        private static function classConstruct():Boolean 
+        {
+            if (!StyleManager.getStyleDeclaration("ButtonsBubble"))
+            {
+                // if there is no stytle definition for bubbleBorderColor and 
+                // bubbleBackgroundColor then create one and set the default value.
+                var styles:CSSStyleDeclaration = new CSSStyleDeclaration();
+                styles.defaultFactory = function():void
+                {
+                    this.bubbleBorderColor = 0x7CA4DA;
+                    this.bubbleBackgroundColor = 0xE0EEFF;
+                }
+                StyleManager.setStyleDeclaration("ButtonsBubble", styles, true);
+            }
+            return true;
+        }
+        
+		/**
+		 * Text that is displayed above the list of buttons
+		 */ 
+		public function set text(value:String):void
+		{
+			_text = value;
+			if (textField && _text && _text.length)
+			{
+				_waitForTextResize = true;
+				textField.text = _text;
+			}
+		}
+		
+		/**
+		 * The number of buttons horizontally
+		 */ 
+		public function set columns(value:int):void
+		{
+			_columns = value;
+		}
+		
+		public function get columns():int
+		{
+			return _columns;
+		}
+		
+		/**
+		 * The number of buttons verically
+		 */ 
+		public function set rows(value:int):void
+		{
+			_rows = value;
+			
+			// create the HBOXes for our rows
+			for (var i:int = 0; i < _rows; i++)
+				bubble.addChild(new HBox());
+		}
+		
+		public function set buttonWidth(value:int):void
+		{
+			_buttonWidth = value;
+		}
+		
+		public function set buttonHeight(value:int):void
+		{
+			_buttonHeight = value;
+		}
+		
+		public function set padding(value:int):void
+		{
+			_padding = value;
+		}
+		
+		public function set bubbleHeight(value:int):void
+		{
+			_bubbleHeight = value;
+			_waitForTextResize = false;
+			if (_bubbleHeight && _bubbleWidth)
+			{
+				if (this._text)
+					textField.includeInLayout = textField.visible = true;
+
+				init();
+			}
+		}
+		
+		public function set bubbleWidth(value:int):void
+		{
+			_bubbleWidth = value;
+			_waitForTextResize = false;
+			if (_bubbleHeight && _bubbleWidth)
+			{
+				if (this._text)
+					textField.includeInLayout = textField.visible = true;
+
+				init();
+			}
+		}
+		
+		/**
+		 * Positions the horizontal location of the bubble's mouthpiece
+		 */ 
+		public function set triangleX(value:int):void
+		{
+			triangle.x = value - (triangle.width / 2)
+		}
+		
+		/**
+		 * True if there's only text in the bubble (no buttons)
+		 */ 
+		public function set textOnly(value:Boolean):void
+		{
+			_textOnly = value;
+			if (_textOnly)
+			{
+				textField.includeInLayout = textField.visible = true;
+				init();	
+			}
+		}
+		
+		public function get textOnly():Boolean
+		{
+			return _textOnly;
+		}
+		
+		/**
+		 * Adds a button to the bubble
+		 */ 
+		public function addButton(iconUrl:String, onButtonClicked:Function = null, params:Object = null, toolTip:String = null):void
+		{
+			var image:Image = new Image();
+			iconUrl = StringUtil.beginsWith(iconUrl, "assets/") ? iconUrl : Environment.getApplicationUrl() + iconUrl;
+			
+			image.buttonMode = true;
+			image.data = params;
+			image.load(iconUrl);
+			image.mouseChildren = false;
+			image.toolTip = toolTip;
+			image.addEventListener(Event.INIT, onButtonSwfDownload);
+			image.addEventListener(MouseEvent.MOUSE_OVER, onButtonMouseOver);
+			image.addEventListener(MouseEvent.MOUSE_OUT, onButtonMouseOut);
+			
+			if (onButtonClicked != null)			
+				image.addEventListener(MouseEvent.CLICK, onButtonClicked);
+			
+			// get the HBOX for this button
+			var currentRowIndex:int = (_buttonCount++ / _columns) + 1;
+			var hbox:HBox = HBox(bubble.getChildAt(currentRowIndex));
+			hbox.addChild(image);
+		}
+		
+		protected function onButtonSwfDownload(event:Event):void
+		{
+			var image:Image = Image(event.currentTarget);
+			var swf:Object = Object(event.currentTarget.content);
+
+			if (swf.doMouseOutEffect)
+				swf.doMouseOutEffect();
+				
+			_buttonWidth = !_buttonWidth ? swf.width : _buttonWidth;	
+			_buttonHeight = !_buttonHeight ? swf.height : _buttonHeight;	
+				
+			// do we need to initialized
+			if (!_buttonSizeKnown)
+			{
+				_buttonSizeKnown = true;
+				init();
+			}
+		}
+		
+		protected function onButtonMouseOver(event:MouseEvent):void
+		{
+			var swf:Object = Object(event.currentTarget.content);
+			if (swf && swf.doMouseOverEffect)
+				swf.doMouseOverEffect();
+		}
+		
+		protected function onButtonMouseOut(event:MouseEvent):void
+		{
+			var swf:Object = Object(event.currentTarget.content);
+			if (swf && swf.doMouseOutEffect)
+				swf.doMouseOutEffect();
+		}
+		
+		/**
+		 * This is the mouthpiece for the bubble
+		 */ 
+		protected function drawTriangle():void
+		{
+			var triangleShape:Shape = new Shape();
+			triangleShape.graphics.beginFill(getStyle('bubbleBackgroundColor'));
+			triangleShape.graphics.lineStyle(4, getStyle('bubbleBorderColor'), 1, true);
+			triangleShape.graphics.moveTo(0, 0);
+			triangleShape.graphics.lineTo(triangle.width, triangle.height * 2 - 1);
+			triangleShape.graphics.lineTo(triangle.width * 2, 0);
+			triangleShape.graphics.lineStyle(NaN);
+			triangleShape.graphics.lineTo(0, 0);
+			
+			triangle.source = triangleShape;
+			triangle.y = bubble.height - 2;
+			triangle.x = (bubble.width / 2) - (triangle.width / 2);
+		}
+		
+		protected function init():void
+		{
+			if ((_waitForTextResize || !_buttonSizeKnown) && !_textOnly)
+				return;
+			
+			// size the bubble
+			if (!_bubbleWidth)
+				bubble.width = (_columns * _buttonWidth) + ((_columns - 1) * BUTTON_GAP) + (_padding * 2);
+			else if (_bubbleWidth)
+				bubble.width = _bubbleWidth;	
+				 
+			if (!_bubbleHeight)
+			{	 
+				bubble.height = (_rows * _buttonHeight) + ((_rows - 1) * BUTTON_GAP) + (_padding * 2) + 4;
+				this.width = bubble.width;
+				
+				if (_textHeight)
+				{
+					bubble.height += _textHeight + BUTTON_GAP;
+					textField.includeInLayout = textField.visible = true;
+					if (textField.width > this.width)
+						return;
+				}
+			}
+			else
+				bubble.height = _bubbleHeight;
+				
+			// set the width on the hboxes and set the styles
+			for each (var box:DisplayObject in bubble.getChildren())
+			{
+				var hbox:HBox = box as HBox;
+				if (!hbox)
+					continue;
+					
+				hbox.width = bubble.width - (_padding * 2);
+				hbox.setStyle("horizontalAlign", "center");
+				hbox.setStyle("horizontalGap", BUTTON_GAP);
+				hbox.horizontalScrollPolicy = "off";
+				hbox.verticalScrollPolicy = "off";
+			}
+			
+			drawTriangle();
+			
+			// set the overall size of this control
+			this.height = bubble.height + triangle.height;
+			this.visible = true;
+		}
+		
+		protected function onTextFieldCreationComplete():void
+		{		
+			if (_text && !textField.text)
+				text = _text;
+		}
+		
+		protected function onTextFieldResize():void
+		{
+			if (_bubbleHeight && _bubbleWidth)
+				return;
+			
+			if (_text && _text.length && !_textOnly)
+			{
+				if (_textHeight != textField.height)
+				{
+					_textHeight = textField.height;
+					_waitForTextResize = false;
+
+					init();
+				}
+			}
+		}
+		
+		// Override the styleChanged() method to detect changes in your new style.
+        override public function styleChanged(styleProp:String):void 
+        {
+            super.styleChanged(styleProp);
+
+            if (styleProp=="bubbleBackgroundColor" || styleProp=="bubbleBorderColor") 
+            {
+            	bubble.setStyle("backgroundColor", getStyle('bubbleBackgroundColor'));
+            	bubble.setStyle("borderColor", getStyle('bubbleBorderColor'));
+            	textField.setStyle("color", getStyle('bubbleBorderColor'));
+            	drawTriangle();
+            }
+        }
+
+	]]>
+</mx:Script>
+    <mx:VBox id="bubble" backgroundColor="{getStyle('bubbleBackgroundColor')}" borderColor="{getStyle('bubbleBorderColor')}" borderStyle="solid" borderThickness="2" cornerRadius="7" paddingTop="{_padding}" verticalGap="{BUTTON_GAP}" horizontalAlign="center" verticalScrollPolicy="off" horizontalScrollPolicy="off" >
+		<mx:Text id="textField" includeInLayout="false" visible="false" creationComplete="onTextFieldCreationComplete()" resize="onTextFieldResize()" color="{getStyle('bubbleBorderColor')}" fontSize="16" width="90%" textAlign="center" />
+	</mx:VBox> 
+	<mx:Image id="triangle" height="15" width="28" />
+</mx:Canvas>	

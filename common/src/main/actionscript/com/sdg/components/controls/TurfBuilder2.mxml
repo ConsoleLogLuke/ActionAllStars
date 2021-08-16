@@ -1,0 +1,457 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="925" xmlns:controls="com.sdg.components.controls.*" initialize="init()"
+	rollOut="playAnimation(_slideHide)">
+
+	<mx:Metadata>
+		[Event(name="saveRoom", type="flash.events.Event")]
+		[Event(name="updateRoom", type="flash.events.Event")]
+	</mx:Metadata>
+
+	<mx:Script>
+		<![CDATA[
+			import com.sdg.model.ItemType;
+			import com.sdg.utils.Constants;
+			import mx.core.IStateClient;
+			import com.sdg.utils.MainUtil;
+			import mx.events.ListEvent;
+			import mx.binding.utils.BindingUtils;
+			import com.sdg.events.RoomEnumEvent;
+			import com.sdg.control.room.RoomManager;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			import com.sdg.model.InventoryItem;
+			import com.sdg.events.InventoryListEvent;
+			import com.sdg.model.InventoryItemType;
+			import com.sdg.net.socket.SocketClient;
+			import com.sdg.model.Room;
+			import com.sdg.utils.PreviewUtil;
+			import mx.events.CloseEvent;
+			import mx.events.DragEvent;
+			import mx.effects.Move;
+			import mx.events.EffectEvent;
+			import mx.effects.TweenEffect;
+			import mx.effects.easing.Sine;
+			import com.sdg.model.ModelLocator;
+			import mx.collections.ArrayCollection;
+
+			private const DEFAULT_SORT:String = "default sort";
+			private const TURF_VALUE_SORT:String = "turf value sort";
+			private const ALPHABETICAL:String = "alphabetical sort";
+
+			private var _room:Room;
+			private var _itemToolTip:TurfItemToolTip;
+			private var _modelLocator:ModelLocator;
+			private var _slideShow:Move
+			private var _slideHide:Move;
+			private var _currentAnimation:TweenEffect;
+			private var _sortDropDown:TurfDropDown;
+			private var _previouslySelectedTheme:Object;
+			private var _turfItemList:Object;
+			private var _defaultDisplayArray:Array;
+
+			private function init():void
+			{
+				_modelLocator = ModelLocator.getInstance();
+
+				_slideShow = new Move(itemsWindow);
+				_slideShow.yTo = 0;
+				_slideShow.duration = 300;
+				_slideShow.easingFunction = Sine.easeIn;
+				_slideShow.addEventListener(EffectEvent.EFFECT_END, onAnimationEnd);
+
+				_slideHide = new Move(itemsWindow);
+				_slideHide.yTo = itemsWindowContainer.height;
+				_slideHide.duration = 300;
+				_slideHide.easingFunction = Sine.easeOut;
+				_slideHide.addEventListener(EffectEvent.EFFECT_START, onAnimationEnd);
+
+				categoryList.dataProvider = _modelLocator.inventoryItemTypes[2];
+				categoryListBar.y = itemsWindowContainer.height;
+
+				// Create sort dropdown.
+				var dropSortArray:Array = new Array();
+				dropSortArray.push( {title:"Default", name:DEFAULT_SORT} );
+				dropSortArray.push( {title:"Alphabetical", name:ALPHABETICAL} );
+				var dropFmat:TextFormat = new TextFormat('EuroStyle', 10, 0xffffff, true);
+				_sortDropDown = new TurfDropDown(120, 17, " Sort By:", dropFmat, 0x80002A, 0x9B0031, dropSortArray, "down", onSortSelect, true);
+				_sortDropDown.buttonMode = true;
+				sorter.addChild(_sortDropDown);
+
+				BindingUtils.bindSetter(selectCategory, categoryList, "selectedItem");
+				BindingUtils.bindSetter(selectItem, itemListBox, "selectedItem");
+			}
+
+			private function selectCategory(itemType:InventoryItemType):void
+			{
+				if (itemType == null) return;
+				_defaultDisplayArray = _turfItemList[itemType.itemTypeId].defaultDisplayArray;
+
+				_sortDropDown.selectOptionByName(DEFAULT_SORT);
+
+				if (itemType.itemTypeId == PreviewUtil.THEME)
+					itemListBox.selectedItem = _previouslySelectedTheme;
+				else
+					itemListBox.selectedIndex = 0;
+
+				clickdragLabel.text = _defaultDisplayArray.length > 0 ? "Click & Drag" : "Shop For More Items";
+			}
+
+			private function onSortSelect(e:Event):void
+			{
+				var array:Array = _defaultDisplayArray;
+				var sortName:String = e.currentTarget.name;
+
+				if (sortName == this.ALPHABETICAL)
+				{
+					array = array.concat().sortOn("itemName", Array.CASEINSENSITIVE);
+				}
+
+				itemListBox.dataProvider = new ArrayCollection(array);
+
+				if (InventoryItemType(categoryList.selectedItem).itemTypeId == PreviewUtil.THEME)
+					itemListBox.selectedItem = _previouslySelectedTheme;
+				else
+					itemListBox.selectedIndex = 0;
+			}
+
+			private function playAnimation(animation:TweenEffect):void
+			{
+				if (_currentAnimation != null)
+				{
+					if (_currentAnimation == animation) return;
+
+					_currentAnimation.stop();
+				}
+
+				_currentAnimation = animation;
+				_currentAnimation.play();
+			}
+
+			private function onAnimationEnd(event:EffectEvent):void
+			{
+				_currentAnimation = null;
+			}
+
+			private function selectItem(turfItem:TurfItem):void
+			{
+				if (turfItem == null)
+				{
+					itemLabel.text = null;
+					return;
+				}
+
+				itemLabel.text = turfItem.itemName;
+
+				if (turfItem.itemTypeId == PreviewUtil.THEME && _room.themeId != turfItem.themeId)
+				{
+					if (_room.layoutId == turfItem.layoutId)
+					{
+						changeTheme();
+					}
+					else
+					{
+						var alert:SdgAlertChrome = SdgAlertChrome.show("Switching to a theme with a different layout will clear your home turf and put all of your items back in your locker. Would you like to continue?", "Changing Themes", onClose, null, true, false);
+						alert.addButton("Yes", 1);
+						alert.addButton("No", 2);
+					}
+				}
+
+				function onClose(event:CloseEvent):void
+				{
+					if (event.detail == 1)
+					{
+						// ONLY RESET YOUR OWN TURF if you went to another room with this dialog up, ignore it.
+						if(RoomManager.getInstance().currentRoom.ownerId == ModelLocator.getInstance().avatar.avatarId)
+						{
+							_room.removeInventoryItemsExceptWithTypeId(ItemType.PETS);
+							//_room.removeAllInventoryItems();
+							RoomManager.getInstance().itemCount = 0;
+							dispatchEvent(new Event('updateRoom'));
+							changeTheme();
+						}
+					}
+					else
+					{
+						itemListBox.selectedItem = _previouslySelectedTheme;
+					}
+				}
+
+				function changeTheme():void
+				{
+					SocketClient.getInstance().sendPluginMessage("room_config_server_level", "changeThemeConfig", { roomId:_room.id, themeId:String(turfItem.themeId) });
+					if (_previouslySelectedTheme != null)
+						setInventoryRoom(_previouslySelectedTheme.getInventoryItemByIndex(0), 0);
+					setInventoryRoom(turfItem.getInventoryItemByIndex(0), 1);
+					_previouslySelectedTheme = turfItem;
+				}
+			}
+
+			private function getInventoryItems():void
+			{
+				var itemTypeCollection:ArrayCollection = _modelLocator.inventoryItemTypes[2];
+				var numItemType:int = itemTypeCollection.length;
+				var index:int = 0;
+				_turfItemList = new Object();
+				CairngormEventDispatcher.getInstance().addEventListener(InventoryListEvent.LIST_COMPLETED, onInventoryListCompleted);
+				getInventoryList();
+
+				function getInventoryList():void
+				{
+					if (index < numItemType)
+						dispatchEvent(new InventoryListEvent(_modelLocator.avatar.avatarId, itemTypeCollection[index].itemTypeId));
+					else
+					{
+						CairngormEventDispatcher.getInstance().removeEventListener(InventoryListEvent.LIST_COMPLETED, onInventoryListCompleted);
+						categoryList.selectedIndex = 0;
+					}
+				}
+
+				function onInventoryListCompleted(event:InventoryListEvent):void
+				{
+					var itemTypeId:uint = event.itemTypeId;
+
+					// create the TurfItem
+					var collection:ArrayCollection = _modelLocator.avatar.getInventoryListById(itemTypeId);
+
+					var defaultDisplayArray:Array = new Array();
+					var displayHash:Object = new Object();
+
+					for each (var item:InventoryItem in collection)
+					{
+						var display:TurfItem = displayHash[item.itemId] as TurfItem;
+
+						if (display == null)
+						{
+							display = new TurfItem();
+							displayHash[item.itemId] = display;
+							defaultDisplayArray.push(display);
+						}
+						if (_modelLocator.avatar.membershipStatus == Constants.MEMBER_STATUS_FREE)
+						{
+							if (item.itemValueType == InventoryItem.PREMIUM && display.isFree == false)
+								display.isGreyedOut = true;
+							else
+								display.isFree = true;
+						}
+
+						display.addInventoryItem(item);
+					}
+
+					_turfItemList[itemTypeId] = {displayHash:displayHash, defaultDisplayArray:defaultDisplayArray};
+
+					// count the number of unused items
+					var numUnusedItem:int = 0;
+					for each (var turfItem:TurfItem in displayHash)
+						numUnusedItem += turfItem.inventoryCountDisplay;
+
+					itemTypeCollection[index].numItems = numUnusedItem;
+
+					// set previously selected theme
+					if (itemTypeId == PreviewUtil.THEME)
+					{
+						for each (var theme:TurfItem in displayHash)
+						{
+							if (_room.themeId == theme.themeId)
+							{
+								_previouslySelectedTheme = theme;
+								break;
+							}
+						}
+					}
+
+					index++;
+					getInventoryList();
+				}
+			}
+
+			private function onItemRemovedFromRoom(event:RoomEnumEvent):void
+			{
+				changeRoomItem(event, 0);
+			}
+
+			private function onItemAddedToRoom(event:RoomEnumEvent):void
+			{
+				changeRoomItem(event, 1);
+			}
+
+			private function changeRoomItem(event:RoomEnumEvent, roomId:int):void
+			{
+				var inventoryItem:InventoryItem = event.item as InventoryItem;
+				if (inventoryItem == null) return;
+				setInventoryRoom(inventoryItem, roomId);
+			}
+
+			private function setInventoryRoom(inventoryItem:InventoryItem, roomId:int):void
+			{
+				var turfItemFromList:Object = _turfItemList[inventoryItem.itemTypeId];
+				if(turfItemFromList == null)
+				{
+					trace("Error, tried to remove type from turf that wasn't on list");
+					return;
+				}
+				var displayHash:Object = turfItemFromList.displayHash;
+				var turfItem:TurfItem = displayHash[inventoryItem.itemId] as TurfItem;
+
+				// get corresponding item from turf builder
+				var item:InventoryItem = turfItem.getInventoryItem(inventoryItem.inventoryItemId);
+				item.roomId = roomId;
+
+				var itemType:InventoryItemType;
+				for each (itemType in _modelLocator.inventoryItemTypes[2])
+				{
+					if (itemType.itemTypeId == inventoryItem.itemTypeId)
+						break;
+				}
+
+				if (roomId == 0)
+				{
+					turfItem.inventoryCount++;
+					itemType.numItems++;
+				}
+				else
+				{
+					turfItem.inventoryCount--;
+					itemType.numItems--;
+				}
+			}
+
+			private function onItemDragEntered(event:Event):void
+			{
+				if (RoomManager.getInstance().itemCount >= Constants.MAX_TURF_ITEMS)
+					SdgAlertChrome.show("You can't have more than " +  Constants.MAX_TURF_ITEMS + " items in your turf at one time.", "Fire Hazard!");
+				else
+					itemListBox.proxyImage.alpha = 0;
+			}
+
+			private function onFinishedClicked(event:MouseEvent):void
+			{
+				dispatchEvent(new Event('saveRoom'));
+			}
+
+			private function clearTurf():void
+			{
+				var confirmation:SdgAlertChrome = SdgAlertChrome.show("Are you sure you want to remove all your items from the room?", "Clear Turf", onClose, null, true, false);
+				confirmation.addButton("Yes", 1);
+				confirmation.addButton("No", 2);
+
+				function onClose(event:CloseEvent):void
+				{
+					if (event.detail == 1)
+					{
+						_room.removeInventoryItemsExceptWithTypeId(ItemType.PETS);
+						RoomManager.getInstance().itemCount = 0;
+					}
+				}
+			}
+
+			private function onItemRollOver(event:ListEvent):void
+			{
+				if (!_itemToolTip)
+				{
+					_itemToolTip = MainUtil.showDialog(TurfItemToolTip, {itemRenderer:event.itemRenderer}, false, false) as TurfItemToolTip;
+					_itemToolTip.mouseEnabled = false;
+					_itemToolTip.mouseChildren = false;
+				}
+				else if (_itemToolTip.parent == null)
+				{
+					MainUtil.reShowDialog(_itemToolTip, false);
+
+					_itemToolTip.itemRenderer = event.itemRenderer;
+				}
+				else
+				{
+					_itemToolTip.itemRenderer = event.itemRenderer;
+				}
+			}
+
+			private function onItemRollOut(event:ListEvent):void
+			{
+				if (_itemToolTip && _itemToolTip.initialized)
+				{
+					if (IStateClient(event.itemRenderer).currentState != "highlighted" && IStateClient(event.itemRenderer).currentState != "selected")
+						_itemToolTip.close();
+				}
+			}
+
+			private function onRollOut(event:Event):void
+			{
+				if (_itemToolTip && _itemToolTip.initialized)
+					_itemToolTip.close();
+			}
+
+			override public function set visible(value:Boolean):void
+			{
+				if (value == super.visible) return;
+
+				super.visible = value;
+
+				if (value == true)
+				{
+					_room = RoomManager.getInstance().currentRoom;
+					_room.addEventListener(RoomEnumEvent.ITEM_REMOVED, onItemRemovedFromRoom);
+					_room.addEventListener(RoomEnumEvent.ITEM_ADDED, onItemAddedToRoom);
+					_room.addEventListener("item drag entered", onItemDragEntered);
+
+					getInventoryItems();
+				}
+				else
+				{
+					// Room is null when you haven't entered the turf builder yet, but don't want to show it under the world map
+					if(_room)
+					{
+						_room.removeEventListener(RoomEnumEvent.ITEM_REMOVED, onItemRemovedFromRoom);
+						_room.removeEventListener(RoomEnumEvent.ITEM_ADDED, onItemAddedToRoom);
+						_room.removeEventListener("item drag entered", onItemDragEntered);
+					}
+					_turfItemList = null;
+					categoryList.selectedItem = null;
+					_previouslySelectedTheme = null;
+
+					if (_itemToolTip && _itemToolTip.initialized)
+						_itemToolTip.close();
+				}
+			}
+		]]>
+	</mx:Script>
+
+	<mx:Style>
+		.turfScrollbar
+		{
+			upArrowUpSkin: Embed(source="images/scrollbars/turfArrowUp.png");
+			upArrowDisabledSkin: Embed(source="images/scrollbars/turfArrowUp.png");
+			upArrowOverSkin: Embed(source="images/scrollbars/turfArrowUpOver.png");
+			upArrowDownSkin: Embed(source="images/scrollbars/turfArrowUpOver.png");
+			downArrowUpSkin: Embed(source="images/scrollbars/turfArrowDown.png");
+			downArrowDisabledSkin: Embed(source="images/scrollbars/turfArrowDown.png");
+			downArrowOverSkin: Embed(source="images/scrollbars/turfArrowDownOver.png");
+			downArrowDownSkin: Embed(source="images/scrollbars/turfArrowDownOver.png");
+			track-skin: Embed(source="images/scrollbars/scrollBarTrack.jpg");
+			thumb-up-skin: Embed(source='images/scrollbars/scrollThumb.jpg');
+			thumb-over-skin: Embed(source='images/scrollbars/scrollThumbOver.jpg');
+			thumb-down-skin: Embed(source='images/scrollbars/scrollThumbOver.jpg');
+		}
+	</mx:Style>
+
+	<mx:Canvas id="itemsWindowContainer" width="100%" height="130">
+		<mx:Canvas id="itemsWindow" width="100%" height="100%" backgroundColor="#000000" backgroundAlpha=".8"
+			verticalScrollPolicy="off" horizontalScrollPolicy="off"
+			borderStyle="solid" borderThickness="1" borderSides="top" borderColor="#2c2c2c">
+			<controls:TurfItemHorizontalList id="itemListBox" borderStyle="none" horizontalScrollBarStyleName="turfScrollbar"
+				disabledColor="#333333" rollOverColor="#999999" selectionColor="#ffffff" backgroundAlpha="0"
+				horizontalCenter="0" y="25" itemRenderer="com.sdg.components.renderers.TurfItemRenderer"
+				itemRollOver="onItemRollOver(event)" itemRollOut="onItemRollOut(event)" rollOut="onRollOut(event)"
+				columnCount="12" rowCount="1" rowHeight="86" columnWidth="72" itemWidth="60" itemHeight="60"/>
+			<mx:Label id="itemLabel" x="35" y="3" color="#ffffff" fontSize="15" fontFamily="EuroStyle" fontWeight="bold"/>
+			<mx:Label id="clickdragLabel" right="175" y="3" color="#ffffff" fontSize="15" fontFamily="EuroStyle" fontWeight="bold"/>
+			<mx:UIComponent id="sorter" right="155" y="5"/>
+		</mx:Canvas>
+	</mx:Canvas>
+
+	<mx:Canvas id="categoryListBar" width="100%" height="65" rollOver="playAnimation(_slideShow)" backgroundImage="assets/swfs/turfBuilder/NavigationBar.swf">
+		<controls:HorizontalListCustom id="categoryList" columnWidth="100" rowHeight="63" columnCount="6"
+				paddingTop="0" paddingBottom="0" paddingLeft="0" paddingRight="0" horizontalCenter="0" verticalCenter="0"
+				horizontalScrollPolicy="off" backgroundAlpha="0" borderStyle="none"
+				itemRenderer="com.sdg.components.renderers.ItemTypeRenderer"/>
+		<mx:Image source="assets/swfs/turfBuilder/resetButton.swf" left="15" verticalCenter="0" buttonMode="true" click="clearTurf()"/>
+		<mx:Image source="assets/swfs/turfBuilder/exitButton.swf" right="15" verticalCenter="0" buttonMode="true" click="onFinishedClicked(event)"/>
+	</mx:Canvas>
+</mx:Canvas>

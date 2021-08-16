@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml"
+	implements="com.sdg.components.dialog.ISdgDialog" width="737" height="570">
+	
+	<mx:Script>
+		<![CDATA[
+			import com.sdg.net.Environment;
+			import com.sdg.utils.Constants;
+			import com.sdg.utils.MainUtil;
+			import com.sdg.model.ModelLocator;
+			import mx.managers.PopUpManager;
+			
+			private var _showPremiumHeader:Boolean = true;
+			private var _messaging:String;
+			private var _cc:int = 12;
+			private var _showFreeOption:Boolean = true;
+			
+			public function init(params:Object):void
+			{
+				if (params)
+				{
+					if (params.showPremiumHeader != null)
+						_showPremiumHeader = params.showPremiumHeader;
+					_messaging = params.messaging;
+					if (params.cc != null)
+						_cc = params.cc;
+					if (params.showFreeOption != null)
+						_showFreeOption = params.showFreeOption;
+				}
+				//upsellSwf.source = "assets/swfs/premium_feature_popup_sportsPsychic.swf";
+				upsellSwf.source = "assets/swfs/premium_feature_popup.swf";
+			}
+			
+			public function close():void
+			{
+				PopUpManager.removePopUp(this);
+			}
+			
+			private function ioErrorHandler(event:IOErrorEvent):void
+			{
+				trace("ioErrorHandler: " + event.text);
+				close();
+			}
+			
+			private function onClose(event:Event):void
+			{
+				event.currentTarget.removeEventListener("NoThanks", onClose);
+				event.currentTarget.removeEventListener("GetMonthFree", onMonthFree);
+				event.currentTarget.removeEventListener("Close", onClose);
+				event.currentTarget.addEventListener("FreeAccount", onFreeAccount);
+				close();
+			}
+			
+			private function onMonthFree(event:Event):void
+			{
+				if (ModelLocator.getInstance().avatar.membershipStatus == 3)
+					MainUtil.postAvatarIdToURL('register.jsp', 0, _cc);
+				else
+				{
+					navigateToURL(new URLRequest('http://' + Environment.returnUrl +
+						'/premium/co/ccard?userId=' + ModelLocator.getInstance().user.userId +
+						'&pm=' + Constants.CREDIT_CARD + '&plan=' + 7 + '&mf=1&affiliateId=' + ModelLocator.getInstance().affiliate), '_self');
+				}
+			}
+			
+			private function onFreeAccount(event:Event):void
+			{
+				MainUtil.postAvatarIdToURL('register.jsp', 0, 11);
+			}
+			
+			private function initUpsellSwf():void
+			{
+				try
+				{
+					// get the swf
+					var swf:Object = Object(upsellSwf.content);
+					
+					// add our listeners
+					swf.addEventListener("NoThanks", onClose);
+					swf.addEventListener("GetMonthFree", onMonthFree);
+					swf.addEventListener("Close", onClose);
+					
+					// if guest account
+					//ModelLocator.getInstance().avatar.membershipStatus = 3; // testing
+					if (_showFreeOption && ModelLocator.getInstance().avatar.membershipStatus == 3 &&
+						ModelLocator.getInstance().affiliate != 53 && ModelLocator.getInstance().affiliate != 64)
+					{
+						swf.showFreeOption = true;
+						swf.addEventListener("FreeAccount", onFreeAccount);
+					}
+					
+					swf.showPremiumHeader = _showPremiumHeader;
+					if (_messaging != null)
+						swf.messaging = _messaging;
+				}
+				catch(e:Error)
+				{
+					trace("upsellSwf error: " + e.message);
+					close();
+				}
+			}
+		]]>
+	</mx:Script>
+	
+	<mx:Image id="upsellSwf" init="initUpsellSwf()" ioError="ioErrorHandler(event)"/>
+</mx:Canvas>

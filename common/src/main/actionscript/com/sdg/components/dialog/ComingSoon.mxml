@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml"
+	backgroundImage="@Embed('images/comingSoon_bubble.png')" width="77" height="48" x="698" y="574"
+	implements="com.sdg.components.dialog.ISdgDialog">
+
+	<mx:Script>
+
+		<![CDATA[
+			import mx.events.FlexMouseEvent;
+			import mx.managers.PopUpManager;
+
+			public function init(params:Object):void
+		    {
+		    	// set the location of the dialog if the x and/or y position was passed in
+		    	if (params)
+		    	{
+		    		if (params.x)
+		    			this.x = params.x;
+
+		    		if (params.y)
+		    			this.y = params.y;
+		    	}
+
+		    	addEventListener(FlexMouseEvent.MOUSE_DOWN_OUTSIDE, onMouseDownOutside);
+		    }
+
+   		    public function close():void
+	        {
+            	PopUpManager.removePopUp(this);
+            }
+
+            private function onMouseDownOutside(event:FlexMouseEvent):void
+            {
+            	close();
+            }
+		]]>
+
+	</mx:Script>
+</mx:Canvas>

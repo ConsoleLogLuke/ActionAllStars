@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" implements="com.sdg.components.dialog.ISdgDialog"
+	backgroundImage="@Embed('images/actions-bg.png')" width="160" height="80" x="670" y="541"
+	mouseDownOutside="close()" rollOut="closeTimer.start()" rollOver="closeTimer.reset()">
+
+	<mx:Script>
+
+		<![CDATA[
+			import com.sdg.model.ModelLocator;
+			import com.sdg.control.room.RoomManager;
+			import com.sdg.utils.EventUtil;
+
+			import flash.events.TimerEvent;
+			import flash.utils.Timer;
+
+			import mx.events.FlexMouseEvent;
+			import mx.managers.PopUpManager;
+
+			private var closeTimer:Timer = new Timer(2000, 1);
+
+			public function init(params:Object):void
+		    {
+		    	closeTimer.addEventListener(TimerEvent.TIMER_COMPLETE, EventUtil.createEventInvoker(close));
+		    }
+
+   		    public function close():void
+	        {
+            	PopUpManager.removePopUp(this);
+            	closeTimer.reset();
+            }
+
+            private function doAction(event:MouseEvent):void
+            {
+            	RoomManager.getInstance().userController.animate(event.target.id);
+            }
+		]]>
+
+	</mx:Script>
+	<mx:Style>
+		Button.action {
+		    paddingLeft: 0;
+		    paddingRight: 0;
+	    }
+	</mx:Style>
+	<mx:HBox horizontalGap="0" horizontalCenter="-3" verticalCenter="-7" paddingLeft="0" paddingRight="0" >
+		<mx:Button id="wave" width="45" height="45" buttonMode="true" click="doAction(event)" styleName="action" upSkin="@Embed('swfs/actions/waveDefault.swf')" overSkin="@Embed('swfs/actions/waveRollover.swf')" downSkin="@Embed('swfs/actions/waveDefault.swf')"/>
+		<mx:Button id="idle" width="45" height="45" buttonMode="true" click="doAction(event)" styleName="action" upSkin="@Embed('swfs/actions/idleDefault.swf')" overSkin="@Embed('swfs/actions/idleRollover.swf')" downSkin="@Embed('swfs/actions/idleDefault.swf')"/>
+		<mx:Button id="flex" width="45" height="45" buttonMode="true" click="doAction(event)" styleName="action" upSkin="@Embed('swfs/actions/muscleDefault.swf')" overSkin="@Embed('swfs/actions/muscleRollover.swf')" downSkin="@Embed('swfs/actions/muscleDefault.swf')"/>
+	</mx:HBox>
+
+</mx:Canvas>

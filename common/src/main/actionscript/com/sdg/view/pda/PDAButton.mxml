@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml"
+	implements="com.sdg.view.pda.interfaces.IPDAButton" borderStyle="solid" borderThickness="0"
+	mouseChildren="false" buttonMode="true"
+	mouseOver="{if (_mouseOverSound != null) _mouseOverSound.play(); highlighted = true}" mouseOut="{highlighted = false}"
+	backgroundColor="{_highlighted ? rollOverBorderColor : selected ? selectedBorderColor : borderColor}"
+	click="{if (_clickSound != null) _clickSound.play()}">
+	
+	<mx:Canvas id="insideBox" horizontalCenter="0" verticalCenter="0"
+		width="{this.width - (2 * borderThickness)}" height="{this.height - (2 * borderThickness)}"
+		cornerRadius="{getStyle('cornerRadius') - 1}"
+		borderStyle="solid" borderThickness="1" borderColor="#ffffff"
+		backgroundColor="{_highlighted ? rollOverColor : selected ? selectedColor : backgroundColor}">
+		
+		<mx:Label id="buttonLabel" horizontalCenter="0" verticalCenter="0"
+			text="{label}" fontSize="{getStyle('fontSize')}" color="{getStyle('color')}"
+			fontWeight="{getStyle('fontWeight')}" fontStyle="{getStyle('fontStyle')}"
+			fontThickness="{getStyle('fontThickness')}" fontFamily="{getStyle('fontFamily')}"/>
+		
+		<mx:Image id="buttonIcon" source="{_toggleOn ? iconSource : iconSourceToggleOff}" init="{setImageSelection()}" width="100%" height="100%"
+			horizontalCenter="0" verticalCenter="0"/>
+	</mx:Canvas>
+	
+	<mx:Script>
+		<![CDATA[
+			[Bindable]
+			public var backgroundColor:uint = 0x1f1f1f;
+			[Bindable]
+			public var borderColor:uint = 0x464646;
+			[Bindable]
+			public var borderThickness:int = 3;
+			[Bindable]
+			public var rollOverColor:uint = 0x1a5aaf;
+			[Bindable]
+			public var rollOverBorderColor:uint = 0xffffff;
+			[Bindable]
+			public var selectedColor:uint = 0xa8152f;
+			[Bindable]
+			public var selectedBorderColor:uint = 0xffffff;
+			[Bindable]
+			public var iconSource:String;
+			[Bindable]
+			public var iconSourceToggleOff:String;
+			[Bindable]
+			private var _highlighted:Boolean = false;
+			
+			private var _selected:Boolean = false;
+			[Bindable]
+			private var _toggleOn:Boolean = true;
+			private var _callBack:Function;
+			private var _labelText:String;
+			private var _mouseOverSound:Sound;
+			private var _clickSound:Sound;
+			private var _params:Object;
+			
+			private function setImageSelection():void
+			{
+				try
+				{
+					var swf:Object = Object(buttonIcon);
+					swf.content.selected = _selected;
+				}
+				catch(e:Error) {}
+			}
+			
+			public function set mouseOverSound(value:Sound):void
+			{
+				_mouseOverSound = value;
+			}
+			
+			public function set clickSound(value:Sound):void
+			{
+				_clickSound = value;
+			}
+			
+			private function set highlighted(value:Boolean):void
+			{
+				_highlighted = value;
+				
+				try
+				{
+					var swf:Object = Object(buttonIcon);
+					swf.content.rollOver = value;
+				}
+				catch(e:Error) {}
+			}
+			
+			public function set labelText(value:String):void
+			{
+				_labelText = value;
+			}
+			
+			public function get labelText():String
+			{
+				return _labelText;
+			}
+			
+			public function get params():Object
+			{
+				return _params;
+			}
+			
+			public function set params(value:Object):void
+			{
+				_params = value;
+			}
+			
+			[Bindable]
+			public function set selected(value:Boolean):void
+			{
+				_selected = value;
+				setImageSelection();
+			}
+			
+			public function get selected():Boolean
+			{
+				return _selected;
+			}
+			
+			public function set callBack(value:Function):void
+			{
+				_callBack = value;
+			}
+			
+			public function get callBack():Function
+			{
+				return _callBack;
+			}
+			
+			public function set toggleOn(value:Boolean):void
+			{
+				_toggleOn = value;
+			}
+			
+			public function get toggleOn():Boolean
+			{
+				return _toggleOn;
+			}
+		]]>
+	</mx:Script>
+</mx:Canvas>

@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" dataChange="init()" height="70" xmlns:controls="com.sdg.components.controls.*" buttonMode="true">
+	<mx:Script>
+		<![CDATA[
+			import com.sdg.components.controls.BadgeShield;
+			import mx.controls.Image;
+			import com.sdg.net.Environment;
+			import com.sdg.model.ModelLocator;
+			import com.sdg.manager.BadgeManager;
+			import com.sdg.model.BadgeLevel;
+			import com.sdg.model.BadgeLevelCollection;
+			import com.sdg.model.Badge;
+			
+			private var _badgeShield:BadgeShield;
+			
+			private function init():void
+			{
+				var badge:Badge = data as Badge;
+				if (badge == null) return;
+				
+				badgeNameLabel.text = badge.name.toUpperCase();
+				var levels:BadgeLevelCollection = badge.levels;
+				
+				var highestLevel:BadgeLevel;
+				var highestLevelIndex:int;
+				
+				for (var i:int = levels.length - 1; i >= 0; i--)
+				{
+					var level:BadgeLevel = levels.getAt(i);
+					if (BadgeManager.DoesAvatarOwnBadgeLevel(ModelLocator.getInstance().avatar.avatarId, badge.id, level.id))
+					{
+						highestLevel = level;
+						highestLevelIndex = i;
+						break;
+					}
+				}
+				
+				if (highestLevel == null)
+				{
+					badgeContainer.alpha = .3;
+					//badgeIcon.alpha = .3;
+					//badgeIconContainer.alpha = .3;
+					badgeNameLabel.alpha = .3;
+					badgeLevelLabel.alpha = .3;
+					badgeDescriptionLabel.alpha = .3;
+					
+					highestLevelIndicator.text = "0/" + levels.length;
+					
+					highestLevelIndex = 0;
+					highestLevel = levels.getAt(highestLevelIndex);
+				}
+				else
+				{
+					badgeContainer.alpha = 1;
+					//badgeIcon.alpha = 1;
+					//badgeIconContainer.alpha = 1;
+					badgeNameLabel.alpha = 1;
+					badgeLevelLabel.alpha = 1;
+					badgeDescriptionLabel.alpha = 1;
+					
+					highestLevelIndicator.text = (highestLevelIndex + 1) + "/" + levels.length;
+				}
+				
+				badgeLevelLabel.text = highestLevel.name;
+				badgeDescriptionLabel.text = highestLevel.description;
+				
+				if (_badgeShield != null)
+				{
+					if (badgeContainer.contains(_badgeShield))
+						badgeContainer.removeChild(_badgeShield);
+				}
+				
+				_badgeShield = new BadgeShield();
+				_badgeShield.level = highestLevelIndex;
+				_badgeShield.badgeId = badge.id;
+				_badgeShield.addEventListener("badge_completed", onBadgeCompleted);
+				_badgeShield.badgeWidth = 54;
+				_badgeShield.badgeHeight = 54;
+				
+				function onBadgeCompleted(event:Event):void
+				{
+					if (_badgeShield != event.currentTarget) return;
+					
+					badgeContainer.width = _badgeShield.width;
+					badgeContainer.height = _badgeShield.height;
+					
+					badgeContainer.addChild(_badgeShield);
+				}
+			}
+		]]>
+	</mx:Script>
+	<mx:HBox id="badgeListBox" borderStyle="solid" borderThickness="1" borderColor="#233249" paddingLeft="5" paddingRight="5"
+		width="280" height="66" backgroundColor="#071132" verticalAlign="middle" horizontalGap="7" horizontalCenter="0" verticalCenter="0">
+		
+		<mx:UIComponent id="badgeContainer"/>
+		
+		<mx:Canvas width="100%" height="100%">
+			<mx:VBox verticalGap="0" verticalCenter="0">
+				<mx:Label id="badgeNameLabel" paddingTop="0" paddingBottom="0" height="15"
+					fontFamily="EuroStyle" fontWeight="bold"/>
+				<mx:Label id="badgeLevelLabel" paddingTop="0" paddingBottom="0" height="14"
+					fontSize="11" fontFamily="EuroStyle" fontWeight="normal"/>
+				<mx:Label id="badgeDescriptionLabel" paddingTop="0" paddingBottom="0" height="14"
+					fontSize="11" fontFamily="EuroStyle" width="218" fontWeight="normal" fontStyle="italic"/>	
+			</mx:VBox>
+			
+			<mx:Label id="highestLevelIndicator" right="0"/>
+		</mx:Canvas>
+	</mx:HBox>
+</mx:Canvas>

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas width="300" height="140"
+	xmlns:mx="http://www.adobe.com/2006/mxml"
+    xmlns:business="com.sdg.business.*"
+	implements="com.sdg.components.dialog.ISdgDialog"
+	backgroundColor="#ecf4ff" borderStyle="solid" borderColor="#6f83a4" cornerRadius="8">
+
+	<mx:Script>
+		<![CDATA[
+			import mx.managers.PopUpManager;
+
+			private var _selection:uint;
+			private var _returnUrl:String;
+			private var _userId:uint;
+			private var _planId:uint;
+
+			public function init(params:Object):void
+			{
+				_selection = params.selection;
+				_returnUrl = params.returnUrl;
+				_userId = params.userId;
+				_planId = params.planId;
+			}
+			public function close():void
+			{
+				if (_selection == Membership.CREDIT_CARD)
+				{
+					navigateToURL(new URLRequest('http://' + _returnUrl +
+						'/reg/creditCardForm.jsp?userId=' + _userId + '&pm=' +
+						_selection + '&plan=' + _planId), '_self');
+				}
+				else if (_selection == Membership.PAYPAL)
+				{
+					navigateToURL(new URLRequest('http://' + _returnUrl +
+						'/reg/Paypal.jsp?userId=' + _userId + '&planId=' + _planId), '_self');
+					//dispatchEvent(new PayByPayPalEvent(userId, planId));
+				}
+				PopUpManager.removePopUp(this);
+			}
+		]]>
+	</mx:Script>
+	<mx:Text text="Kids, the next page needs to be completed by your parents." color="#193d73" fontSize="15"
+		width="80%" horizontalCenter="0" verticalCenter="0" textAlign="center"/>
+	<mx:Button skin="@Embed('images/closeDefaultBtn.png')"
+		overSkin="@Embed('images/closeOverBtn.png')"
+		downSkin="@Embed('images/closeDownBtn.png')"
+		click="close()" right="5" top="5"/>
+</mx:Canvas>

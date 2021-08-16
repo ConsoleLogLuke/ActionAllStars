@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml"
+	    backgroundImage="@Embed('images/cardKiosk/cardPlaceHolder.png')"
+		width="121"
+		height="262"
+		horizontalCenter="0"
+		verticalScrollPolicy="off"
+		horizontalScrollPolicy="off"
+		creationComplete="init()"
+		>
+	   <mx:filters>
+        <mx:DropShadowFilter distance="4" alpha=".2" />
+      </mx:filters>
+
+	<mx:Script>
+		<![CDATA[
+			import com.sdg.utils.MainUtil;
+			import com.sdg.events.TradingCardPurchaseEvent;
+			import com.sdg.model.TradingCard;
+			import com.sdg.model.AvatarLevel;
+			import com.sdg.model.ModelLocator;
+			import com.sdg.utils.StringUtil;
+			import com.sdg.net.Environment;
+
+			import mx.events.PropertyChangeEvent;
+			import mx.binding.utils.ChangeWatcher;
+			import mx.events.CloseEvent;
+			import mx.managers.PopUpManager;
+			import com.sdg.events.SdgSwfEvent;
+
+			[Bindable]
+			private var _tc:TradingCard;
+
+			public var showPremium:Boolean = false;
+
+			[Bindable]
+			public var quantity:uint;
+
+			[Bindable]
+			public var cost:uint;
+			[Bindable]
+			public var cardLevel:uint;
+			[Bindable]
+			private var _avatarLevel:String;
+			[Bindable]
+			private var _fontColor:uint;
+
+            [Embed(source="images/cardKiosk/starPlaceHolder.png")]
+            [Bindable]
+            private var _star:Class;
+
+            [Embed(source="images/cardKiosk/blueStar.png")]
+            [Bindable]
+            private var _blueStar:Class;
+
+            [Embed(source="images/cardKiosk/redStar.png")]
+            [Bindable]
+            private var _redStar:Class;
+
+            [Embed(source="images/cardKiosk/whiteStar.png")]
+            [Bindable]
+            private var _whiteStar:Class;
+
+            [Embed(source="images/cardKiosk/goldStar.png")]
+            [Bindable]
+            private var _goldStar:Class;
+
+			public function init():void
+			{
+				_avatarLevel = "";
+				try{
+					var lev:AvatarLevel = AvatarLevel(ModelLocator.getInstance().avatarLevels[cardLevel]);
+					_avatarLevel = lev.levelName;
+				}catch(e:Error){
+					trace("avatar levels are not set in com.sdg.components.controls.KioskCard");
+				}
+
+				_fontColor = AvatarLevel.getFontColor(cardLevel);
+
+				for(var i:uint=1; i <= cardLevel; i++)
+				{
+					var image:Image = new Image();
+					image.source = _star;
+					stars.addChild(image);
+				}
+			}
+			// if the card is not null show active state
+			// and show star icon
+			public function set tradingCard(value:TradingCard):void
+			{
+				if(value != null)
+				{
+					// remove old placeholders
+					stars.removeAllChildren();
+
+					for(var i:uint=1; i <= cardLevel; i++)
+					{
+						var image:Image = new Image();
+
+						switch (cardLevel)
+						{
+							case 1:
+								image.source = _whiteStar;
+								break;
+							case 2:
+								image.source = _blueStar;
+								break;
+							case 3:
+								image.source = _redStar;
+								break;
+							case 4:
+								image.source = _goldStar;
+								break;
+							case 5:
+								image.source = _whiteStar;
+								break;
+						}
+						stars.addChild(image);
+					}
+					_tc = value;
+					cardToggle.selectedChild = active;
+				}
+				else
+				{
+					cardToggle.selectedChild = inactive;
+				}
+			}
+
+			private function purchase():void
+			{
+				if(quantity > 0)
+				{
+					SdgAlert.show("You have " + quantity + " cards.\n You cannot purchase trading cards unless you are out.", "Time Out!", SdgAlert.OK);
+					return;
+				}
+
+				if(ModelLocator.getInstance().avatar.currency >= cost)
+				{
+					SdgAlert.show("This purchase cost " + cost + " tokens.\nDo you wish to make this purchase?", "Confirm Purchase", SdgAlert.YES | SdgAlert.NO, SdgAlert.NO, finalizePurchase);
+				}
+				else
+				{
+					SdgAlert.show("You do not have enough tokens to complete this purchase.", "Time Out!", SdgAlert.OK);
+				}
+			}
+
+			private function finalizePurchase(event:CloseEvent):void
+			{
+				if(event.detail == SdgAlert.YES)
+				{
+					dispatchEvent(new TradingCardPurchaseEvent(TradingCardPurchaseEvent.TRADING_CARD_PURCHASE, ModelLocator.getInstance().avatar.avatarId, _tc.tradingCardDefinitionId, cost));
+				}
+			}
+
+//			private function onSdgSwfEvent(ev:SdgSwfEvent):void
+//			{
+//				if (ev.data.eventType == "goPremium")
+//				{
+//					upSell.content.removeEventListener(SdgSwfEvent.SDG_SWF_EVENT, onSdgSwfEvent);
+//
+//					MainUtil.navigateToMonthFreePage();
+//				}
+//			}
+
+//			private function initSwf():void
+//			{
+//				if (showPremium)
+//				{
+//					upSell.visible = true;
+//					upSell.content.addEventListener(SdgSwfEvent.SDG_SWF_EVENT, onSdgSwfEvent);
+//				}
+//			}
+		]]>
+	</mx:Script>
+
+	<mx:Style>
+	/*
+		@font-face
+		{
+		  font-family: Calibri;
+		  fontWeight: normal;
+		  src: url("file:///C|/www/sixdegrees/svn/sdg/trunk/client/flash/assets/fonts/CALIBRI.TTF");
+		}
+		<!--ModelLocator.getInstance().avatarLevels[tradingCard.avatarLevel]-->
+		*/
+	</mx:Style>
+	<mx:HBox id="stars" y="30" horizontalCenter="0" horizontalAlign="center" height="12" width="100"  horizontalGap="4"/>
+	<mx:ViewStack id="cardToggle" width="100%" height="100%" horizontalScrollPolicy="off" verticalScrollPolicy="off">
+		<mx:Canvas id="active">
+			<mx:Canvas borderSkin="com.sdg.components.skins.TitlePlateSkin" styleName="red" width="113.5" height="21.25" y="4" horizontalScrollPolicy="off" verticalScrollPolicy="off" horizontalCenter="0">
+				<mx:Label styleName="titlePlate" text="{_avatarLevel}" width="100%" horizontalCenter="0" verticalCenter="0" fontSize="14"/>
+			</mx:Canvas>
+		    <mx:Label text="Cost: {cost} Tokens" y="43" horizontalCenter="0" width="100%" textAlign="center" color="#153761" fontSize="10"/>
+			<mx:Image source="{Environment.getApplicationUrl() + _tc.portraitSmallUrl}" horizontalCenter="0" y="58"/>
+			<mx:Label text="{_tc.avatarName}" y="184" width="102" color="{_fontColor}" textAlign="center" fontSize="11" horizontalCenter="0" fontFamily="GillSans" fontWeight="normal" />
+			<mx:Label text="{StringUtil.formatDate(_tc.mintDate)}" horizontalCenter="0" y="194" width="102" color="{_fontColor}" textAlign="center" fontWeight="normal" fontSize="7" fontFamily="GillSans"/>
+			<mx:Label text="Quantity: {quantity}" horizontalCenter="0" width="100%" textAlign="center" color="#153761" fontSize="10" y="204"/>
+			<mx:Button styleName="orange" label="Buy" horizontalCenter="0" y="219" click="purchase()"/>
+		</mx:Canvas>
+		<mx:Canvas id="inactive" horizontalScrollPolicy="off" verticalScrollPolicy="off">
+			<mx:Label text="{_avatarLevel}" width="100%" horizontalCenter="0" y="5" textAlign="center" fontSize="14"/>
+		</mx:Canvas>
+	</mx:ViewStack>
+
+	<!--<mx:SWFLoader id="upSell" source="assets/swfs/kioskGoPremium.swf" visible="false" init="initSwf()"/>-->
+</mx:Canvas>

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:UIComponent xmlns:mx="http://www.adobe.com/2006/mxml" implements="com.sdg.components.dialog.ISdgDialog" width="630" height="510">
+	<mx:Script>
+		<![CDATA[
+			import mx.managers.PopUpManager;
+			import com.sdg.components.controls.InWorldShopDisplay;
+			
+			public function init(params:Object):void
+			{
+				var shopDisplay:InWorldShopDisplay = new InWorldShopDisplay();
+				shopDisplay.swfUrl = params as String;
+				shopDisplay.addEventListener(Event.CLOSE, onClose);
+				addChild(shopDisplay);
+				
+				function onClose(event:Event):void
+				{
+					shopDisplay.removeEventListener(Event.CLOSE, onClose);
+					removeChild(shopDisplay);
+					close();
+				}
+			}
+			
+			public function close():void
+			{
+				PopUpManager.removePopUp(this);
+			}
+		]]>
+	</mx:Script>
+</mx:UIComponent>

@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas
+	xmlns:mx="http://www.adobe.com/2006/mxml"
+	implements="com.sdg.components.dialog.ISdgDialog"
+	width="753" height="588">
+	
+	<mx:Script>
+		<![CDATA[
+			import com.sdg.components.controls.AvatarPreview;
+			
+			private var _email:String;
+//			private var _showMonthFree:Boolean = false;
+			
+			public function init(params:Object):void
+			{
+				var avatarPreview:AvatarPreview = AvatarPreview(params.avatarPreview);
+				avatarPreview.setStyle("backgroundImage", null);
+				//avatarPreview.height = 431;
+				
+				_email = String(params.emailAddress);
+				
+				var cc:int = int(params.cc);
+//				if (cc == 8 || cc == 9)
+//					_showMonthFree = true;
+
+//				avatarPreview.x = -50;
+//				avatarPreview.avatarHorizontalAlign = 0;
+//				avatarPreview.avatarVerticalAlign = 15;
+//				avatarPreview.avatarHeightAdjust = 50;
+//				avatarPreview.avatarWidthAdjust = 50;
+				previewer.addChild(avatarPreview);
+			}
+			
+			public function close():void
+			{
+			}
+			
+			private function displayEmail(email:String):void
+			{
+				try
+				{
+					var swf:Object = Object(congratsMessage);
+					swf.content.displayConfirmation(email);
+//					if (_showMonthFree)
+//						swf.content.setMonthFree();
+				}
+				catch(e:Error)
+				{
+					trace("congrats error = " + e.message);
+				}
+			}
+		]]>
+	</mx:Script>
+	<mx:Image id="congratsMessage" source="assets/swfs/congratsMessage.swf" complete="displayEmail(_email)"/>
+	<mx:Canvas id="previewer" x="-21" y="88"/>
+	<!--<mx:VBox width="339" height="400" horizontalAlign="center" x="-39">
+		<mx:Canvas width="240" height="100%" backgroundColor="#0000ff"/>
+	</mx:VBox>-->
+</mx:Canvas>

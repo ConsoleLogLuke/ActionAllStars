@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml"
+	horizontalScrollPolicy="off" verticalScrollPolicy="off"
+	mouseOver="setSkin(event)" mouseDown="setSkin(event)" mouseOut="setSkin(event)" buttonMode="true">
+
+	<mx:Script>
+		<![CDATA[
+			import com.sdg.model.Server;
+
+			public static const MAX_NUM_USERS:uint = 400;
+
+			[Embed(source="images/server/serverDefaultBtn.png")]
+			private var _serverDefault:Class;
+			[Embed(source="images/server/serverOverBtn.png")]
+			private var _serverOver:Class;
+			[Embed(source="images/server/serverDownBtn.png")]
+			private var _serverDown:Class;
+			[Embed(source="images/server/serverDisabledBtn.png")]
+			private var _serverDisabled:Class;
+
+			[Bindable]
+			protected var state:String;
+
+			override public function get currentState():String
+			{
+				return state;
+			}
+
+			override public function set currentState(value:String):void
+			{
+				state = value;
+			}
+
+			private function setSkin(event:MouseEvent):void
+			{
+				if (data.numUsers < MAX_NUM_USERS)
+				{
+					if (event.type == MouseEvent.MOUSE_OVER)
+						serverButton.source = _serverOver;
+					else if (event.type == MouseEvent.MOUSE_OUT)
+						serverButton.source = _serverDefault;
+				}
+			}
+		]]>
+	</mx:Script>
+	<mx:Image id="serverButton" source="{data.numUsers &lt; MAX_NUM_USERS ? _serverDefault : _serverDisabled}" horizontalCenter="0" verticalCenter="0"/>
+	<mx:HBox verticalCenter="0" left="20" verticalAlign="middle">
+		<mx:Text id="serverLabel" text="{data.name}" fontSize="16" selectable="false" mouseChildren="false" visible="{data.numUsers &lt; MAX_NUM_USERS}"/>
+		<mx:Image id="ultraSafe" source="@Embed('images/server/safeChatIcon.png')"
+			visible="{data.chatMode == Server.ULTRA_SAFE_CHAT &amp;&amp; data.numUsers &lt; MAX_NUM_USERS}"/>
+	</mx:HBox>
+
+	<mx:HBox id="numUsersBox" verticalCenter="0" verticalAlign="middle"
+		horizontalGap="0" right="60" visible="{data.numUsers &lt; MAX_NUM_USERS}">
+
+		<mx:Image id="personIcon5" source="@Embed('images/server/personIcon.png')"
+			visible="{data.numUsers &gt; 150 &amp;&amp; data.numUsers &lt; MAX_NUM_USERS}"/>
+		<mx:Image id="personIcon4" source="@Embed('images/server/personIcon.png')"
+			visible="{data.numUsers &gt; 100 &amp;&amp; data.numUsers &lt; MAX_NUM_USERS}"/>
+		<mx:Image id="personIcon3" source="@Embed('images/server/personIcon.png')"
+			visible="{data.numUsers &gt; 50 &amp;&amp; data.numUsers &lt; MAX_NUM_USERS}"/>
+		<mx:Image source="@Embed('images/server/personIcon.png')"/>
+		<mx:Image source="@Embed('images/server/personIcon.png')"/>
+	</mx:HBox>
+</mx:Canvas>

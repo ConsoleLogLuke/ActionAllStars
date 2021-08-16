@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml"
+			backgroundImage="@Embed('images/avatarSelectBg.png')"
+			width="259"
+			height="344"
+			verticalScrollPolicy="off"
+			horizontalScrollPolicy="off">
+
+	<mx:Script>
+		<![CDATA[
+
+		    import com.sdg.model.IPreviewItem;
+
+		    /**
+		    * Shows that preview item!
+		    *
+		    * @param  previewItem  the item to preview (example: storeItem, etc.)
+		    */
+			public function showItem(previewItem:IPreviewItem):void
+		  	{
+		  		// set the image source if it is different than what we already have
+		  		if (previewImage.source != previewItem.previewUrl)
+		  			previewImage.source = previewItem.previewUrl;
+		    }
+		]]>
+	</mx:Script>
+
+	<mx:Image id="previewImage" horizontalCenter="0" verticalCenter="0" />
+
+</mx:Canvas>

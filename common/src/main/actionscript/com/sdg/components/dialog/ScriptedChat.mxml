@@ -1,0 +1,328 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas
+	xmlns:mx="http://www.adobe.com/2006/mxml"
+	xmlns:controls="com.sdg.components.controls.*"
+	implements="com.sdg.components.dialog.ISdgDialog"
+	x="20"
+	y="10">
+
+	<mx:Script>
+		<![CDATA[
+			import flash.display.DisplayObject;
+			import flash.events.MouseEvent;
+			import mx.containers.VBox;
+			import mx.controls.Button;
+			import mx.events.FlexMouseEvent;
+			import mx.managers.PopUpManager;
+
+			import com.sdg.components.controls.ChatButton;
+			import com.sdg.control.room.RoomManager;
+			import com.sdg.net.Environment;
+
+			private static const VGAP:uint = 3;
+			private static const HGAP:uint = 3;
+
+			[Embed(source='images/scriptedChat/chat_default.png')]
+			static public var chatDefault:Class;
+
+			[Embed(source='images/scriptedChat/chat_over.png')]
+			static public var chatOver:Class;
+
+			[Embed(source='images/scriptedChat/chatMore_default.png')]
+			static public var chatMoreDefault:Class;
+
+			[Embed(source='images/scriptedChat/chatMore_over.png')]
+			static public var chatMoreOver:Class;
+
+			private var _buttonIdCounter:uint = 0;
+			private var _boxIdCounter:uint = 0;
+
+			public function init(params:Object):void
+			{
+				var server:String = Environment.getApplicationDomain();
+
+				// load our xml data
+				var xmlLoader:URLLoader = new URLLoader();
+				xmlLoader.addEventListener(Event.COMPLETE, onDownloadComplete);
+				xmlLoader.load(new URLRequest("http://" + server + "/test/chatScript?chatScriptId=1"));
+
+				// close everything if the user clicks outside scripted chat
+		    	addEventListener(FlexMouseEvent.MOUSE_DOWN_OUTSIDE, onMouseDownOutside);
+		    	addEventListener(MouseEvent.CLICK, onClick);
+			}
+
+			public function close():void
+			{
+				// make the root messages the only visible layer so that is
+				// all we show when the dialog is re-shown
+
+				var messageBoxes:Array = getChildren();
+				for each (var box:VBox in messageBoxes)
+					box.visible = box.id == "box_0";
+
+				this.includeInLayout = false;
+				this.visible = false;
+			}
+
+			public function reshow():void
+			{
+				this.includeInLayout = true;
+				this.visible = true;
+			}
+
+			private function loadMessagesXml(messages:XMLList, includeParent:Boolean):VBox
+			{
+				// create the box container for these messages
+				var box:VBox = new VBox();
+				box.addEventListener(MouseEvent.MOUSE_OVER, onMouseOver);
+				box.addEventListener(MouseEvent.MOUSE_OUT, onMouseOut);
+				box.setStyle("verticalGap", VGAP);
+				box.visible = false;
+				box.id = "box_" + _boxIdCounter++;
+
+				// processes each message in this list
+				for each (var messageXml:XML in messages)
+				{
+					// create a button for each message
+					var button:ChatButton = new ChatButton();
+					button.label = messageXml.text;
+					button.styleName = "cannedChat";
+					button.clickable = messageXml.@clickable != "false";
+					if (button.clickable)
+						button.addEventListener(MouseEvent.CLICK, sendChatMessage);
+					button.id = "button_" + _buttonIdCounter++;
+					button.includeParent = includeParent;
+
+					// add "..." to label if the label needs to be appended to children
+					var appendChildren:Boolean = messageXml.@appendChildren == "true";
+					if (appendChildren)
+						button.label = button.label + "..."
+
+					if (messageXml.message.length() > 0)
+					{
+						button.childBox = loadMessagesXml(messageXml.message, appendChildren);
+						button.setStyle("upSkin", chatMoreDefault);
+						button.setStyle("overSkin", chatMoreOver);
+						button.setStyle("downSkin", chatMoreOver);
+					}
+					else
+					{
+						button.setStyle("upSkin", chatDefault);
+						button.setStyle("overSkin", chatOver);
+						button.setStyle("downSkin", chatOver);
+					}
+					box.addChild(button);
+				}
+				addChild(box);
+
+				return box;
+			}
+
+			// event handlers
+
+			private function onDownloadComplete(e:Event):void
+			{
+				var messages:XML = new XML(e.target.data);
+				loadMessagesXml(messages.message, false);
+
+				// the last VBox in our child list should be our root messages - make it visible
+				var boxes:Array = getChildren();
+				var rootBox:VBox = boxes[boxes.length - 1];
+				rootBox.visible = true;
+			}
+
+
+
+			private function onMouseOver(e:MouseEvent):void
+			{
+				var button:ChatButton = e.target as ChatButton;
+				if (!button)
+					return;
+
+				// show the child messages
+				if (button.childBox)
+					showMessages(button);
+			}
+
+			private function onMouseOut(e:MouseEvent):void
+			{
+				// hide the child messages
+				var button:ChatButton = e.target as ChatButton;
+				if (button)
+				{
+					// hide child buttons?
+					if (button.childBox)
+					{
+						// hide nothing if we are a horizonally parallel button and to the right
+						if (Math.ceil(e.localX) >= button.width)
+							return;
+
+						hideMessages(button.childBox);
+					}
+
+					// hide sibling buttons?
+					var container:VBox = button.parent as VBox;
+					if (!container)
+						return;
+
+					if (isMatchingButton(button))
+					{
+						// if we are to the left of the matching button - don't hide
+						if (e.localX <= 0)
+							return;
+					}
+
+					if (isFirstButton(button))
+					{
+						// are we above the button?
+						if (e.localY <= 0)
+							hideMessages(container);
+					}
+					else if (isLastButton(button))
+					{
+						// are we below the button?
+						if (Math.ceil(e.localY) >= button.height)
+							hideMessages(container);
+					}
+
+					// are we to the left of a button or right of a leaf button?
+					if (e.localX <= 0 || Math.ceil(e.localX) >= button.x + button.width)
+						hideMessages(container);
+				}
+			}
+
+			private function isFirstButton(button:ChatButton):Boolean
+			{
+				var container:VBox = button.parent as VBox;
+				if (!container)
+					return false;
+
+				var buttons:Array = container.getChildren();
+				var firstButton:ChatButton = buttons[0];
+				return firstButton.id == button.id;
+			}
+
+			private function isLastButton(button:ChatButton):Boolean
+			{
+				var container:VBox = button.parent as VBox;
+				if (!container)
+					return false;
+
+				var buttons:Array = container.getChildren();
+				var lastButton:ChatButton = buttons[buttons.length - 1];
+				return lastButton.id == button.id;
+			}
+
+			private function isMatchingButton(button:ChatButton):Boolean
+			{
+				var container:VBox = button.parent as VBox;
+				if (!container)
+					return false;
+
+				// check to see if it is root messages - has no parent
+				if (container.data == null)
+					return false;
+
+				var parentButton:ChatButton = container.data.parentButton as ChatButton;
+				return (button.y + button.parent.y) == (parentButton.y + parentButton.parent.y);
+			}
+
+			private function showMessages(button:ChatButton):void
+			{
+				// calculate the y postion of our messages
+				button.childBox.y = button.y + button.parent.y;
+
+				const MAX_BUTTON_PER_VBOX:uint = 14;
+				var maxHeight:uint = ((ChatButton.HEIGHT + VGAP) * MAX_BUTTON_PER_VBOX) - VGAP;
+
+				// shift the childBox up if it is lower than the max
+				if (button.childBox.y + button.childBox.height > maxHeight)
+				{
+					var difference:uint = (button.childBox.y + button.childBox.height) - maxHeight;
+					button.childBox.y -= difference;
+				}
+
+				// calculate the x postion of our messages
+				button.childBox.x = ChatButton.WIDTH + HGAP + button.parent.x;
+
+				// see if there are any messages open at this x position - close them if so.
+				var messageBoxes:Array = getChildren();
+				for each (var box:VBox in messageBoxes)
+				{
+					if (box.visible && box.x == button.childBox.x)
+						box.visible = false;
+				}
+
+				// finally, make our messages visible
+				button.childBox.visible = true;
+			}
+
+			private function hideMessages(box:VBox):void
+			{
+				// close this dialog if we are hiding the root messages
+				if (box.id == "box_0")
+					close();
+				else
+					box.visible = false;
+			}
+
+			private function sendChatMessage(e:MouseEvent):void
+			{
+				var button:ChatButton = e.target as ChatButton;
+				if (!button)
+					return;
+
+				RoomManager.getInstance().sendChat(getMessage(button, false));
+			}
+
+			private function getMessage(button:ChatButton, appendChildren:Boolean):String
+			{
+				var message:String = "";
+				if (button.includeParent)
+				{
+					var container:VBox = button.parent as VBox;
+					var parentButton:ChatButton = container.data.parentButton;
+					message = getMessage(parentButton, true) + " ";
+				}
+
+				var label:String = button.label;
+				// remove the "..." when sending the message
+				if (appendChildren)
+					label = label.substring(0, label.indexOf("..."));
+				return message + label;
+			}
+
+			private function onMouseDownOutside(event:FlexMouseEvent):void
+			{
+				// closes the scripted chat if you click outside the canvas
+				close();
+			}
+
+			private function onClick(e:MouseEvent):void
+			{
+				// closes the scripted chat if you click off the scripted chat inside the canvas
+				var button:ChatButton = e.target as ChatButton;
+				if (button)
+				{
+					// do not close the scripted chat window on the click if the button is not clickable
+					if (!button.clickable)
+						return;
+				}
+				close();
+			}
+		]]>
+	</mx:Script>
+
+	<mx:Style source="styles/style.css"/>
+
+	<mx:Style>
+		Button.cannedChat
+		{
+			color: #000000;
+			textRollOverColor: #ffffff;
+			textSelectedColor: #ffffff;
+			fontSize: 17;
+			fontThickness: 30;
+		}
+	</mx:Style>
+</mx:Canvas>

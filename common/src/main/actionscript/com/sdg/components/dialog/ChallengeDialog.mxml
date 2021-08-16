@@ -1,0 +1,302 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas
+	xmlns:mx="http://www.adobe.com/2006/mxml"
+	xmlns:controls="com.sdg.components.controls.*"
+	implements="com.sdg.components.dialog.ISdgDialog">
+	<mx:Script>
+		<![CDATA[
+			import mx.core.UIComponent;
+			import mx.core.UITextField;
+
+			import flash.events.MouseEvent;
+			import mx.containers.Canvas;
+			import mx.containers.HBox;
+			import mx.containers.VBox;
+			import mx.controls.Image;
+			import mx.controls.Text;
+			import mx.messaging.channels.StreamingAMFChannel;
+			import mx.managers.PopUpManager;
+			import mx.core.Application;
+
+			import com.sdg.model.ModelLocator;
+			import com.sdg.model.Avatar;
+
+			// default images
+			[Embed(source='images/challenge/amateurDefault_button.png')]
+			static private var _amateurDefaultImage:Class;
+
+			[Embed(source='images/challenge/rookieDefault_button.png')]
+			static private var _rookieDefaultImage:Class;
+
+			[Embed(source='images/challenge/proDefault_button.png')]
+			static private var _proDefaultImage:Class;
+
+			[Embed(source='images/challenge/veteranDefault_button.png')]
+			static private var _veteranDefaultImage:Class;
+
+			[Embed(source='images/challenge/allstarDefault_button.png')]
+			static private var _allstarDefaultImage:Class;
+
+			// rollover images
+			[Embed(source='images/challenge/amateurOver_button.png')]
+			static private var _amateurOverImage:Class;
+
+			[Embed(source='images/challenge/rookieOver_button.png')]
+			static private var _rookieOverImage:Class;
+
+			[Embed(source='images/challenge/proOver_button.png')]
+			static private var _proOverImage:Class;
+
+			[Embed(source='images/challenge/veteranOver_button.png')]
+			static private var _veteranOverImage:Class;
+
+			[Embed(source='images/challenge/allstarOver_button.png')]
+			static private var _allstarOverImage:Class;
+
+			// complete image
+			[Embed(source='images/challenge/challengeComplete_button.png')]
+			static private var _challengeCompleteImage:Class;
+
+			// 'locked' images
+			[Embed(source='images/challenge/amateurDisabled_button.png')]
+			static private var _amateurLockedImage:Class;
+
+			[Embed(source='images/challenge/rookieDisabled_button.png')]
+			static private var _rookieLockedImage:Class;
+
+			[Embed(source='images/challenge/proDisabled_button.png')]
+			static private var _proLockedImage:Class;
+
+			[Embed(source='images/challenge/veteranDisabled_button.png')]
+			static private var _veteranLockedImage:Class;
+
+			[Embed(source='images/challenge/allstarDisabled_button.png')]
+			static private var _allstarLockedImage:Class;
+
+			private var _gameId:uint;
+
+			public function close():void
+			{
+				PopUpManager.removePopUp(this);
+			}
+
+			public function init(params:Object):void
+			{
+				var xmlData:XML = params as XML;
+				if (!xmlData)
+					return;
+
+				// the game title and id
+				challengeDialog.title = String(xmlData.achievements.@gameName);
+				this._gameId = xmlData.achievements.@gameId;
+
+				// The challenges for BigLeagueBites will not change everyday.
+				if (_gameId == 14)
+					newChallengeLabel.text = "New Challenges Will Appear Frequently!";
+
+				// set the text and status of our challenges
+				var challenges:Object = new Object;
+				for each(var challengeXml:XML in xmlData.achievements.achievement)
+				{
+					// which challenge?
+					var challengeButton:Canvas;
+					switch (parseInt(challengeXml.achievementRequirementValue))
+					{
+						case 1:
+							challengeButton = this.amateurChallenge;
+							break;
+						case 2:
+						    challengeButton = this.rookieChallenge;
+						    break;
+						case 3:
+						    challengeButton = this.proChallenge;
+						    break;
+						case 4:
+						    challengeButton = this.veteranChallenge;
+						    break;
+						case 5:
+						    challengeButton = this.allstarChallenge;
+						    break;
+						default:
+							continue;
+					}
+
+					// completed challenge?
+				    if (challengeXml.completed != "0")
+				    	challengeButton.setStyle("backgroundImage", _challengeCompleteImage);
+
+				    // locked challenge?
+				    else if (parseInt(challengeXml.achievementRequirementValue) > ModelLocator.getInstance().avatar.level)
+				    	lockChallenge(challengeButton);
+
+				    // available challenge if we get here
+				    else
+				    {
+						// set the achievement id (challenge id)
+						challengeButton.data = parseInt(challengeXml.achievementId);
+
+						// set the text for this challenge
+						Text(challengeButton.getChildByName("challengeText")).text = challengeXml.description;
+
+					    // add event listeners
+				    	challengeButton.addEventListener(MouseEvent.MOUSE_OVER, onMouseOver);
+				    	challengeButton.addEventListener(MouseEvent.MOUSE_OUT, onMouseOut);
+				    	challengeButton.addEventListener(MouseEvent.CLICK, onPlayClicked);
+
+					    // show the button
+				    	showChallenge(challengeButton);
+				    }
+				}
+			}
+
+			public function showChallenge(challengeButton:Canvas):void
+			{
+				var textField:Text = Text(challengeButton.getChildByName("challengeText"));
+
+				switch (challengeButton.id)
+				{
+					case "amateurChallenge":
+				    	challengeButton.setStyle("backgroundImage", _amateurDefaultImage);
+				    	textField.setStyle("color", "#616161");
+				    	break;
+					case "rookieChallenge":
+				    	challengeButton.setStyle("backgroundImage", _rookieDefaultImage);
+				    	textField.setStyle("color", "#2C4887");
+				    	break;
+					case "proChallenge":
+				    	challengeButton.setStyle("backgroundImage", _proDefaultImage);
+				    	textField.setStyle("color", "#730000");
+				    	break;
+					case "veteranChallenge":
+				    	challengeButton.setStyle("backgroundImage", _veteranDefaultImage);
+				    	textField.setStyle("color", "#0");
+				    	break;
+					case "allstarChallenge":
+				    	challengeButton.setStyle("backgroundImage", _allstarDefaultImage);
+				    	textField.setStyle("color", "#966F10");
+				    	break;
+				    default:
+				    	break;
+				}
+			}
+
+			public function lockChallenge(challengeButton:Canvas):void
+			{
+				switch (challengeButton.id)
+				{
+					case "amateurChallenge":
+				    	challengeButton.setStyle("backgroundImage", _amateurLockedImage);
+				    	break;
+					case "rookieChallenge":
+				    	challengeButton.setStyle("backgroundImage", _rookieLockedImage);
+				    	break;
+					case "proChallenge":
+				    	challengeButton.setStyle("backgroundImage", _proLockedImage);
+				    	break;
+					case "veteranChallenge":
+				    	challengeButton.setStyle("backgroundImage", _veteranLockedImage);
+				    	break;
+					case "allstarChallenge":
+				    	challengeButton.setStyle("backgroundImage", _allstarLockedImage);
+				    	break;
+				    default:
+				    	break;
+				}
+			}
+
+			private function onMouseOver(event:MouseEvent):void
+			{
+				var challengeButton:Canvas = event.target as Canvas;
+				if (!challengeButton)
+					return;
+
+				switch (challengeButton.id)
+				{
+					case "amateurChallenge":
+				    	challengeButton.setStyle("backgroundImage", _amateurOverImage);
+				    	break;
+					case "rookieChallenge":
+				    	challengeButton.setStyle("backgroundImage", _rookieOverImage);
+				    	break;
+					case "proChallenge":
+				    	challengeButton.setStyle("backgroundImage", _proOverImage);
+				    	break;
+					case "veteranChallenge":
+				    	challengeButton.setStyle("backgroundImage", _veteranOverImage);
+				    	break;
+					case "allstarChallenge":
+				    	challengeButton.setStyle("backgroundImage", _allstarOverImage);
+				    	break;
+				    default:
+				    	break;
+				}
+
+				// set the text to white
+				Text(challengeButton.getChildByName("challengeText")).setStyle("color", "#ffffff");
+			}
+
+			private function onMouseOut(event:MouseEvent):void
+			{
+				var challengeButton:Canvas = event.target as Canvas;
+				if (!challengeButton)
+					return;
+
+				showChallenge(challengeButton);
+			}
+
+
+			private function onPlayClicked(event:MouseEvent):void
+			{
+				// get the button that was clicked
+				var button:Button = event.target as Button;
+
+				if (button && button.id == "buttonInstantPlay")
+				{
+					// load the game without any challenge
+					RoomManager.getInstance().loadGame(_gameId);
+				}
+
+				var challengeButton:Canvas = event.target as Canvas;
+				if (challengeButton)
+				{
+					// load the game with the selected challenge
+					var achievementId:uint = uint(challengeButton.data);
+					RoomManager.getInstance().loadGame(_gameId, achievementId);
+				}
+
+				// close the dialog as we launch the game
+				close();
+			}
+
+		]]>
+	</mx:Script>
+
+	<mx:Style source="styles/style.css" />
+	<controls:TitlePanel id="challengeDialog" title="Challenges" width="575" height="565" paddingTop="0" paddingLeft="14" paddingRight="14" paddingBottom="14" showCloseButton="true" close="close()" >
+		<mx:VBox backgroundColor="#e0eeff" width="100%" height="100%" paddingLeft="7" paddingRight="7" paddingTop="5" paddingBottom="7" horizontalGap="4" verticalGap="8" cornerRadius="10" borderStyle="solid" borderColor="#7ca4da" >
+			<mx:VBox id="challengesBox" backgroundColor="#ffffff" width="100%" height="370" paddingLeft="7" paddingRight="7" paddingTop="7" horizontalGap="4" verticalGap="5" cornerRadius="10" borderStyle="solid" borderColor="#bababa" horizontalAlign="center" >
+				<controls:TitlePlate title="Choose A Challenge!" styleName="blue" width="100%" cornerRadius="8" />
+				<mx:Canvas id="amateurChallenge" width="505" height="56" mouseChildren="false" verticalScrollPolicy="off" horizontalScrollPolicy="off">
+					<mx:Text name="challengeText" color="#616161" width="80%" left="80" top="10" selectable="false"/>
+				</mx:Canvas>
+				<mx:Canvas id="rookieChallenge" width="505" height="56" mouseChildren="false" verticalScrollPolicy="off" horizontalScrollPolicy="off">
+					<mx:Text name="challengeText" color="#2C4887" width="80%" left="80" top="10" />
+				</mx:Canvas>
+				<mx:Canvas id="proChallenge" width="505" height="56" mouseChildren="false"  verticalScrollPolicy="off" horizontalScrollPolicy="off">
+					<mx:Text name="challengeText" color="#730000" width="80%" left="80" top="10" />
+				</mx:Canvas>
+				<mx:Canvas id="veteranChallenge" width="505" height="56" mouseChildren="false"  verticalScrollPolicy="off" horizontalScrollPolicy="off">
+					<mx:Text name="challengeText" color="#0" width="80%" left="80" top="10" />
+				</mx:Canvas>
+				<mx:Canvas id="allstarChallenge" width="505" height="56" mouseChildren="false"  verticalScrollPolicy="off" horizontalScrollPolicy="off">
+					<mx:Text name="challengeText" color="#966F10" width="80%" left="80" top="10" />
+				</mx:Canvas>
+				<mx:Label id="newChallengeLabel" text="New Challenges Will Appear Everyday!" color="#0" />
+			</mx:VBox>
+			<mx:VBox backgroundColor="#ffffff" width="100%" height="110" paddingLeft="7" paddingRight="7" paddingTop="4" verticalGap="8" horizontalAlign="center" cornerRadius="8" borderStyle="solid" borderColor="#bababa" >
+				<controls:TitlePlate title="Not Ready For A Challenge?" styleName="blue" width="100%" cornerRadius="8" />
+		    <mx:Button id="buttonInstantPlay" label="Normal Mode" width="210" height="60"  styleName="orange" fontSize="25"  click="{onPlayClicked(event)}" focusEnabled="false" />
+			</mx:VBox>
+		</mx:VBox>
+	</controls:TitlePanel>
+</mx:Canvas>

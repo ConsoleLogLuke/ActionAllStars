@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns="com.sdg.components.controls.*" xmlns:mx="http://www.adobe.com/2006/mxml"
+	width="50"
+	height="50" 
+	x="52"
+	y="112"
+	backgroundAlpha="0"
+	borderThickness="0"
+	creationComplete="init()">
+	
+	<mx:Script>
+		<![CDATA[
+			import com.sdg.utils.MainUtil;
+			import com.sdg.logging.LoggingUtil;
+			
+			import com.sdg.components.dialog.helpers.MainDialogHelper;
+			import com.sdg.model.ModelLocator;
+			import com.sdg.model.Avatar;
+			import com.sdg.model.User;
+			import com.sdg.model.GameAssetId;
+			import com.sdg.util.AssetUtil;
+			
+			protected var _user:User;
+			protected var _asnButton:NewspaperIcon;
+			protected var _asnButtonAbstract:Object;
+			
+			private function init():void
+			{
+				_user = ModelLocator.getInstance().user;
+				
+				_asnButton = new NewspaperIcon();
+				rawChildren.addChild(DisplayObject(_asnButton));
+				
+				_asnButton.buttonMode = true;
+				_asnButton.useHandCursor = true;
+
+				// Determine whether to set "New" on button
+				if (_user.lastEditionId > _user.userEditionId)
+				{
+					Object(_asnButton).play();
+				}
+				else
+				{
+					Object(_asnButton).gotoAndStop(1);
+				}
+				
+				_asnButton.addEventListener(MouseEvent.CLICK,onClick);
+				
+				// because I don't want to make a controller for one button.
+				// if the welcome screen OR the PDA hits the show ASN then hide the button too.
+				ModelLocator.getInstance().avatar.addEventListener('Event_ASN_Shown',onASNShownElsewhere,false,0,true);
+			}
+			
+			private function stopAnimation():void
+			{
+				Object(_asnButton).gotoAndStop(1);
+			}
+			
+			private function onClick(e:Event):void
+			{
+				// Show Action Sports News.
+				MainDialogHelper.showDialog({news:true});
+				LoggingUtil.sendClickLogging(LoggingUtil.HUD_ASN_NEWSPAPER_BUTTON_CLICK);
+				
+				// SET BUTTON TO NOT NEW
+				stopAnimation();
+			}
+			
+			private function onASNShownElsewhere(ev:Event):void
+			{
+				stopAnimation();
+			}
+	
+		]]>
+	</mx:Script>
+	
+</mx:Canvas>

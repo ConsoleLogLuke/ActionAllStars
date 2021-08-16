@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="utf-8"?>
+<controls:BoxContainer xmlns:mx="http://www.adobe.com/2006/mxml" xmlns:controls="com.sdg.components.controls.*"
+	styleName="darkBlue" borderStyle="none" direction="horizontal" horizontalAlign="center" width="100%"
+	creationComplete="init()">
+
+	<mx:Script>
+		<![CDATA[
+			import com.sdg.model.NotificationIcon;
+			import com.sdg.control.HudController;
+			import mx.core.Application;
+			import mx.modules.ModuleLoader;
+			import mx.events.ModuleEvent;
+			import com.sdg.utils.Constants;
+			import com.sdg.components.games.InvitePanel;
+			import com.sdg.model.Avatar;
+			import com.sdg.model.SdgItem;
+
+			import flash.events.MouseEvent;
+
+			import mx.controls.Image;
+			import mx.controls.ToolTip;
+			import mx.managers.PopUpManager;
+			import mx.managers.ToolTipManager;
+
+			import com.sdg.components.controls.SdgAlert;
+			import com.sdg.components.dialog.*;
+			import com.sdg.control.BuddyManager;
+			import com.sdg.control.room.RoomManager;
+			import com.sdg.model.Room;
+			import com.sdg.display.RoomConsoleImages;
+			import com.sdg.events.RoomNavigateEvent;
+			import com.sdg.model.ModelLocator;
+			import com.sdg.model.Server;
+			import com.sdg.net.socket.SocketClient;
+			import com.sdg.utils.MainUtil;
+			import com.sdg.components.dialog.helpers.MainDialogHelper;
+
+			public static const HELP_CLICK:String = 'help button click';
+
+			private var _scriptedChat:ScriptedChat;
+
+			public function init():void
+			{
+				ToolTipManager.scrubDelay = 1;
+
+				if (Server.getCurrent().chatMode == Server.ULTRA_SAFE_CHAT)
+					chat.visible = false;
+
+				// Listen for full screen events.
+				Application.application.stage.addEventListener(FullScreenEvent.FULL_SCREEN, onFullScreen);
+			}
+
+			private function sendChatMessage():void
+			{
+				// make sure the user is not in 'warned' mode
+				if (ModelLocator.getInstance().avatar.warned)
+				{
+					//SdgAlert.show("You are limited to scripted chat until your warning period expires.", "Warning Mode");
+					ModeratorAlertChrome.show("You are limited to scripted chat until your warning period expires.", "Warning Mode");
+					return;
+				}
+
+				chatInput.sendChatMessage();
+			}
+
+			private function showScriptedChat():void
+			{
+				if (!_scriptedChat)
+				{
+					// show scripted chat for the first time
+					_scriptedChat = MainUtil.showDialog(ScriptedChat, null, false, false) as ScriptedChat;
+				}
+				else
+				{
+					_scriptedChat.reshow();
+				}
+			}
+
+
+			private function showActionsDialog():void
+			{
+				MainUtil.showDialog(ActionsDialog, null, false, false);
+				//MainUtil.showDialog(SaveYourGameDialog);
+				//MainUtil.showDialog(WelcomeDialog, {name:"name", level:ModelLocator.getInstance().avatar.levelName});
+				//MainUtil.showDialog(InitialTokensDialog, null, false, true);
+			}
+
+			private function showEmoteDialog():void
+			{
+				MainUtil.showDialog(EmoteDialog, {button:buttonEmote, columns:6, vendorId:0}, false, false);
+			}
+
+			private function goToHome():void
+			{
+				dispatchEvent(new RoomNavigateEvent(RoomNavigateEvent.ENTER_ROOM, ModelLocator.getInstance().avatar.privateRoom));
+			}
+
+			private function showBuddyList():void
+			{
+				if (ModelLocator.getInstance().avatar.membershipStatus == 3)
+					//MainUtil.showDialog(MonthFreeUpsellDialog, {showPremiumHeader:false, messaging:"This feature is only available if you register."});
+					MainUtil.showDialog(SaveYourGameDialog);
+				//else
+				//	BuddyManager.showBuddyListDialog();
+			}
+
+			private function reportToModerator():void
+			{
+				MainUtil.showDialog(ModeratorSceneDialog);
+			}
+
+			private function onFullScreenClick():void
+			{
+				var stage:Stage = Application.application.stage;
+				stage.displayState = (stage.displayState == StageDisplayState.NORMAL) ? StageDisplayState.FULL_SCREEN : StageDisplayState.NORMAL;
+				stage.scaleMode = (stage.displayState == StageDisplayState.NORMAL) ? StageScaleMode.NO_BORDER : StageScaleMode.SHOW_ALL;
+				stage.align = (stage.displayState == StageDisplayState.NORMAL) ? StageAlign.TOP_LEFT : StageAlign.TOP;
+			}
+
+			[Bindable]
+			private var helpStyle:String = "tutorial";
+
+			/**
+			 * this function is called by the RoomModule when the user changes a room.
+			 * It sets the style for the help button to glow if this is the first time
+			 * a user enters a room.
+			 */
+			public function tutorialStyleSelector():void
+			{
+				var room:Room = RoomManager.getInstance().currentRoom;
+				if( room == null ) // if no room, force normal button
+				{
+					 helpStyle = "tutorial";
+					 return;
+				}
+
+				// we have a room and this is the first time the user is in
+				if( room.firstUser == true )
+				{
+					 helpStyle = "glow";
+				}
+				else
+				{
+					 helpStyle = "tutorial";
+				}
+			}
+
+			public function showCardAlbum():void
+			{
+				if (ModelLocator.getInstance().avatar.membershipStatus == 3)
+					//MainUtil.showDialog(MonthFreeUpsellDialog, {showPremiumHeader:false, messaging:"This feature is only available if you register."});
+					MainUtil.showDialog(SaveYourGameDialog);
+				else
+					MainUtil.showDialog(CardAlbum);
+			}
+
+			private function muteMessage():void
+			{
+				var swfButton:Object = Object(buttonMute.content);
+				swfButton.isMuted = !swfButton.isMuted;
+				ModelLocator.getInstance().audio.setAudio(!swfButton.isMuted);
+			}
+
+			private function onHelpClick():void
+			{
+				dispatchEvent(new Event(HELP_CLICK));
+				MainDialogHelper.showDialog();
+			}
+
+			private function onFullScreen(e:FullScreenEvent):void
+			{
+				chatInput.chatEnabled = (e.fullScreen) ? false : true;
+			}
+
+
+		]]>
+	</mx:Script>
+	<mx:Spacer width="35" includeInLayout="{!Constants.PDA_ENABLED}"/>
+	<mx:Image id="buttonNews" source="assets/swfs/news.swf" click="MainDialogHelper.showDialog({news:true})" toolTip="Action Sports News"/>
+	<mx:Image id="buttonHome" source="assets/swfs/home.swf" click="goToHome()" toolTip="Go to your home turf"/>
+	<mx:Image id="buttonBuddy" source="assets/swfs/buddy.swf" click="showBuddyList()" toolTip="Show your buddy list"/>
+
+	<mx:Image id="buttonChat" source="assets/swfs/chat.swf" click="showScriptedChat()" toolTip="Send a composed chat message"/>
+
+	<mx:Canvas id="chat" borderStyle="none" backgroundAlpha="0">
+		<controls:ChatInput id="chatInput" width="400" paddingRight="40" enter="sendChatMessage()"/>
+		<mx:Button verticalCenter="0" styleName="blue" cornerRadius="6" width="36" height="28" buttonMode="true" right="4"
+			click="sendChatMessage()" icon="@Embed(source='images/roomConsole/chatBarIcon.png')" toolTip="Send Message"/>
+	</mx:Canvas>
+
+	<mx:Image id="buttonEmote" source="assets/swfs/emotion.swf" click="showEmoteDialog()" toolTip="Send an emote to the room"/>
+	<mx:Image id="buttonAction" source="assets/swfs/action.swf" click="showActionsDialog()" toolTip="Have your avatar do an action"/>
+	<!--<mx:Image id="buttonTradingCard" source="assets/swfs/card.swf" click="showCardAlbum()" toolTip="Trading Card Album"
+		visible="{!Constants.PDA_ENABLED}" includeInLayout="{buttonTradingCard.visible}"/>-->
+	<mx:Image id="buttonModerator" source="assets/swfs/report.swf" click="reportToModerator()" toolTip="Report this scene to the moderator"/>
+	<mx:VBox verticalGap="0" paddingTop="0" paddingBottom="0" paddingLeft="0" paddingRight="0">
+		<mx:Image id="buttonMute" source="assets/swfs/mute.swf" click="muteMessage()" toolTip="Turn sounds on and off" width="18" height="18"/>
+		<!--<mx:Image id="buttonHelp" source="assets/swfs/tutorial.swf" click="onHelpClick()" toolTip="Room Tutorial" width="18" height="18"/>-->
+		<mx:Image id="buttonFullScreen" source="assets/swfs/full_screen_button.swf" click="onFullScreenClick()" toolTip="Full Screen" width="18" height="18"/>
+	</mx:VBox>
+</controls:BoxContainer>

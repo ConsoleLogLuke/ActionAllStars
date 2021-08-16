@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:SWFLoader xmlns:mx="http://www.adobe.com/2006/mxml"
+	width="925" height="665"
+	completeEffect="{fadeIn}"
+	showEffect="{fadeIn}" hideEffect="{fadeOut}"
+	init="init()">
+	
+	<mx:Script>
+		<![CDATA[
+			import com.sdg.components.dialog.SaveYourGameDialog;
+			import com.sdg.model.MembershipStatus;
+			import com.sdg.model.Avatar;
+			import com.sdg.logging.LoggingUtil;
+			import mx.core.FlexLoader;
+			import com.sdg.event.UIDialogueEvent;
+			import com.sdg.event.RoomSelectEvent;
+			import com.sdg.ui.UITriviaRoomSelect;
+			import com.sdg.model.RoomInfo;
+			import com.sdg.control.room.RoomManager;
+			import com.sdg.events.RoomNavigateEvent;
+			import com.sdg.events.SocketRoomEvent;
+			import com.sdg.model.ModelLocator;
+			import com.sdg.utils.MainUtil;
+			import com.sdg.components.dialog.helpers.MainDialogHelper;
+			import com.sdg.net.socket.methods.SocketRoomMethods;
+			
+			public static const VISIBLE:String = 'visible';
+			
+			protected var socketMethods:SocketRoomMethods = new SocketRoomMethods();
+			protected var _broadcastCenterRoomIds:Array = ['public_122', 'public_123', 'public_124', 'public_125'];
+			protected var triviaRoomUI:UITriviaRoomSelect;
+			protected var triviaRoomMenuIsOn:Boolean = false;
+			protected var _roomIdLoggingMap:Array;
+			
+			private function init():void
+			{
+				_roomIdLoggingMap = [];new LoggingUtil
+				_roomIdLoggingMap['public_101'] = LoggingUtil.WORLD_MAP_RIVERWALK; // Riverwalk
+				_roomIdLoggingMap['public_103'] = LoggingUtil.WORLD_MAP_JOE_BOSE_PARK; // Joe Bose Park
+				_roomIdLoggingMap['public_105'] = LoggingUtil.WORLD_MAP_AAS_STORE; // AAS Store
+				_roomIdLoggingMap['public_106'] = LoggingUtil.WORLD_MAP_MY_TURF; // My Turf
+				_roomIdLoggingMap['public_107'] = LoggingUtil.WORLD_MAP_BALLERS_HALL; // Baller's Hall
+				_roomIdLoggingMap['public_108'] = LoggingUtil.WORLD_MAP_NBA_STORE; // NBA Store
+				_roomIdLoggingMap['public_109'] = LoggingUtil.WORLD_MAP_BALLERS_PLAZA; // Baller's Plaza
+				_roomIdLoggingMap['public_110'] = LoggingUtil.WORLD_MAP_DIAMONDS_RUN; // Diamond's Run
+				_roomIdLoggingMap['public_113'] = LoggingUtil.WORLD_MAP_MLB_STORE; // MLB Store
+				_roomIdLoggingMap['public_114'] = LoggingUtil.WORLD_MAP_VERT_VILLAGE; // Vert Village
+				_roomIdLoggingMap['public_116'] = LoggingUtil.WORLD_MAP_VERT_VILLAGE_STORE; // Vert Village Store
+				_roomIdLoggingMap['public_117'] = LoggingUtil.WORLD_MAP_THE_PEAK; // The Peak
+				_roomIdLoggingMap['public_118'] = LoggingUtil.WORLD_MAP_BEACHSIDE; // Beachside
+				_roomIdLoggingMap['public_119'] = LoggingUtil.WORLD_MAP_MAVERICKS; // Maverick's
+				_roomIdLoggingMap['public_121'] = LoggingUtil.WORLD_MAP_FOOTBALL_FIELD; // Football Field
+				_roomIdLoggingMap['public_129'] = LoggingUtil.WORLD_MAP_BROADCAST_CENTER; // Broadcast Center
+				_roomIdLoggingMap['public_142'] = LoggingUtil.WORLD_MAP_BLAKES_PLACE; // Blake's Place
+				
+				_roomIdLoggingMap['private_756_1'] = LoggingUtil.WORLD_MAP_KOBE_TURF; // Kobe Turf
+				_roomIdLoggingMap['private_757_1'] = LoggingUtil.WORLD_MAP_LEBRON_TURF; // LeBron Turf
+				_roomIdLoggingMap['private_760_1'] = LoggingUtil.WORLD_MAP_STEVE_NASH_TURF; // Steve Nash Turf
+				_roomIdLoggingMap['private_759_1'] = LoggingUtil.WORLD_MAP_DUANE_WAYDE_TURF; // Dwayne Wade Turf
+				_roomIdLoggingMap['private_761_1'] = LoggingUtil.WORLD_MAP_DWIGHT_HOWARD_TURF; // Dwight Howard Turf
+				_roomIdLoggingMap['private_763_1'] = LoggingUtil.WORLD_MAP_SAM_TURF; // Sam Turf
+				
+				content.addEventListener(MouseEvent.CLICK, contentClickHandler);
+			}
+			
+			private function contentClickHandler(event:MouseEvent):void
+			{
+				var roomExists:Boolean = (RoomManager.getInstance().currentRoom != null);
+				var roomId:String = "";
+				if (event.target.name == "closeButton" && roomExists)
+				{
+					visible = false;
+				}
+				else if (event.target.name == "tutButton" )
+				{
+					MainDialogHelper.showDialog({worldmap:true, showSkip:false});
+				}
+				else
+				{
+				 	roomId = Object(content).getTargetRoomId(event.target);
+					
+					// Make sure we have a room id.
+					if (roomId == null) return;
+					
+					// Log the room selection.
+					logMapClick(roomId);
+					
+					// If it's a private room, handle it.
+					// Use the local user avatar's private room.
+					if (roomId == "private")
+					{
+						// Get reference to local user avatar.
+						var userAvatar:Avatar = ModelLocator.getInstance().avatar;
+						
+						// Make sure the user is registered.
+						if (userAvatar.membershipStatus == MembershipStatus.GUEST)
+						{
+							MainUtil.showDialog(SaveYourGameDialog);
+							return;
+						}
+						
+						roomId = userAvatar.privateRoom;
+					}
+						
+					dispatchEvent(new RoomNavigateEvent(RoomNavigateEvent.ENTER_ROOM, roomId));
+				
+					if (roomExists) visible = false;
+				}
+			}
+			
+			private function onEffectEnd(event:Event):void
+			{
+				if (this.parent)
+					this.parent.removeChild(this);
+			}
+			
+			override public function set visible(value:Boolean):void
+			{
+				super.visible = value;
+				
+				// Dispatch a visible event.
+				dispatchEvent(new Event(VISIBLE));
+			}
+			
+			private function logMapClick(roomId:String):void
+			{
+				// Determine click id for room id.
+				var clickId:uint = _roomIdLoggingMap[roomId] as uint;
+				
+				// Determine if it is my turf.
+				if (clickId < 1 && roomId.indexOf("private") > -1)
+				{
+					// It is my turf.
+					clickId = 3003;
+				}
+				else if (clickId < 1)
+				{
+					return;
+				}
+				
+				LoggingUtil.sendClickLogging(clickId);
+			}
+			
+		]]>
+	</mx:Script>
+	
+	<!-- effects -->
+	<mx:Fade id="fadeIn" alphaTo="1" duration="300" />
+	<mx:Fade id="fadeOut" alphaTo="0" duration="300" effectEnd="onEffectEnd(event)"/>
+
+</mx:SWFLoader>
+ 

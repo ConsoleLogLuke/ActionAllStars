@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas
+	xmlns:mx="http://www.adobe.com/2006/mxml"
+	implements="com.sdg.components.dialog.ISdgDialog"
+	width="400" height="295" mouseDownOutside="close()"
+	cornerRadius="20" backgroundColor="#ffffff" backgroundAlpha=".9"
+	borderStyle="solid" borderColor="#172d5f" borderThickness="2">
+
+	<mx:Script>
+		<![CDATA[
+			import mx.controls.Spacer;
+			import mx.controls.Text;
+			import mx.collections.ArrayCollection;
+			import mx.managers.PopUpManager;
+
+			public function init(params:Object):void
+			{
+				var textfield:Text;
+				var lastSpacer:Spacer;
+
+				for each (var pair:Object in ArrayCollection(params))
+				{
+					addText(pair.header, "header");
+					addText(pair.body, "body");
+
+					var space:Spacer = new Spacer();
+					space.height = 20;
+					lastSpacer = box.addChild(space) as Spacer;
+				}
+				box.removeChild(lastSpacer);
+			}
+
+			private function addText(str:String, styleName:String):void
+			{
+				var textfield:Text = new Text();
+				textfield.text = str;
+				textfield.styleName = styleName;
+				textfield.width = this.width - 30;
+				box.addChild(textfield);
+			}
+
+			public function close():void
+			{
+				PopUpManager.removePopUp(this);
+			}
+		]]>
+	</mx:Script>
+	<mx:Style>
+		Text.body
+		{
+			color: #193d73;
+			fontSize: 12;
+		}
+		Text.header
+		{
+			color: #193d73;
+			fontSize: 16;
+		}
+	</mx:Style>
+	<mx:VBox id="box" width="100%" height="100%" verticalAlign="middle"
+		paddingBottom="10" paddingTop="10" paddingLeft="10" paddingRight="10"/>
+	<mx:Button id="closeButton" upSkin="@Embed('images/closeDefaultBtn.png')"
+		overSkin="@Embed('images/closeOverBtn.png')"
+		downSkin="@Embed('images/closeDownBtn.png')"
+		right="10" top="10" click="close()"/>
+</mx:Canvas>

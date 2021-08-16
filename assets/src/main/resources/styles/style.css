@@ -1,0 +1,606 @@
+/* Fonts */
+
+@font-face
+{
+  font-family: GillSans;
+  fontWeight: normal;
+  src: url("../fonts/GIL.TTF");
+}
+
+@font-face
+{
+  font-family: GillSans;
+  fontWeight: normal;
+  fontStyle: italic;
+  src: url("../fonts/GILI.TTF");
+}
+
+@font-face
+{
+  font-family: GillSans;
+  fontWeight: bold;
+  src: url("../fonts/GILB.TTF");
+}
+
+@font-face
+{
+  font-family: GillSans;
+  fontWeight: bold;
+  fontStyle: italic;
+  src: url("../fonts/GILBI.TTF");
+}
+
+@font-face
+{
+  font-family: EuroStyle;
+  fontWeight: normal;
+  src: url('../fonts/EurostileLTStd-Demi.otf');
+}
+
+@font-face
+{
+  font-family: EuroStyle;
+  fontWeight: bold;
+  src: url('../fonts/EurostileLTStd-Bold.otf');
+}
+
+@font-face
+{
+  font-family: EuroStyle;
+  fontWeight: bold;
+  fontStyle: oblique;
+  src: url('../fonts/EurostileLTStd-BoldOblique.otf');
+}
+
+@font-face
+{
+  font-family: EuroStyle;
+  fontWeight: normal;
+  fontStyle: oblique;
+  src: url('../fonts/EurostileLTStd-Oblique.otf');
+}
+
+/* Color Table
+
+	gray:			#a3a3a3;
+
+	blue:	 		#4c6fa4;
+	brightBlue:		#2e71d8;
+	deepBlue:		#133870;
+	darkBlue:		#06193c;
+	lightBlue1:		#7ca4da;
+
+	lightBlue2:		#98bff4;
+	lightBlue3:		#e0eeff;
+
+	orange:			#dc8100;
+	darkOrange:		#8f4d00;
+	lightOrange:	#f0b242;
+
+	red:			#d32323;
+	darkRed:		#a84141;
+*/
+
+/* Global */
+
+global
+{
+	themeColor: #98bff4;
+	color: #133870;
+	disabledColor: #a3a3a3;
+	focusColor: #98bff4;
+	selectionColor: #98bff4;
+	rollOverColor: #98bff4;
+	textRollOverColor: #ffffff;
+	textSelectedColor: #133870;
+	dropShadowColor: #7d7d7d;
+	shadowDistance: 1;
+	shadowDirection: right;
+	fontFamily: GillSans;
+	fontSize: 13;
+ 	modalTransparencyBlur: 0;
+}
+
+/* Color Schemes */
+
+.white
+{
+	backgroundColor:#ffffff;
+	borderColor: #5f0808;
+	borderStyle: solid;
+}
+
+.blue
+{
+	backgroundColor:#4c6fa4;
+	borderColor: #7ca4da;
+	borderStyle: solid;
+}
+
+.brightBlue
+{
+	backgroundColor: #2e71d8;
+	borderColor: #2e71d8;
+	borderStyle: solid;
+}
+
+.deepBlue
+{
+	backgroundColor: #133870;
+	borderColor: #133870;
+	borderStyle: solid;
+}
+
+.darkBlue
+{
+	backgroundColor: #06193c;
+	borderColor: #06193c;
+	borderStyle: solid;
+}
+
+.lightBlue
+{
+	backgroundColor: #e0eeff;
+	borderColor: #7ca4da;
+	borderStyle: solid;
+}
+
+.orange
+{
+	backgroundColor: #dc8100;
+	borderColor: #8f4d00;
+	focusColor: #f0b242;
+	selectionColor: #f0b242;
+	textSelectedColor: #dc8100;
+	borderStyle: solid;
+}
+
+.transparent
+{
+	backgroundAlpha: 0;
+	borderStyle: none;
+}
+
+.translucent
+{
+	backgroundColor: #FFFFFF;
+	backgroundAlpha: .75;
+	borderThickness: 0;
+}
+
+/* Controls */
+
+Button
+{
+	color: #ffffff;
+	fillColors: #5376ac, #98bff4;
+	fillAlphas: 1, 1;
+	highlightAlphas: .15, .2;
+	borderColor: #133870;
+	borderThickness: 1;
+	cornerRadius: 6;
+	fontSize: 13;
+	fontWeight: bold;
+	fontThickness: 50;
+	paddingLeft: 8; paddingTop: 8; paddingRight: 8; paddingBottom: 8;
+	skin:ClassReference("com.sdg.components.skins.ButtonSkin");
+}
+
+Button.darkRed
+{
+	fillColors: #881e1e, #881e1e;
+	borderColor: #5f0808;
+}
+Button.blue
+{
+	fillColors: #5376ac, #98bff4;
+}
+
+Button.brightBlue
+{
+	fillColors: #2e71d8, #2e71d8;
+}
+
+Button.deepBlue
+{
+	fillColors: #133870, #133870;
+}
+
+Button.darkBlue
+{
+	fillColors: #06193c, #06193c;
+}
+
+Button.orange
+{
+	fillColors: #dc8100, #fed36e;
+}
+
+Button.close
+{
+	skin: Embed("images/buttonDialogClose.png");
+}
+
+Button.scroll
+{
+	fillColors: #133870, #133870;
+	highlightAlphas: 0, 0;
+	borderThickness: 0;
+	cornerRadius: 4;
+}
+
+Button.scrollVivid
+{
+	fillColors: #2e71d8, #2e71d8;
+	highlightAlphas: 0, 0;
+	borderThickness: 0;
+	cornerRadius: 4;
+}
+
+Button.buttonBar
+{
+	color: #7ca4da;
+	textSelectedColor: #133870;
+	selectionColor: #dbe2ed;
+	fillColors: #4c6fa4, #4c6fa4, #4c6fa4, #4c6fa4;
+	highlightAlphas: 0, 0;
+	textRollOverColor: #133870;
+	borderColor: #7ca4da;
+	borderThickness: 2;
+	fontSize: 13;
+	textAlign: left;
+	paddingLeft: 8;
+	skin:ClassReference("com.sdg.components.skins.ButtonSkin");
+}
+
+/* Navigators */
+
+BreadCrumb
+{
+	paddingLeft:5;
+	color: #881e1e;
+	fontSize: 15;
+}
+
+ButtonBar
+{
+	buttonStyleName: buttonBar;
+	selectedButtonTextStyleName: buttonBarSelected;
+}
+
+/* Layout */
+
+BoxContainer
+{
+	borderStyle: solid;
+	cornerRadius: 6;
+	dropShadowEnabled: true;
+	paddingLeft: 4; paddingTop: 4; paddingRight: 4; paddingBottom: 4;
+}
+
+BoxContainer.stats
+{
+	backgroundColor: 0; backgroundAlpha: .65; borderThickness: 0;
+	cornerRadius:12;
+}
+
+
+Container
+{
+	borderThickness: 2;
+}
+
+ControlBar
+{
+	horizontalAlign: center;
+	paddingLeft:20; paddingRight:20; paddingTop:0; paddingBottom:20;
+}
+
+Canvas.dialog
+{
+	backgroundSize:"100%";
+	backgroundImage: Embed("images/dialogBg.png",
+                scaleGridTop="50", scaleGridBottom="159",
+                scaleGridLeft="22", scaleGridRight="403"
+              );
+}
+
+Canvas.menu
+{
+	backgroundSize:"100%";
+	backgroundImage: Embed("images/canvasBg.png",
+                scaleGridTop="60", scaleGridBottom="120",
+                scaleGridLeft="15", scaleGridRight="225"
+              );
+}
+
+Canvas.store {
+	backgroundSize:"100%";
+	backgroundImage: Embed("images/store/storeBg.png",
+                scaleGridTop="60", scaleGridBottom="120",
+                scaleGridLeft="15", scaleGridRight="225"
+              );
+}
+
+ItemTileList
+{
+	itemWidth: 64;
+	itemHeight: 64;
+	cornerRadius: 6;
+}
+
+ItemTileList.store
+{
+	color: #133870;
+	backgroundAlpha:0;
+	borderStyle:none;
+	paddingLeft:0;
+	paddingBottom: 15;
+}
+
+Panel
+{
+	borderStyle: solid;
+	cornerRadius: 12;
+	roundedBottomCorners: true;
+	dropShadowEnabled: true;
+	titleStyleName: largeTitle;
+	borderThicknessLeft: 0; borderThicknessTop: 0; borderThicknessRight: 0; borderThicknessBottom: 0;
+}
+/*
+ProgressBar
+{
+	borderStyle: solid;
+	borderThickness: 2;
+	borderColor: #7ca4da;
+	cornerRadius: 12;
+}
+
+ProgressAlert
+{
+	modalTransparency: 0;
+}
+*/
+SdgAlert
+{
+	buttonStyleName: blue;
+	defaultButtonStyleName: orange;
+	messageStyleName: blue;
+	buttonMinWidth: 180;
+	fontSize: 15;
+	textAlign: center;
+	verticalGap: 20;
+}
+
+SimpleTitlePanel
+{
+	backgroundColor:#4c6fa4;
+	borderColor: #7ca4da;
+	highlightAlphas: 0, 1, 1, 0;
+	borderThickness: 2;
+	headerHeight: 45;
+	paddingLeft: 20; paddingTop: 0;  paddingRight: 20; paddingBottom: 20;
+	borderSkin: ClassReference('com.sdg.components.skins.TitlePanelSkin');
+	closeButtonSkin: Embed("images/buttonDialogClose.png");
+}
+
+TitlePanel.store
+{
+	backgroundColor:#494949;
+	borderColor: #ffffff;
+}
+
+TitlePlate.red
+{
+	backgroundColor:#a84141;
+	borderColor: #7ca4da;
+}
+
+TitlePlate.orange
+{
+	backgroundColor:#f8b616;
+}
+
+TitlePlate.blue
+{
+	backgroundColor:#5173a7;
+}
+
+TitlePlate.black
+{
+	backgroundColor:#000000;
+}
+
+TitlePlate.amateur
+{
+	backgroundColor:#DDDDDD;
+}
+
+TitlePlate.rookie
+{
+	backgroundColor:#3C75CA;
+}
+
+TitlePlate.pro
+{
+	backgroundColor:#C13333;
+}
+
+TitlePlate.veteran
+{
+	backgroundColor:#E2A000;
+}
+
+TitlePlate.allstar
+{
+	backgroundColor:#000000;
+}
+
+
+SimpleTitlePanel.small
+{
+	titleStyleName: smallTitle;
+	highlightAlphas: 0, 0, 0, 0;
+	headerHeight: 35;
+}
+
+/* Text */
+
+.largeTitle
+{
+	color: #ffffff;
+	textAlign: center;
+	fontSize: 28;
+	fontStyle: italic;
+	fontWeight: bold;
+	fontThickness: 100;
+	letterSpacing: 2;
+}
+
+.smallTitle
+{
+	color: #ffffff;
+	textAlign: center;
+	fontSize: 18;
+	fontStyle: italic;
+	fontWeight: bold;
+	fontThickness: 100;
+	letterSpacing: 2;
+}
+
+Text
+{
+	color: #ffffff;
+	fontWeight: bold;
+}
+
+Text.buttonBarSelected
+{
+	color: #133870;
+}
+
+Text.stats
+{
+	paddingTop: -5; paddingBottom: -5;
+	paddingLeft: 20; paddingRight: 24;
+	fontSize:16; leading:0;
+}
+
+TextInput
+{
+	cornerRadius: 6;
+	borderStyle: solid;
+	borderThickness: 1;
+	paddingLeft: 4; paddingTop: 4; paddingRight: 4; paddingBottom: 4;
+}
+
+TextArea
+{
+	cornerRadius: 6;
+	borderStyle: solid;
+	borderThickness: 1;
+	paddingLeft: 4; paddingTop: 4; paddingRight: 4; paddingBottom: 4;
+}
+
+ChatInput
+{
+	color: #ffffff;
+	backgroundColor: #06193c;
+	borderColor: #7ca4da;
+	borderStyle: solid;
+	fontSize: 18;
+	fontFamily: GillSans;
+}
+
+Label
+{
+	color: #ffffff;
+	fontWeight: bold;
+	fontFamily: GillSans;
+	textAlign: center;
+}
+
+Label.menuTitle
+{
+	color: #ffffff;
+	fontWeight: bold;
+	fontSize:28;
+	fontStyle:italic;
+	textAlign:center;
+	paddingTop:10;
+	paddingBottom:10;
+}
+
+Label.subTitle
+{
+	color: #5173a7;
+	fontWeight: bold;
+	fontSize: 20;
+}
+
+Label.titlePlate
+{
+	fontWeight: bold;
+	fontSize: 16;
+	textAlign: center;
+}
+
+Label.storeSubTitle
+{
+	fontSize: 17;
+}
+
+Label.storeItem
+{
+	color: #be7400;
+	paddingTop: 0;
+	paddingBottom: 0;
+	fontWeight: bold;
+}
+
+Label.storeItemOwned
+{
+	color: #7c7c7c;
+	fontWeight: bold;
+}
+
+Label.storeItemDesc
+{
+	paddingTop: 0;
+	color: #be7400;
+	fontWeight: normal;
+}
+
+Label.storeItemDescOwned
+{
+	paddingTop:0;
+	color: #7c7c7c;
+	fontWeight: normal;
+}
+
+.vscrollbar
+{
+	highlightAlphas: 0, 0;
+	fillColors: #064280, #064280, #9ec6e1, #9ec6e1;
+	trackColors: #02101d, #02101d;
+	borderColor: #064280;
+	upArrowUpSkin: Embed(source="images/scrollbars/ArrowUp.png");
+	upArrowDisabledSkin: Embed(source="images/scrollbars/ArrowUp.png");
+	upArrowOverSkin: Embed(source="images/scrollbars/ArrowUpOver.png");
+	upArrowDownSkin: Embed(source="images/scrollbars/ArrowUpOver.png");
+	downArrowUpSkin: Embed(source="images/scrollbars/ArrowDown.png");
+	downArrowDisabledSkin: Embed(source="images/scrollbars/ArrowDown.png");
+	downArrowOverSkin: Embed(source="images/scrollbars/ArrowDownOver.png");
+	downArrowDownSkin: Embed(source="images/scrollbars/ArrowDownOver.png");
+	themeColor: #6797cd;
+}
+
+ToolTip
+{
+	color: #ffffff;
+	backgroundColor: #333333;
+	backgroundAlpha: 1;
+	fontWeight: bold;
+	fontSize: 11;
+	paddingLeft: 3; paddingTop: 3; paddingRight: 3; paddingBottom: 3;
+}

@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Box xmlns:mx="http://www.adobe.com/2006/mxml" width="44" height="44"
+	verticalScrollPolicy="off" horizontalScrollPolicy="off" initialize="init()" verticalAlign="bottom">
+    <mx:Script>
+    	<![CDATA[
+    	
+    	    import com.sdg.utils.MainUtil;
+    	    import com.sdg.components.dialog.helpers.MainDialogHelper;
+    	
+    		// the default dialog id is 2100   	
+    	    private var _dialogId:int = 2100;
+    	    
+    	    // properties
+    	    
+    	    public function get dialogId():int
+    	    {
+    	    	return _dialogId;
+    	    }
+    	    
+    	    public function set dialogId(value:int):void
+    	    {
+    	    	_dialogId = value;
+    	    }
+    	    
+    	    public function set size(value:String):void
+    	    {
+    	    	if (value == "small")
+    	    	{
+    	    		// the small icon size
+    	    		helpIcon.width = 28;
+    	    		helpIcon.height = 28;
+    	    		this.width = 32;
+    	    		this.height = 32;
+    	    	}
+    	    	else 
+    	    	{
+    	    		// the large icon size (default)
+    	    		helpIcon.width = 39;
+    	    		helpIcon.height = 39;
+    	    		this.width = 43;
+    	    		this.height = 43;
+    	    	}
+    	    }
+    	    
+    	    // methods
+    	
+    		private function init():void
+    		{
+    			helpIcon.addEventListener(MouseEvent.CLICK, onHelpIconClick);    			
+    			//setButtonState(true);
+    		}
+    		
+    		private function onHelpIconClick(event:MouseEvent):void
+    		{
+    			trace("helpIcon clicked - dialogId is " + dialogId);
+    			MainDialogHelper.showDialog({dialogId:_dialogId});
+    		}
+    		
+    		private function setButtonState(animate:Boolean):void
+			{
+				try
+				{
+					var swf:Object = Object(helpIcon);
+					swf.content.setButtonState(animate);
+				}
+				catch(e:Error)
+				{
+					trace("set button error = " + e.message);
+				}
+			}
+
+    	]]>
+    </mx:Script>
+	<mx:Image id="helpIcon" buttonMode="true" complete="setButtonState(true)" source="assets/swfs/helpModalButton_MC.swf"/>
+</mx:Box>

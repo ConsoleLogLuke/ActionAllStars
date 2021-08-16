@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml"
+	xmlns:sdgcontrols="com.sdg.components.controls.*"
+	xmlns:pda="com.sdg.view.pda.*"
+	implements="com.sdg.view.pda.interfaces.IPDAMainPanel"
+	width="316" height="400">
+	<mx:Script>
+		<![CDATA[
+			import com.sdg.components.dialog.PickemResultsDialog;
+			import com.sdg.model.ModelLocator;
+			import com.sdg.utils.MainUtil;
+			import com.sdg.events.RoomNavigateEvent;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			import com.sdg.view.pda.interfaces.IPDASidePanel;
+			import com.sdg.control.PDAController;
+			
+			[Bindable]
+			private var _controller:PDAController;
+			private var _isInitialized:Boolean = false;
+			
+			public function init(controller:PDAController = null):void
+			{
+				this.controller = controller;
+				
+				refresh();
+				_isInitialized = true;
+			}
+			
+			public function refresh():void
+			{
+				_controller.getScorecard();
+				_controller.addEventListener("pickemDataComplete", onCollectionComplete);
+			}
+			
+			public function close():void
+			{
+			}
+			
+			public function set controller(value:PDAController):void
+			{
+				_controller = value;
+			}
+			
+			public function get isInitialized():Boolean
+			{
+				return _isInitialized;
+			}
+			
+			public function get sidePanel():IPDASidePanel
+			{
+				return null;
+			}
+			
+			public function get panelName():String
+			{
+				return "Sports Psychic";
+			}
+			
+			private function onCollectionComplete(event:Event):void
+			{
+				_controller.removeEventListener("pickemDataComplete", onCollectionComplete);
+				if (_controller.pickemData.status == "unplayed")
+				{
+					played.visible = false;
+					unplayed.visible = true;
+				}
+				else
+				{
+					pickemList.selectedIndex = 0;
+					onSelection();
+				}
+				
+				var sharedObject:SharedObject = ModelLocator.getInstance().pickemSharedObject;
+				if (sharedObject.data.newPickemResults != null && sharedObject.data.avatarId == ModelLocator.getInstance().avatar.avatarId)
+				{
+					if (sharedObject.data.newPickemResults == "true")
+						MainUtil.showDialog(PickemResultsDialog, _controller.pickemData.numCorrect, false);
+					
+					sharedObject.clear();
+				}
+			}
+			
+			private function onIOError(image:Image, text:Text, string:String):void
+			{
+				image.visible = false;
+				text.visible = true;
+				text.text = string;
+			}
+			
+			private function onSelection():void
+			{
+				var selection:Object = _controller.pickemData.pickemPicks.getItemAt(pickemList.selectedIndex);
+				question.text = selection.question;
+				
+				if (_controller.pickemData.status == "unresolved")
+				{
+					unresolved.visible = unresolved.includeInLayout = true;
+					resolved.visible = resolved.includeInLayout = false;
+					choice1.text = selection.answer[0];
+					choice2.text = selection.answer[1];
+					var percentages:Array = selection.percentages;
+					choice1Percent.text = percentages[0] + "%";
+					choice2Percent.text = percentages[1] + "%";
+					voteMeter.setMeter(percentages[0], percentages[1]);
+					
+					shortMessage.text = "Return tomorrow for results";
+				}
+				else if (_controller.pickemData.status == "resolved")
+				{
+					resolved.visible = resolved.includeInLayout = true;
+					unresolved.visible = unresolved.includeInLayout = false;
+					
+					
+					pickImage.visible = true;
+					pickText.visible = false;
+					if (selection.selected > -1)
+					{
+						pickImage.source = selection.images[selection.selected];
+						pickImage.addEventListener(IOErrorEvent.IO_ERROR,
+							function(event:Event):void {onIOError(pickImage, pickText, selection.answer[selection.selected])});
+					}
+					else
+					{
+						pickImage.source = null; 
+					}
+					
+					winnerImage.visible = true;
+					winnerText.visible = false;
+					// is a tie
+					if (selection.correct > 1)
+						winnerImage.source = "assets/swfs/pda/tie.swf";
+					else if (selection.correct > -1)
+					{
+						winnerImage.source = selection.images[selection.correct];
+						winnerImage.addEventListener(IOErrorEvent.IO_ERROR,
+							function(event:Event):void {onIOError(winnerImage, winnerText, selection.answer[selection.correct])});
+					}
+					
+					if (selection.isCorrect)
+					{
+						thumb.source = "assets/swfs/pda/thumbsUp.swf";
+						thumbText.text = "Correct";
+					}
+					else
+					{
+						thumb.source = "assets/swfs/pda/thumbsDown.swf";
+						thumbText.text = "Incorrect";
+					}
+					
+					var numCorrect:int = _controller.pickemData.numCorrect;
+					var numTokensEarned:int = numCorrect > 0 ? Math.pow(2, numCorrect - 1) : 0;
+					var strTokens:String = numTokensEarned == 1 ? " token." : " tokens."
+					shortMessage.text = "You've earned " + numTokensEarned + strTokens;
+				}
+			}
+		]]>
+	</mx:Script>
+	<mx:Canvas borderStyle="solid" borderThickness="3" borderColor="#1f3361" cornerRadius="10" width="100%" height="375" backgroundColor="#14213f">
+		<mx:VBox id="played" width="100%" height="100%" verticalGap="0" horizontalAlign="center">
+			<mx:Label text="Your picks are highlighted in white" color="#999999"/>
+			
+			<mx:List id="pickemList" paddingRight="0" paddingLeft="0" paddingTop="0" paddingBottom="0" dataProvider="{_controller.pickemData.pickemPicks}"
+				width="100%" backgroundColor="#000000" columnCount="1" rowCount="5" change="onSelection()"
+				borderStyle="solid" borderThickness="1" borderColor="#1f3361" borderSides="top"
+				itemRenderer="com.sdg.components.renderers.PickemScorecardRenderer"
+				rollOverColor="#333333" selectionColor="#525252"/>
+			<mx:VBox borderStyle="solid" borderThickness="4" borderColor="#1f3361" borderSides="top" width="100%" height="100%"
+				horizontalAlign="center" verticalGap="0">
+				<mx:Text id="question" width="290" height="36" color="#ffffff" textAlign="center" selectable="false"/>
+				
+				<mx:HBox id="resolved" width="100%" height="100%" visible="false" includeInLayout="false"
+					paddingLeft="5" paddingRight="5" paddingTop="5" paddingBottom="5" horizontalGap="5">
+					<mx:VBox backgroundColor="#1f3361" width="180" height="100%" horizontalAlign="center"
+						paddingTop="0" paddingBottom="3" paddingLeft="3" paddingRight="3"
+						cornerRadius="10" borderStyle="solid" borderThickness="0" verticalGap="0">
+						<mx:Label text="The answer was:" color="#4d9ccc"/>
+						<mx:Canvas width="100%" height="100%">
+							<mx:Image id="winnerImage" width="100%" height="100%" horizontalAlign="center" verticalAlign="middle"/>
+							<mx:Text id="winnerText" width="100%" textAlign="center" verticalCenter="0" fontSize="20" fontThickness="250" selectable="false"/>
+						</mx:Canvas>
+					</mx:VBox>
+					<mx:VBox backgroundColor="#1f3361" width="100%" height="100%" horizontalAlign="center"
+						cornerRadius="10" borderStyle="solid" borderThickness="0" paddingTop="4" paddingBottom="4">
+						<mx:VBox backgroundColor="#14213f" width="105" height="75" horizontalAlign="center"
+							paddingTop="0" paddingBottom="3" paddingLeft="3" paddingRight="3"
+							borderStyle="solid" borderThickness="1" cornerRadius="10" borderColor="#4d9ccc" verticalGap="0">
+							<mx:Label text="Your pick:" color="#4d9ccc"/>
+							<mx:Canvas width="100%" height="100%">
+								<mx:Image id="pickImage" width="100%" height="100%" horizontalAlign="center" verticalAlign="middle"
+									filters="{[new GlowFilter(0xffffff, .8, 10, 10)]}"/>
+								<mx:Text id="pickText" width="100%" textAlign="center" verticalCenter="0" fontThickness="200" selectable="false"
+									filters="{[new GlowFilter(0xffffff, .60, 10, 10, 2, 2)]}"/>
+							</mx:Canvas>
+						</mx:VBox>
+						<mx:VBox width="100%" height="100%" horizontalAlign="center" verticalGap="0">
+							<mx:Image id="thumb" width="100%" height="100%" horizontalAlign="center" verticalAlign="middle"/>
+							<mx:Label id="thumbText"/>
+						</mx:VBox>
+					</mx:VBox>
+				</mx:HBox>
+				
+				<mx:VBox id="unresolved" width="100%" height="100%" horizontalAlign="center"
+					paddingLeft="3" paddingRight="3" paddingTop="5" paddingBottom="5" visible="false" includeInLayout="false">
+					<mx:VBox width="100%" height="100%" horizontalAlign="center" verticalAlign="middle" backgroundColor="#1f3361"
+						borderStyle="solid" cornerRadius="10" borderColor="#4d9ccc" borderThickness="3"
+						paddingLeft="10" paddingRight="10" verticalGap="2">
+						<mx:Label text="Current vote count"/>
+						<sdgcontrols:VoteMeter id="voteMeter" width="270" height="20" leftColor="#7297cf" rightColor="#d3d3d3" borderColor="#ffffff"/>
+						<mx:Canvas width="100%">
+							<mx:Label id="choice1" fontSize="15" left="0" fontThickness="200" color="#7297cf"/>
+							<mx:Label id="choice1Percent"  fontSize="20" left="0" y="17" color="#7297cf" fontThickness="200"/>
+							<mx:Label id="choice2" fontSize="15" right="0" fontThickness="200" color="#d3d3d3"/>
+							<mx:Label id="choice2Percent" fontSize="20" right="0" y="17" color="#d3d3d3" fontThickness="200"/>
+						</mx:Canvas>
+					</mx:VBox>
+					<mx:Text width="100%" text="Update picks until 4:00pm PST in the Sports Psychic room"
+						fontSize="15" fontThickness="200" color="#4d9ccc" textAlign="center" selectable="false"/>
+				</mx:VBox>
+			</mx:VBox>
+		</mx:VBox>
+		<mx:VBox id="unplayed" width="100%" height="100%" visible="false" verticalAlign="middle" horizontalAlign="center" verticalGap="0">
+			<mx:Text width="250" textAlign="center" fontSize="25" fontThickness="250" selectable="false"
+				text="You don't have any picks yet!&#xa;&#xa;Go to the" color="#4d9ccc"/>
+			<mx:Text id="link" width="250" textAlign="center" fontSize="25" fontThickness="250" mouseChildren="false" buttonMode="true"
+				mouseOver="{link.setStyle('textDecoration', 'none')}" mouseOut="{link.setStyle('textDecoration', 'underline')}"
+				click="{CairngormEventDispatcher.getInstance().dispatchEvent(new RoomNavigateEvent(RoomNavigateEvent.ENTER_ROOM, 'public_129'));_controller.hidePDA()}"
+				text="Broadcast Center" color="#ffffff" textDecoration="underline"/>
+			<mx:Text width="250" textAlign="center" fontSize="25" fontThickness="250" selectable="false"
+				text="to play Sports Psychic!" color="#4d9ccc"/>
+		</mx:VBox>
+	</mx:Canvas>
+	
+	<mx:Label id="shortMessage" horizontalCenter="0" bottom="0" filters="{[new GlowFilter(0xffffff, .60, 10, 10, 2, 2)]}" fontSize="15"/>
+</mx:Canvas>
