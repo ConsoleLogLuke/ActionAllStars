@@ -65,11 +65,6 @@ package com.sdg.collections
 		}
 
 		/**
-		 * Adds the item to the map at the specified key
-		 */
-		public function add(key:Object, value:*):void;
-
-		/**
 		 * Removes and returns the item at the specified key.
 		 */
 		public function remove(key:Object):*
@@ -108,16 +103,11 @@ package com.sdg.collections
 		}
 
 		/**
-		 * Removes all of the items in the map.
-		 */
-		public function removeAll():void;
-
-		/**
 		 * Returns an iterator for the map.
 		 */
 		public function getIterator():IIterator
 		{
-			return new MapIterator(IMapCollection(this), _keys);
+			return new MapIterator(IMapCollection(this), _keys); // Non-SDG - fix small mistake
 		}
 	}
 }

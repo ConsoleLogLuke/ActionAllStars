@@ -267,19 +267,21 @@ package com.sdg.components.controls
 			var params:Object = e.params;
 			var action:String = params.action as String;
 
+			// Non-SDG start
 			var paramString:String
 			var rawTurfValue:String
+			// Non-SDG end
 
 			if (action == 'turfRating')
 			{
 				trace("TURF RATING PLUGIN EVENT RECEIVED");
 
 				// Parse Values
-				paramString = params.payload as String;
+				paramString = params.payload as String; // Non-SDG - prevent duplicate variable definition
 				var paramArray:Array = paramString.split(";",10);
 
 				// Parse Data and then utilize setters
-				rawTurfValue = paramArray.pop() as String;
+				rawTurfValue = paramArray.pop() as String; // Non-SDG - prevent duplicate variable definition
 				var userVote:String = paramArray.pop() as String;
 				var numVotes:String = paramArray.pop() as String;
 				var roomRating:String = paramArray.pop() as String;
@@ -305,10 +307,10 @@ package com.sdg.components.controls
 			else if (action == 'turfValue')
 			{
 				trace("TURF VALUE PLUGIN EVENT RECEIVED");
-				paramString = params.payload as String;
+				paramString = params.payload as String; // Non-SDG - prevent duplicate variable definition
 
 				// Parse Data and then utilize setters
-				rawTurfValue = paramString;
+				rawTurfValue = paramString; // Non-SDG - prevent duplicate variable definition
 
 				if (this._turfValue)
 				{

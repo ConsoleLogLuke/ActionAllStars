@@ -18,7 +18,6 @@
 			import mx.managers.PopUpManager;
 			import mx.core.Application;
 
-			import com.sdg.control.room.RoomManager;
 			import com.sdg.model.ModelLocator;
 			import com.sdg.model.Avatar;
 

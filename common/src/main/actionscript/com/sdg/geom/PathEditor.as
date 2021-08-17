@@ -12,7 +12,7 @@ package com.sdg.geom
 
 		public function insert(segType:int, coords:Array):void
 		{
-			var numCoords:int = Path.SEG_COORDS[segType];
+			var numCoords:int = Path.SEG_COORDS[segType]; // Non-SDG - get SEG_COORDS from Path
 
 			if (numCoords > 0)
 			{
@@ -21,10 +21,10 @@ package com.sdg.geom
 			}
 		}
 
-		public function remove(coords:Array):void
+		public function remove(coords:Array):void // Non-SDG - return void instead of int
 		{
-			var type:int = currentSegment(coords);
-			var numCoords:int = Path.SEG_COORDS[ _path.types[_segIndex] ];
+			var type:int = currentSegment(coords); // Non-SDG - current to currentSegment
+			var numCoords:int = Path.SEG_COORDS[ _path.types[_segIndex] ]; // Non-SDG - get SEG_COORDS from Path
 
 			if (numCoords > 0)
 			{

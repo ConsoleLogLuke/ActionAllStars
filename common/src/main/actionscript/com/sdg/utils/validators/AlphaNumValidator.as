@@ -4,13 +4,13 @@ package com.sdg.utils.validators
     import mx.validators.ValidationResult;
 
 
-    public class AlphaNumValidator extends Validator {
+    public class AlphaNumValidator extends Validator { // Non-SDG - fix typo in class name
 
         // Define Array for the return value of doValidation().
         private var results:Array;
 
         // Constructor.
-        public function AlphaNumValidator() {
+        public function AlphaNumValidator() { // Non-SDG - fix typo in class name
             // Call base class constructor.
             super();
         }

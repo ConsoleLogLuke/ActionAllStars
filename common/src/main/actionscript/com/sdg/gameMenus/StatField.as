@@ -11,7 +11,7 @@ package com.sdg.gameMenus
 		protected var _height:Number;
 		protected var _listWindow:ItemListWindow;
 
-		public function StatField(width:Number = 850, height:Number = 300)
+		public function StatField(width:Number = 850, height:Number = 300) // Non-SDG - fix the constructor name
 		{
 			super();
 			_width = width;

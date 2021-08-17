@@ -7,8 +7,8 @@
 
 	<mx:Script>
 		<![CDATA[
-			import com.sdg.utils.Constants;
 			import mx.managers.PopUpManager;
+			import com.sdg.utils.Constants; // Non-SDG
 
 			private var _selection:uint;
 			private var _returnUrl:String;
@@ -24,13 +24,13 @@
 			}
 			public function close():void
 			{
-				if (_selection == Constants.CREDIT_CARD)
+				if (_selection == Constants.CREDIT_CARD) // Non-SDG - Membership to Constants
 				{
 					navigateToURL(new URLRequest('http://' + _returnUrl +
 						'/reg/creditCardForm.jsp?userId=' + _userId + '&pm=' +
 						_selection + '&plan=' + _planId), '_self');
 				}
-				else if (_selection == Constants.PAYPAL)
+				else if (_selection == Constants.PAYPAL) // Non-SDG - Membership to Constants
 				{
 					navigateToURL(new URLRequest('http://' + _returnUrl +
 						'/reg/Paypal.jsp?userId=' + _userId + '&planId=' + _planId), '_self');

@@ -8,18 +8,18 @@ package com.sdg.components.controls
 	import flash.events.TimerEvent;
 	import flash.text.TextLineMetrics;
 	import flash.utils.Timer;
-	import mx.controls.ProgressBarDirection;
-	import mx.controls.ProgressBarLabelPlacement;
-	import mx.controls.ProgressBarMode;
+	import mx.controls.ProgressBarDirection; // Non-SDG
+	import mx.controls.ProgressBarLabelPlacement; // Non-SDG
+	import mx.controls.ProgressBarMode; // Non-SDG
 	import mx.core.FlexVersion;
 	import mx.core.IFlexDisplayObject;
 	import mx.core.IFlexModuleFactory;
-	import mx.core.IUITextField;
+	import mx.core.IUITextField; // Non-SDG
 	import mx.core.mx_internal;
 	import mx.core.UIComponent;
-	import mx.core.UITextField;
+	import mx.core.UITextField; // Non-SDG
 	import mx.events.FlexEvent;
-	import mx.styles.ISimpleStyleClient;
+	import mx.styles.ISimpleStyleClient; // Non-SDG
 
 	use namespace mx_internal;
 

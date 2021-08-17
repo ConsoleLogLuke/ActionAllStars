@@ -4,6 +4,6 @@ package com.sdg.components.controls
 	{
 		function get contentSize():Number;
 		function get windowSize():Number;
-		function get scrollPosition():Number;
+		function get scrollPosition():Number; // Non-SDG - set to get
 	}
 }

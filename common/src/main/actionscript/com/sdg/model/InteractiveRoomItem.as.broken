@@ -16,6 +16,7 @@ package com.sdg.model
 			interactiveStompRocket:{ definition:SDIEStompRocket, idField:"interactiveStompRocketId" }
 		}
 
+		// public var itemId:int; // Non-SDG - SdgItem also contains an itemId
 		private var objectClass:Class;
 		public var interactiveObj:SDIE;
 
