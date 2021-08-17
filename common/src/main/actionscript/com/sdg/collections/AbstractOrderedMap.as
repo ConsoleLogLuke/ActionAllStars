@@ -1,18 +1,19 @@
 package com.sdg.collections
 {
 	import com.sdg.collections.iterators.MapIterator;
+	import flash.errors.IllegalOperationError; // Non-SDG
 	import mx.events.CollectionEventKind;
 
 	public class AbstractOrderedMap extends AbstractMapCollection implements IOrderedMapCollection
 	{
-		protected var _keys:Array = [];
+		protected var keys:Array = []; // Non-SDG - _keys to keys
 
 		/**
 		 * Returns whether the map contains any items.
 		 */
 		public function get isEmpty():Boolean
 		{
-			return _keys.length < 1;
+			return keys.length < 1; // Non-SDG - _keys to keys
 		}
 
 		/**
@@ -20,7 +21,7 @@ package com.sdg.collections
 		 */
 		public function get size():uint
 		{
-			return _keys.length;
+			return keys.length; // Non-SDG - _keys to keys
 		}
 
 		/**
@@ -28,7 +29,7 @@ package com.sdg.collections
 		 */
 		public function getByIndex(index:int):*
 		{
-			return this.get(_keys[index]);
+			return this.get(keys[index]); // Non-SDG - _keys to keys
 		}
 
 		/**
@@ -36,7 +37,7 @@ package com.sdg.collections
 		 */
 		public function getKeys():Array
 		{
-			return _keys.slice();
+			return keys.slice(); // Non-SDG - _keys to keys
 		}
 
 		/**
@@ -44,7 +45,7 @@ package com.sdg.collections
 		 */
 		public function keyByIndex(index:int):Object
 		{
-			return _keys[index];
+			return keys[index]; // Non-SDG - _keys to keys
 		}
 
 		/**
@@ -53,7 +54,7 @@ package com.sdg.collections
 		public function indexOf(value:*):int
 		{
 			var key:Object = keyOf(value);
-			return _keys.indexOf(key);
+			return keys.indexOf(key); // Non-SDG - _keys to keys
 		}
 
 		/**
@@ -61,7 +62,7 @@ package com.sdg.collections
 		 */
 		public function indexOfKey(key:Object):int
 		{
-			return _keys.indexOf(key);
+			return keys.indexOf(key); // Non-SDG - _keys to keys
 		}
 
 		/**
@@ -69,14 +70,14 @@ package com.sdg.collections
 		 */
 		public function remove(key:Object):*
 		{
-			var index:int = _keys.indexOf(key);
+			var index:int = keys.indexOf(key); // Non-SDG - _keys to keys
 
 			if (index == -1) throw new ArgumentError("Cannot remove item at 'key' [" + key + "]. The item does not exist.");
 
 			var item:* = data[key];
 
 			delete data[key];
-			_keys.splice(index, 1);
+			keys.splice(index, 1); // Non-SDG - _keys to keys
 
 			collectionChanged(CollectionEventKind.REMOVE, key, null, [item]);
 
@@ -88,14 +89,14 @@ package com.sdg.collections
 		 */
 		public function removeByIndex(index:int):*
 		{
-			var key:Object = _keys[index];
+			var key:Object = keys[index]; // Non-SDG - _keys to keys
 
 			if (key == null) throw new ArgumentError("Cannot remove item at 'index' [" + index + "]. The item does not exist.");
 
 			var item:* = data[key];
 
 			delete data[key];
-			_keys.splice(index, 1);
+			keys.splice(index, 1); // Non-SDG - _keys to keys
 
 			collectionChanged(CollectionEventKind.REMOVE, key, null, [item]);
 
@@ -107,7 +108,19 @@ package com.sdg.collections
 		 */
 		public function getIterator():IIterator
 		{
-			return new MapIterator(IMapCollection(this), _keys); // Non-SDG - fix small mistake
+			return new MapIterator(IMapCollection(this), keys); // Non-SDG - fix small mistake and change _keys to keys
 		}
+
+		// Non-SDG start
+		public function add(key:Object, value:*):void
+		{
+			throw new IllegalOperationError("add has not been implemented in the AbstractOrderedMap class");
+		}
+
+		public function removeAll():void
+		{
+			throw new IllegalOperationError("removeAll has not been implemented in the AbstractOrderedMap class");
+		}
+		// Non-SDG end
 	}
 }
