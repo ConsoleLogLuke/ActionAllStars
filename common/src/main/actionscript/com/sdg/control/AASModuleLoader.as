@@ -19,8 +19,15 @@ package com.sdg.control
 	import flash.events.Event;
 	import flash.events.TimerEvent;
 	import flash.system.ApplicationDomain;
-	import flash.utils.getDefinitionByName; // Non-SDG
 	import flash.utils.Timer;
+
+	// Non-SDG start
+	import modules.GameModule;
+	import modules.LeaderBoardModule;
+	import modules.PrintShopModule;
+	import modules.RoomModule;
+	import modules.StoreModule;
+	// Non-SDG end
 
 	import mx.core.Application;
 	import mx.events.ModuleEvent;
@@ -30,8 +37,6 @@ package com.sdg.control
 
 	public class AASModuleLoader
 	{
-		private static var RoomModule:Class = getDefinitionByName("RoomModule") as Class; // Non-SDG
-
 		private static var _isStoreModuleOpenArray:Array = [];
 		private static var _main:Object = Application.application;
 
@@ -50,7 +55,7 @@ package com.sdg.control
 			_main.rawChildren.addChild(loadIndicator);
 
 			// Steup and execute the load.
-			var module:Object; // Non-SDG - remove the specific module type
+			var module:LeaderBoardModule;
 			var info:IModuleInfo = ModuleManager.getModule('LeaderBoardModule.swf');
 			info.addEventListener(ModuleEvent.READY, onModuleReady);
 			info.addEventListener(ModuleEvent.ERROR, onModuleError);
@@ -115,7 +120,7 @@ package com.sdg.control
 				// Remove the load indicator.
 				_main.rawChildren.removeChild(loadIndicator);
 
-				module = info.factory.create(); // as LeaderBoardModule; // Non-SDG - don't cast to the specific module type
+				module = info.factory.create() as LeaderBoardModule;
 				if (gameType)
 					module.init(ModelLocator.getInstance().avatar.id,gameType,index);
 				else
@@ -149,7 +154,7 @@ package com.sdg.control
 
 		public static function openGameModule(gameId:int):void
 		{
-			var module:Object; // Non-SDG - remove the specific module type
+			var module:GameModule;
 			var info:IModuleInfo = ModuleManager.getModule('GameModule.swf');
 			info.addEventListener(ModuleEvent.READY, onModuleReady);
 			info.load(ApplicationDomain.currentDomain);
@@ -158,7 +163,7 @@ package com.sdg.control
 			{
 				info.removeEventListener(ModuleEvent.READY, onModuleReady);
 
-				module = info.factory.create() // as GameModule; // Non-SDG - don't cast to the specific module type
+				module = info.factory.create() as GameModule;
 				module.init(gameId);
 				module.addEventListener('closeModule', onCloseModule);
 				_main.rawChildren.addChild(module);
@@ -250,7 +255,7 @@ package com.sdg.control
 				//if (storeId < 1) storeId = (RoomManager.getInstance().currentRoom.storeId > 0) ? RoomManager.getInstance().currentRoom.storeId : 1;
 
 				// Get a reference to the store module.
-				var printShopModule:Object = loader.child // as PrintShopModule; // Non-SDG - remove the specific module type and don't cast
+				var printShopModule:PrintShopModule = loader.child as PrintShopModule;
 				if (printShopModule != null) printShopModule.init();
 
 				// Listen to module for a close event.
@@ -459,7 +464,7 @@ package com.sdg.control
 				//if (storeId < 1) storeId = (RoomManager.getInstance().currentRoom.storeId > 0) ? RoomManager.getInstance().currentRoom.storeId : 1;
 
 				// Get a reference to the store module.
-				var storeModule:Object = loader.child // as StoreModule; // Non-SDG - remove the specific module type and don't cast
+				var storeModule:StoreModule = loader.child as StoreModule;
 				if (storeModule != null) storeModule.init(storeId);
 
 				// Listen to module for a close event.
@@ -525,7 +530,7 @@ package com.sdg.control
 
 				// Determine if we need to re-show the room.
 				// while the store is open.
-				if (roomWasHidden == true) RoomModule["SetRoomContainerVisible"](true); // Non-SDG - get the method with square brackets
+				if (roomWasHidden == true) RoomModule.SetRoomContainerVisible(true);
 
 				// Remove module from display.
 				_main.removeChild(loader);
@@ -588,7 +593,7 @@ package com.sdg.control
 
 					// Determine if we should hide the room
 					// while the store is open.
-					if (hideRoom == true) roomWasHidden = RoomModule["SetRoomContainerVisible"](false); // Non-SDG - get the method with square brackets
+					if (hideRoom == true) roomWasHidden = RoomModule.SetRoomContainerVisible(false);
 
 					bitmap = null;
 					whiteTint = null;

@@ -68,13 +68,12 @@ package com.sdg.control.game
 	import flash.text.TextFieldAutoSize;
 	import flash.text.TextFormat;
 	import flash.text.TextFormatAlign;
-	import flash.utils.getDefinitionByName; // Non-SDG
 	import flash.utils.Timer;
+
+	import modules.RoomModule; // Non-SDG
 
 	public class SkateboardGameController extends RoomUIController
 	{
-		private static var RoomModule:Class = getDefinitionByName("RoomModule") as Class; // Non-SDG
-
 		[Embed(source='images/skate/skater_game_body_big.png')]
 		private static const SkaterBodySpriteSheet:Class;
 
@@ -289,9 +288,9 @@ package com.sdg.control.game
 			GameConsoleDelegate.gameConsole.setButtonEnabled('buttonpda', false);
 
 			// Hide speed shoes button.
-			RoomModule["SetSpeedShoesButtonVisible"](false); // Non-SDG - get the method with square brackets
+			RoomModule.SetSpeedShoesButtonVisible(false);
 			// Hide ASN button.
-			RoomModule["SetASNButtonVisible"](false); // Non-SDG - get the method with square brackets
+			RoomModule.SetASNButtonVisible(false);
 
 			// Determine how many times the local user has played this game and display it.
 			// Load game play count for the skate game.
@@ -379,9 +378,9 @@ package com.sdg.control.game
 			_trickLog = null;
 
 			// Show speed shoes button.
-			RoomModule["SetSpeedShoesButtonVisible"](true); // Non-SDG - get the method with square brackets
+			RoomModule.SetSpeedShoesButtonVisible(true);
 			// Show ASN button.
-			RoomModule["SetASNButtonVisible"](true); // Non-SDG - get the method with square brackets
+			RoomModule.SetASNButtonVisible(true);
 
 			super.cleanUp();
 

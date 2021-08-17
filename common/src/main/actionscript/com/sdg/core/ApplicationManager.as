@@ -3,16 +3,15 @@ package com.sdg.core
 	import com.sdg.collections.QuickList;
 
 	import flash.events.TimerEvent;
-	import flash.utils.getDefinitionByName; // Non-SDG
 	import flash.utils.Timer;
+
+	import modules.RoomModule; // Non-SDG
 
 	import mx.core.Application;
 	import mx.managers.ISystemManager;
 
 	public class ApplicationManager
 	{
-		private static var RoomModule:Class = getDefinitionByName("RoomModule") as Class; // Non-SDG
-
 		private var _popUpsHiddenListeners:QuickList = new QuickList();
 		private var _popUpsHiddenTimer:Timer;
 
@@ -59,7 +58,7 @@ package com.sdg.core
 			}
 
 			//count the number in RoomModule
-			numPopUps += RoomModule["getInstance"].popupCounter; // Non-SDG - get the method with square brackets
+			numPopUps += RoomModule.getInstance().popupCounter;
 
 			return numPopUps;
 		}
