@@ -1,0 +1,493 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Application
+	xmlns:mx="http://www.adobe.com/2006/mxml"
+	xmlns:business="com.sdg.business.*"
+	width="852" height="577" layout="absolute"
+	implements="com.sdg.model.ISetAvatar"
+	preloader="com.sdg.components.controls.MembershipProgressBar"
+	applicationComplete="init()" backgroundGradientColors="[#ffffff,#ffffff]">
+	<business:Services/>
+
+	<mx:Script>
+		<![CDATA[
+			import com.sdg.utils.Constants;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			import com.sdg.commands.GetBillDateCommand;
+			import com.sdg.events.GetBillDateEvent;
+			import mx.managers.PopUpManager;
+			import com.sdg.components.dialog.ModalDialog;
+			import com.sdg.utils.MainUtil;
+			import mx.core.UIComponent;
+			import mx.containers.FormItem;
+			import com.sdg.events.LoginEvent;
+			import com.sdg.events.AvatarListEvent;
+			import com.sdg.events.AvatarEvent;
+			import com.sdg.commands.LoginCommand;
+			import com.sdg.commands.AvatarListCommand;
+			import com.sdg.commands.AvatarCommand;
+			import com.sdg.control.SdgFrontController;
+			import com.sdg.model.ModelLocator;
+			import com.sdg.model.Avatar;
+			import mx.binding.utils.ChangeWatcher;
+			import com.sdg.components.controls.SdgAlert;
+			import flash.display.StageAlign;
+			import flash.display.StageScaleMode;
+			import com.sdg.net.Environment;
+
+			private var modelLocator:ModelLocator = ModelLocator.getInstance();
+			private var planType:String;
+			private var pageNum:int = 1;
+			private var _passedInAvatarId:uint;
+			private var _buttonEnabled:Boolean = false;
+			private var _watcher:ChangeWatcher;
+
+			private static const ID_DISPLAY_PLAN_MAP:Object =
+			{
+				monthly:{plan:"Monthly", id:1, price:"5.95"},
+				sixMonths:{plan:"6 Month", id:2, price:"29.95"},
+				twelveMonths:{plan:"12 Month", id:3, price:"57.95"}
+			};
+
+			[Embed(source="images/registration/checkBox_default.png")]
+			public var checkBoxDefault:Class;
+			[Embed(source="images/registration/checkBox_selected.png")]
+			public var checkBoxSelected:Class;
+
+			public function set avatar(value:Avatar):void
+			{
+				modelLocator.avatar = value;
+				nameDisplay.text = modelLocator.avatar.name;
+			}
+
+			private function init():void
+			{
+				var sdg:SdgFrontController = SdgFrontController.getInstance();
+				sdg.addCommand(AvatarEvent.AVATAR, AvatarCommand);
+				sdg.addCommand(AvatarListEvent.LIST, AvatarListCommand);
+				sdg.addCommand(LoginEvent.LOGIN, LoginCommand);
+				//sdg.addCommand(GetBillDateEvent.GET_DATE_BY_PLAN, GetBillDateCommand);
+
+				this.stage.align = StageAlign.TOP_LEFT;
+				this.stage.scaleMode = StageScaleMode.NO_BORDER;
+
+				var flashvars:Object = {};
+
+				for (var str:String in loaderInfo.parameters)
+				{
+					flashvars[str] = loaderInfo.parameters[str];
+				}
+				registerFlashVars(flashvars);
+
+				if (flashvars.avatarId)
+				{
+					_passedInAvatarId = flashvars.avatarId;
+					_buttonEnabled = true;
+				}
+				else
+				{
+					ChangeWatcher.watch(modelLocator.user, "loggedInStatus", loginWatcher);
+					_watcher = ChangeWatcher.watch(modelLocator.user, "avatarId", avatarSelectionWatcher);
+				}
+			}
+
+			private function registerFlashVars(vars:Object):void
+			{
+				applyEnvVars(vars);
+				//applyUserVars(vars);
+
+				ModelLocator.getInstance().affiliate = vars.partnerId;
+				if (vars.version) Environment.serverVersion = vars.version;
+				if (vars.returnUrl) Environment.returnUrl = vars.returnUrl;
+			}
+
+			private static function applyEnvVars(vars:Object):void
+			{
+				if (vars.applicationDomain)
+				{
+					Environment.setApplicationDomain(vars.applicationDomain);
+					Services.setBaseUrl(Environment.getApplicationUrl());
+				}
+
+				if (vars.assetDomain)
+				{
+					Environment.setAssetDomain(vars.assetDomain);
+				}
+
+				trace("app domain " + Environment.getApplicationDomain());
+				trace("asset domain " + Environment.getAssetDomain());
+				trace("app url " + Environment.getApplicationUrl());
+				trace("standalone " + Environment.isStandalone());
+			}
+
+			private function onPage1Init(event:Event):void
+			{
+				event.currentTarget.removeEventListener(event.type, arguments.callee);
+				page1Swf.content.addEventListener("monthly", selectPlan);
+				page1Swf.content.addEventListener("sixMonths", selectPlan);
+				page1Swf.content.addEventListener("twelveMonths", selectPlan);
+			}
+
+			private function selectPlan(event:Event):void
+			{
+				//page1Swf.content.removeEventListener("monthly", selectPlan);
+				//page1Swf.content.removeEventListener("sixMonths", selectPlan);
+				//page1Swf.content.removeEventListener("twelveMonths", selectPlan);
+				//trace(event.type);
+				planType = event.type;
+				goToNextPage();
+			}
+
+			private function avatarSelectionWatcher(event:Event):void
+			{
+				_watcher.unwatch();
+				nameDisplay.text = modelLocator.avatar.name;
+
+				/*
+				if (modelLocator.avatar.membershipStatus != 0)
+				{
+					CairngormEventDispatcher.getInstance().addEventListener(GetBillDateEvent.DATE_BY_PLAN_RECEIVED, onDateReceived);
+					dispatchEvent(new GetBillDateEvent(modelLocator.user.userId, GetBillDateEvent.GET_DATE_BY_PLAN, null, ID_DISPLAY_PLAN_MAP[planType].id));
+				}
+				else
+					_buttonEnabled = true;
+				*/
+			}
+
+			private function onDateReceived(event:GetBillDateEvent):void
+			{
+				if (planType != 'monthly')
+				{
+					warningMessage.text = "You are currently a valued premium member.  " +
+							"Selecting this plan will extend your membership until " + event.date +
+							", at which time your account will automatically renew monthly to avoid service interruption.";
+					_buttonEnabled = true;
+				}
+				else if (event.plan == 1 || event.plan == 6 || event.plan == 7)
+				{
+					warningMessage.text = "You are currently enrolled in a monthly premium membership.  " +
+							"Please return to the previous screen and select either the 6 month or 12 month membership plan to continue.";
+				}
+			}
+
+			private function loginWatcher(event:Event):void
+			{
+				switch (modelLocator.user.loggedInStatus)
+				{
+					case 1:
+						trace('Logged in as ' + modelLocator.user.username);
+						getAvatar();
+						goToPage(++pageNum);
+						break;
+					case 100:
+						SdgAlert.show("Your avatar has been banned.", "Time Out!");
+						break;
+					case 101:
+						SdgAlert.show("We did not recognize your user name or password. Please try again.", "Time Out!");
+						break;
+					case 102:
+						SdgAlert.show("Your registration process was incomplete. Please register again.", "Time Out!");
+						break;
+					case 103:
+						trace('changeUserName.jsp?userId=' + modelLocator.user.userId);
+
+						var request:URLRequest = new URLRequest('changeUserName.jsp');
+						request.method = URLRequestMethod.POST;
+
+						var variables:URLVariables = new URLVariables();
+						variables.userId = modelLocator.user.userId;
+						request.data = variables;
+
+						navigateToURL(request,'_self');
+						break;
+					case 104:
+						SdgAlert.show("Your account has not been activated yet.", "Time Out!");
+						break;
+					case 0:
+						SdgAlert.show("Your login was unsuccessful. Please try again.", "Time Out!");
+						break;
+					case -1:
+						break;
+					default:
+						SdgAlert.show("Your login was unsuccessful. Please try again.", "Time Out!");
+						break;
+				}
+			}
+
+			private function getAvatar():void
+			{
+				dispatchEvent(new AvatarListEvent(modelLocator.user.username));
+			}
+
+			private function goToNextPage():void
+			{
+				if (pageNum == 1)
+				{
+					if (_passedInAvatarId != 0)
+					{
+						pageNum += 2;
+						dispatchEvent(new AvatarEvent(_passedInAvatarId, this));
+						goToPage(pageNum);
+					}
+					else
+						goToPage(++pageNum)
+				}
+				else if (pageNum == 2)
+				{
+					dispatchEvent(new LoginEvent(username.text, password.text));
+				}
+				else if (pageNum == 3)
+				{
+					if (_buttonEnabled)
+					{
+						var userId:uint = modelLocator.avatar.userId;
+						var planId:uint = ID_DISPLAY_PLAN_MAP[planType].id;
+
+						if (payBy.selectedValue == Constants.CREDIT_CARD)
+						{
+							navigateToURL(new URLRequest('http://' + Environment.returnUrl +
+								'/premium/co/ccard?userId=' + userId + '&pm=' + payBy.selectedValue + '&plan=' + planId +
+								'&affiliateId=' + ModelLocator.getInstance().affiliate), '_self');
+						}
+						else if (payBy.selectedValue == Constants.PAYPAL)
+						{
+							navigateToURL(new URLRequest('http://' + Environment.returnUrl +
+								'/premium/paypal/setpaypal?userId=' + userId + '&planId=' + planId +
+								'&affiliateId=' + ModelLocator.getInstance().affiliate), '_self');
+							//dispatchEvent(new PayByPayPalEvent(userId, planId));
+						}
+					}
+				}
+			}
+
+			private function goToPreviousPage():void
+			{
+				if (pageNum == 3 && _passedInAvatarId != 0)
+				{
+					pageNum -= 2;
+					goToPage(pageNum);
+				}
+				else
+					goToPage(--pageNum);
+
+				// reset avatarId
+				modelLocator.avatar.avatarId = 0;
+			}
+
+			private function goToPage(page:int):void
+			{
+				var stackNum:int = page != 3 ? page : 2;
+				pageStack.selectedChild = this["stack_" + stackNum];
+				setupPage(page);
+			}
+
+			private function componentSwfLoaded():void
+			{
+				try
+				{
+					Object(planIcon.content).toggleJoinButton(false);
+				}
+				catch(e:Error)
+				{
+					trace("planIcon error: " + e.message);
+				}
+			}
+
+			private function setupPage(page:int):void
+			{
+				if (page == 2)
+				{
+					if (boxStack)
+						boxStack.selectedChild = this["box_" + page];
+					if (planDisplay && planIcon)
+					{
+						planDisplay.text = ID_DISPLAY_PLAN_MAP[planType].plan + " Membership";
+						planIcon.source = "assets/swfs/membership/" + planType + ".swf";
+					}
+					if (continueButton)
+						continueButton.label = "Login";
+					if (username && password)
+					{
+						username.text = null;
+						password.text = null;
+						username.setFocus();
+					}
+
+					_buttonEnabled = false;
+					modelLocator.user.avatarId = 0;
+					if (warningMessage)
+						warningMessage.text = "";
+					_watcher.reset(modelLocator.user);
+				}
+				else if (page == 3)
+				{
+					if (boxStack)
+						boxStack.selectedChild = this["box_" + page];
+					if (continueButton)
+						continueButton.label = "Continue";
+					if (planDisplay2)
+						planDisplay2.text = ID_DISPLAY_PLAN_MAP[planType].plan;
+					if (planText)
+					{
+						planText.text = "You have selected the " +
+							ID_DISPLAY_PLAN_MAP[planType].plan + " membership for $" +
+							ID_DISPLAY_PLAN_MAP[planType].price + ". Please select the preferred method of payment" +
+							" below and thanks for joining ActionAllStars.com!";
+					}
+					if (paypal)
+					{
+						paypal.visible = planType != 'monthly';
+					}
+				}
+			}
+		]]>
+	</mx:Script>
+
+	<mx:Style source="styles/style2.css"/>
+
+	<mx:Style>
+		FormItem.Label
+		{
+			color: #193d73;
+			fontSize: 22;
+		}
+		Button.login
+		{
+			fillColors: #dc8100, #fed36e;
+			borderColor: #8f4d00;
+			selectionColor: #f0b242;
+			textSelectedColor: #dc8100;
+			borderThickness: 3;
+			cornerRadius: 12;
+			fontSize: 20;
+			fontWeight: bold;
+			fontThickness: 200;
+		}
+	</mx:Style>
+
+	<mx:ViewStack width="100%" height="100%" id="pageStack">
+		<!-- page 1 -->
+		<mx:VBox id="stack_1" paddingTop="0" paddingBottom="0" paddingLeft="0" paddingRight="0" verticalGap="0" horizontalAlign="center">
+			<!--<mx:HBox width="100%" height="200" horizontalAlign="center" horizontalGap="10">
+				<mx:Image id="monthly" source="assets/swfs/bronzePricePoint.swf" click="selectPlan(event)" buttonMode="true"/>
+				<mx:Image id="sixMonths" source="assets/swfs/silverPricePoint.swf" click="selectPlan(event)" buttonMode="true"/>
+				<mx:Image id="twelveMonths" source="assets/swfs/goldPricePoint.swf" click="selectPlan(event)" buttonMode="true"/>
+			</mx:HBox>
+
+			<mx:Image source="@Embed('images/membership/membershipImage.jpg')"/>-->
+			<mx:Image id="page1Swf" source="assets/swfs/membership/page1.swf" init="onPage1Init(event)"/>
+		</mx:VBox>
+
+		<!-- page 2 & 3-->
+		<mx:VBox id="stack_2" paddingTop="15" paddingBottom="15" paddingLeft="30" verticalGap="13" horizontalAlign="center">
+			<mx:HBox width="100%" borderStyle="solid" borderSides="bottom" paddingBottom="20" borderThickness="1" horizontalGap="0">
+				<mx:VBox width="490" verticalGap="10">
+					<mx:ViewStack width="100%" height="315" id="boxStack">
+						<!-- page 2 -->
+						<mx:VBox id="box_2" width="100%" height="100%" cornerRadius="12" backgroundColor="#ecf4ff" verticalAlign="middle"
+							borderStyle="solid" borderColor="#6f83a4" creationComplete="setupPage(pageNum)"
+							paddingTop="5" paddingLeft="20" paddingRight="20">
+							<mx:VBox width="100%" borderSides="bottom" borderStyle="solid" borderThickness="1" verticalGap="10" paddingBottom="5">
+								<mx:FormItem label="You Selected:">
+									<mx:Text id="planDisplay" fontSize="22" color="#8692a3" selectable="false"/>
+								</mx:FormItem>
+								<mx:Text width="100%" fontSize="14" color="#193d73" selectable="false"
+									text="To purchase a premium membership, please login using your account information. If you don't currently have an Action AllStars account, please create one before attempting to sign in below."/>
+								<mx:VBox verticalGap="0">
+									<mx:HBox visible="{ModelLocator.getInstance().affiliate != 53 &amp;&amp; ModelLocator.getInstance().affiliate != 64}"
+										includeInLayout="{ModelLocator.getInstance().affiliate != 53 &amp;&amp; ModelLocator.getInstance().affiliate != 64}">
+										<mx:Text text="Don't have an account?" fontSize="14" color="#193d73" selectable="false"/>
+										<mx:Text text="Create a free account now!" fontSize="14" color="#5f8dc1" textDecoration="underline"
+											mouseChildren="false" buttonMode="true" selectable="false"
+											click="MainUtil.postAvatarIdToURL('register.jsp', 0, 6)"/>
+									</mx:HBox>
+									<mx:HBox>
+										<mx:Text text="Forget login information?" fontSize="14" color="#193d73" selectable="false"/>
+										<mx:Text text="Retrieve information." fontSize="14" color="#5f8dc1" textDecoration="underline"
+											mouseChildren="false" buttonMode="true" selectable="false"
+											click="navigateToURL(new URLRequest('retrieveInformation.jsp'),'_self')"/>
+											<!--click="navigateToURL(new URLRequest('beta.jsp'),'_self')"/>-->
+									</mx:HBox>
+								</mx:VBox>
+							</mx:VBox>
+
+							<mx:Form width="100%" paddingLeft="0" paddingRight="0" paddingTop="5" paddingBottom="5">
+								<mx:FormItem label="Athlete Name:" width="100%">
+									<mx:TextInput id="username" width="100%"
+										borderColor="#172d5f" borderThickness="2" borderStyle="solid"
+										fontSize="20" fontWeight="bold" maxChars="13" textAlign="center"/>
+								</mx:FormItem>
+								<mx:FormItem label="Athlete Password:" width="100%">
+									<mx:TextInput id="password" width="100%" displayAsPassword="true"
+										borderColor="#172d5f" borderThickness="2" borderStyle="solid"
+										fontSize="20" fontWeight="bold" maxChars="10" textAlign="center"/>
+								</mx:FormItem>
+							</mx:Form>
+						</mx:VBox>
+
+						<!-- page 3 -->
+						<mx:VBox id="box_3" width="100%" height="100%" cornerRadius="12" backgroundColor="#ecf4ff" verticalAlign="middle"
+							borderStyle="solid" borderColor="#6f83a4" paddingLeft="20" paddingRight="20" verticalGap="10" creationComplete="setupPage(pageNum)">
+							<mx:Form width="100%" borderSides="bottom" borderStyle="solid" borderThickness="1" verticalGap="0"
+								paddingBottom="10" paddingLeft="0" paddingRight="0">
+								<mx:FormItem label="Athlete Name:">
+									<mx:Text id="nameDisplay" fontSize="22" color="#8692a3" selectable="false"/>
+								</mx:FormItem>
+								<mx:FormItem label="Membership Type:">
+									<mx:Text id="planDisplay2" fontSize="22" color="#8692a3" selectable="false"/>
+								</mx:FormItem>
+								<mx:Text id="planText" width="100%" fontSize="14" color="#193d73" selectable="false"/>
+								<mx:Text id="warningMessage" width="100%" fontSize="12" color="#ff0000" selectable="false"/>
+							</mx:Form>
+
+							<mx:VBox verticalGap="0">
+								<mx:RadioButtonGroup id="payBy"/>
+								<mx:HBox verticalAlign="middle">
+									<mx:RadioButton label="Credit Card" groupName="payBy" value="{Constants.CREDIT_CARD}"
+										color="#193d73" textRollOverColor="#5f81b4"
+										fontSize="18" fontWeight="bold" buttonMode="true" horizontalGap="14"
+										icon="{checkBoxDefault}" selectedUpIcon="{checkBoxSelected}"
+										selectedOverIcon="{checkBoxSelected}" selectedDownIcon="{checkBoxSelected}" paddingRight="10"/>
+									<mx:Image source="@Embed('images/membership/visa.png')"/>
+									<mx:Image source="@Embed('images/membership/mastercard.png')"/>
+									<mx:Image source="@Embed('images/membership/amex.png')"/>
+								</mx:HBox>
+								<mx:HBox id="paypal" verticalAlign="middle">
+									<mx:RadioButton label="PayPal" groupName="payBy" value="{Constants.PAYPAL}"
+										color="#193d73" textRollOverColor="#5f81b4"
+										fontSize="18" fontWeight="bold" buttonMode="true" horizontalGap="14"
+										icon="{checkBoxDefault}" selectedUpIcon="{checkBoxSelected}"
+										selectedOverIcon="{checkBoxSelected}" selectedDownIcon="{checkBoxSelected}" paddingRight="10"/>
+									<mx:Image source="@Embed('images/membership/payPal.png')"/>
+								</mx:HBox>
+							</mx:VBox>
+						</mx:VBox>
+					</mx:ViewStack>
+
+					<!-- footer -->
+					<mx:HBox width="100%" height="69" cornerRadius="12" backgroundColor="#ecf4ff"
+						borderStyle="solid" borderColor="#6f83a4" verticalAlign="middle" paddingLeft="20" paddingRight="20">
+
+						<mx:VBox id="backBox" width="100%" horizontalAlign="left" click="goToPreviousPage()">
+							<mx:Button id="backButton" buttonMode="true"
+								skin="@Embed('images/registration/back_button.png')"
+								overSkin="@Embed('images/registration/backOver_button.png')" />
+						</mx:VBox>
+						<mx:VBox id="continueBox" width="100%" horizontalAlign="right">
+							<mx:Button id="continueButton" width="170" height="55" styleName="login" buttonMode="true" click="goToNextPage()"/>
+						</mx:VBox>
+					</mx:HBox>
+				</mx:VBox>
+
+				<!-- membership plan icon -->
+				<mx:VBox width="100%" height="100%" verticalAlign="middle" horizontalAlign="center">
+					<mx:Image id="planIcon" init="componentSwfLoaded()"/>
+				</mx:VBox>
+			</mx:HBox>
+
+			<mx:HBox width="100%" horizontalAlign="center" horizontalGap="50">
+				<mx:Image source="@Embed('images/membership/ConnectSafely.png')"/>
+				<mx:Image source="@Embed('images/membership/BBB.png')"/>
+			</mx:HBox>
+		</mx:VBox>
+	</mx:ViewStack>
+</mx:Application>

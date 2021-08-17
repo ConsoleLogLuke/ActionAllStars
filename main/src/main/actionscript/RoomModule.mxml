@@ -1,0 +1,1419 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Module xmlns:mx="http://www.adobe.com/2006/mxml" 
+	xmlns:controls="com.sdg.components.controls.*"
+	xmlns:gameControls="com.sdg.components.games.*"
+	width="925" height="665" layout="absolute" horizontalScrollPolicy="off" verticalScrollPolicy="off"
+	creationComplete="init()"
+	>
+		<mx:Script>
+		<![CDATA[
+			import com.sdg.manager.NPCPopupManager;
+			import com.sdg.events.MessageBoardServerEvent;
+			import com.sdg.events.GetPetListEvent;
+			import com.sdg.events.PartyListEvent;
+			import com.sdg.view.avatarcard.AvatarInfoPanelWithControls;
+			import com.sdg.view.avatarcard.AvatarInfoPanel;
+			import mx.events.CloseEvent;
+			import com.sdg.view.PopUpTransition;
+			import com.sdg.net.QuickLoader;
+			import com.sdg.game.counter.GamePlayCounter;
+			import com.sdg.model.AvatarLevelStatus;
+			import com.sdg.manager.LevelManager;
+			import com.sdg.events.GetUnityNBATeamsEvent;
+			import com.sdg.model.SdgItemClassId;
+			import com.sdg.logging.LoggingUtil;
+			import com.sdg.events.RoomCheckEvent;
+			import com.sdg.model.GameAssetId;
+			import com.sdg.util.AssetUtil;
+			import com.sdg.manager.SoundManager;
+			import com.sdg.store.StoreConstants;
+			import com.sdg.model.AvatarAchievement;
+			import com.sdg.control.AASModuleLoader;
+			import com.sdg.model.MembershipStatus;
+			import com.sdg.events.RoomManagerEvent;
+			import com.sdg.manager.BadgeManager;
+			import com.sdg.view.LoadIndicatorOverlay;
+			import com.sdg.events.SocketRoomEvent;
+			import com.sdg.model.UserActionTypes;
+			import com.sdg.events.GetFavTeamsEvent;
+			import com.sdg.model.Team;
+			import com.sdg.control.DialogControl;
+			import com.sdg.model.Achievement;
+			import com.sdg.events.BuddyListEvent;
+			import com.sdg.events.GetItemSetEvent;
+			import com.sdg.model.ItemSet;
+			import com.sdg.events.GetEmotesEvent;
+			import com.sdg.events.GetJabsEvent;
+			import com.sdg.events.GameAttributesEvent;
+			import com.sdg.events.GameResultEvent;
+			import com.sdg.events.AASEventManager;
+			import com.sdg.model.Server;
+			import com.sdg.events.ChallengesEvent;
+			import com.sdg.events.SdgSwfEvent;
+			import com.sdg.utils.ObjectUtil;
+			import com.sdg.control.InboxManager;
+			import com.sdg.utils.GameUtil;
+			import com.sdg.model.Reward;
+			import com.sdg.events.SocketEvent;
+			import com.sdg.control.PSAController;
+			import com.sdg.events.AvatarUpdateEvent;
+			import com.sdg.control.PDAController;
+			import com.sdg.net.socket.SocketClient;
+			import mx.modules.ModuleLoader;
+			import mx.events.ModuleEvent;
+			import com.sdg.control.HudController;
+			import com.sdg.quest.QuestManager;
+			import com.sdg.utils.PreviewUtil;
+			import com.sdg.model.InventoryItem;
+			import com.sdg.control.room.itemClasses.AvatarController;
+			import com.sdg.control.BuddyManager;
+			import com.sdg.model.NotificationIcon;
+			import com.sdg.events.PickemScorecardEvent;
+			import com.sdg.util.LayoutUtil;
+			import com.sdg.net.Environment;
+			import com.sdg.events.ShowOverlayEvent;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			
+			import com.sdg.control.room.RoomManager;
+			import com.sdg.components.dialog.*;
+			import com.sdg.components.controls.*;
+			import com.sdg.commands.*;
+			import com.sdg.control.SdgFrontController;
+			import com.sdg.events.RoomNavigateEvent;
+			import com.sdg.events.RoomPopUpEvent;
+			import com.sdg.events.PrivateRoomEditEvent;
+			import com.sdg.events.TutorialResetEvent;
+			import com.sdg.events.AvatarStatEvent;
+			import com.sdg.model.ModelLocator;
+			import com.sdg.model.Avatar;
+			import com.sdg.model.Room;
+			import com.sdg.model.RoomTypeId;
+			import com.sdg.utils.Constants;
+			import com.sdg.utils.ProgressMonitor;
+			import com.sdg.utils.MainUtil;
+			import com.sdg.model.User;
+			import com.sdg.components.dialog.helpers.MainDialogHelper;
+			
+			import flash.events.KeyboardEvent;
+			import flash.events.MouseEvent;
+			import flash.ui.Keyboard;
+
+			import mx.binding.utils.*; 
+			import mx.core.Application;
+			import mx.core.IChildList;
+			import mx.core.IUIComponent;
+			import mx.events.FlexEvent;
+			import mx.events.PropertyChangeEvent;
+			
+			[Bindable]
+			public var room:Room;
+			
+			[Bindable]
+			private static var _userAvatar:Avatar;
+			
+			[Bindable]
+			private var worldMap:WorldMap = new WorldMap();
+			
+			private var _postGameDialog:ISdgDialog;
+			private var _socket:SocketClient;
+			private var _dialogControl:DialogControl = new DialogControl(925, 665);
+			private var _mapInit:Boolean = false;
+			private var _sessionRoomEnterCount:uint = 0;
+			protected var _editModeWatcher:ChangeWatcher;
+			private var _hasSentMsgRequest:Boolean = false;
+			protected var _worldMapLoadIndicator:LoadIndicatorOverlay;
+			private var _sinceQuestCompleteRoomEnterCount:uint = 0;
+			
+			private static var _instance:RoomModule;
+			
+			protected var _levelName:String;
+			protected var _levelNumber:uint;
+			protected var _rankNumber:uint;
+			protected var _percentToNextLevel:int;
+			protected var _progressToNextLevel:uint;
+			protected var _nextLevel:uint;
+			
+			private var _musicOn:Boolean = true;
+			
+			private var _popUpCounter:int;
+			
+			protected var _onBoardingScreen:MovieClip;
+			
+			protected function init():void
+			{
+				// Set instance.
+				_instance = this;
+				
+				// Add commands.
+				var sdg:SdgFrontController = SdgFrontController.getInstance();
+				sdg.addCommand(RoomNavigateEvent.ENTER_ROOM, RoomNavigateCommand);
+				sdg.addCommand(RoomNavigateEvent.ENTER_PREV_ROOM, RoomNavigateCommand);
+				sdg.addCommand(RoomNavigateEvent.EXIT_ROOM, RoomNavigateCommand);
+				sdg.addCommand(PrivateRoomEditEvent.EDIT_PRIVATE_ROOM, PrivateRoomEditCommand);
+				sdg.addCommand(PrivateRoomEditEvent.REVERT_PRIVATE_ROOM, PrivateRoomEditCommand);
+				sdg.addCommand(PrivateRoomEditEvent.SAVE_PRIVATE_ROOM, PrivateRoomEditCommand);
+				sdg.addCommand(PrivateRoomEditEvent.UPDATE_PRIVATE_ROOM, PrivateRoomEditCommand);
+				
+				sdg.addCommand(AvatarStatEvent.GET_STAT, AvatarStatCommand);
+				sdg.addCommand(AvatarStatEvent.SAVE_STAT, AvatarStatCommand);
+				
+				sdg.addCommand(GetPetListEvent.GET_PET_LIST, GetPetListCommand);
+				
+				// game commands
+				sdg.addCommand(ChallengesEvent.CHALLENGES, ChallengesCommand);
+				sdg.addCommand(GameAttributesEvent.GAME_ATTRIBUTES, GameAttributesCommand);
+				sdg.addCommand(GameResultEvent.GAME_RESULT, GameResultCommand);
+				sdg.addCommand(BuddyListEvent.BUDDYLIST, BuddyListCommand);
+				sdg.addCommand(RoomCheckEvent.CHECK_ROOM, RoomCheckCommand);
+				sdg.addCommand(GetUnityNBATeamsEvent.GET_UNITY_NBA_TEAMS, GetUnityNBATeamsCommand);
+				sdg.addCommand(PartyListEvent.PARTY_LIST, PartyListCommand);
+				sdg.addCommand(MessageBoardServerEvent.GET_MESSAGES, MessageBoardServerCommand);
+				sdg.addCommand(MessageBoardServerEvent.POST_MESSAGE, MessageBoardServerCommand);
+				sdg.addCommand(MessageBoardServerEvent.UPDATE_MESSAGE, MessageBoardServerCommand);
+				
+				_userAvatar = ModelLocator.getInstance().avatar;
+				registerExternalCallbacks();
+				
+				_socket = SocketClient.getInstance();
+				
+				// Initialize global sound manager.
+				var soundManager:SoundManager = SoundManager.GetInstance();
+				
+				// Create the game console delegate.
+				GameConsoleDelegate.init(console);
+				
+				// Create a Badge Manager Instance.
+				BadgeManager.GetInstance();
+				
+				// Create a Popup Manager Instance
+				NPCPopupManager.GetInstance();
+				
+				BuddyManager.start();
+				PSAController.getInstance();
+				
+				// load our jabs, emotes, and itemSets
+				dispatchEvent(new GetJabsEvent());
+				dispatchEvent(new GetEmotesEvent());
+				dispatchEvent(new GetItemSetEvent());
+				
+				// Create Action AllStars Event Manager.
+				var eventManager:AASEventManager = AASEventManager.getInstance();
+				eventManager.eventSocket = _socket;
+				
+				// listen for socket events
+				_socket.addEventListener(SocketEvent.PLUGIN_EVENT, onPluginEvent);
+				_socket.addEventListener(SocketEvent.CONNECTION_CLOSED, onConnectonClosed);
+				
+				// Listen to room manager for events.
+				RoomManager.getInstance().addEventListener(RoomManagerEvent.REQUEST_FOR_WORLD_MAP, onRequestForWorldMap);
+				
+				// Listen to GameConsole for World Map Event
+				console.addEventListener(RoomManagerEvent.REQUEST_FOR_WORLD_MAP, onRequestForWorldMap);
+				console.addEventListener("toggleMusic",onMusicToggleRequest);
+				
+				// when RoomManager.getInstance()-->current room changes - roomChanged invoked with currentroom as arg
+				BindingUtils.bindSetter(roomChanged, RoomManager.getInstance(), "currentRoom");
+				BindingUtils.bindSetter(showVotingPanel, RoomManager.getInstance(), "currentRoom");
+				
+				// commented out to disable Pickem
+				CairngormEventDispatcher.getInstance().addEventListener(PickemScorecardEvent.SCORECARD_RECEIVED, onScorecardReceived);
+				dispatchEvent(new PickemScorecardEvent(_userAvatar.avatarId));
+				
+				// Setup PDA.
+				if (Constants.PDA_ENABLED == true)
+				{
+					this.addChild(HudController.getInstance().display);
+					HudController.getInstance().display.x = 622;
+					HudController.getInstance().display.y = 10;
+				}
+				
+				// World map.
+				_mapInit = false;
+				worldMap.visible = true;
+				initWorldMap();
+				addChild(worldMap);
+				
+				// Add dialog control to display.
+				rawChildren.addChild(_dialogControl);
+				
+				// Initialize quest manager.
+				var qM:QuestManager = QuestManager.getInstance();
+				QuestManager.init();
+				QuestManager.getInstance().addEventListener(QuestManager.QUEST_COMPLETE, onQuestComplete);
+				QuestManager.getInstance().addEventListener(QuestManager.ACTIVE_QUESTS_UPDATE, onActiveQuestsUpdate);
+				
+				// Initialize game play count manager.
+				GamePlayCounter.init(_userAvatar.avatarId);
+				
+				//set up heartbeat
+				startHeartBeat();
+				
+				dispatchEvent(new GetFavTeamsEvent(_userAvatar.avatarId));
+				
+				if (ModelLocator.getInstance().referFriend != null)
+					MainUtil.showDialog(SaveYourGameDialog);
+				
+				// Check if level data is available.
+				if (!LevelManager.LevelDataAvailable)
+				{
+					LevelManager.Instance.addEventListener(LevelManager.LEVEL_DATA_AVAILABLE, onLevelDataAvailable);
+					LevelManager.LoadLevelData();
+				}
+				else
+				{
+					updateLevelStatus();
+				}
+				
+				// Listen for point updates on the avatar.
+				_userAvatar.addEventListener(Avatar.POINTS_TO_SHOW_UPDATE, onAvatarPointsUpdate);
+				_userAvatar.addEventListener(AvatarUpdateEvent.TOKENS_TO_SHOW_UPDATE, onTokensUpdate);
+				
+				
+				if (_userAvatar.membershipStatus != MembershipStatus.GUEST)
+				{
+					MainUtil.showDialog(WelcomeNewsDialog,{showWorldMapOnEnd:true});
+					// Hide the world map.
+					worldMap.visible = false;
+					turfBuilder.visible = false;
+				}
+				else
+				{
+					loadBoardingScreen();
+					turfBuilder.visible = false;
+				}
+				loadLocalAvatarLoginXML();
+			}
+			
+			//////////////////////
+			// PUBLIC METHODS
+			//////////////////////
+			
+			public static function getInstance():RoomModule
+			{
+				return _instance;
+			}
+			
+			public static function SetRoomContainerVisible(isVisible:Boolean):Boolean
+			{
+				// Return true if this call was effective.
+				
+				if (isVisible == true && _instance.contains(_instance.roomContainer) != true)
+				{
+					_instance.addChildAt(_instance.roomContainer, 0);
+					return true;
+				}
+				else if (isVisible == false && _instance.contains(_instance.roomContainer) == true)
+				{
+					_instance.removeChild(_instance.roomContainer);
+					return true;
+				}
+				
+				return false;
+			}
+			
+			public static function SetSpeedShoesButtonVisible(value:Boolean):void
+			{
+				_instance.speedShoesBtn.visible = (AvatarController(RoomManager.getInstance().userController).speedShoesOn && value);
+			}
+			
+			public static function SetASNButtonVisible(value:Boolean):void
+			{
+				_instance.asnButton.visible = value;
+			}
+			
+			public function get popupCounter():int
+			{
+				return _popUpCounter;
+			}
+			
+			public function closeGame(gameResults:Array):void
+			{
+				var result:XML = XML(gameResults[0]);
+				
+				//If they quit out early, dont try to log anything
+				if (String(result) == "undefined" || String(result) == "")
+				{ 
+					dispatchEvent(new RoomNavigateEvent(RoomNavigateEvent.ENTER_PREV_ROOM));
+					return;
+				}
+					
+				// Determine game id.
+				var gameId:int = result.gameId;
+				
+				// Increment game play count.
+				GamePlayCounter.incrementGamePlay(gameId);
+				
+				// Reset the frameRate.
+				Application.application.frameRate = 16;
+				// Enter the previous room. Special case for event games. -Molly
+				if(gameId == Constants.ROCK_JENGA_GAME_ID && result.winCondition == "win")
+				{
+					dispatchEvent(new RoomNavigateEvent(RoomNavigateEvent.ENTER_ROOM,Constants.ROOM_ID_MINIMAZE_PRIZE_ROOM_G));
+				}
+				else if(gameId == Constants.ZOMBIE_BOSS_GAME_ID && result.winCondition == "win")
+				{
+					dispatchEvent(new RoomNavigateEvent(RoomNavigateEvent.ENTER_ROOM,Constants.ROOM_ID_BULLPEN));
+				}
+				else
+				{
+					dispatchEvent(new RoomNavigateEvent(RoomNavigateEvent.ENTER_PREV_ROOM));
+				}
+				
+				// If the game was won, dispatch a socket event
+				// to notify the server.
+				if (result.winCondition == "win")
+				{
+					var prms:Object = new Object();
+					prms.actionType = UserActionTypes.GAME_WON;
+					prms.actionValue = gameId.toString();
+					SocketClient.getInstance().sendPluginMessage('room_manager', SocketRoomEvent.USER_ACTION, prms);
+				}
+				
+				// Determine if this game should use a result screen.
+				// Note this also controls the game end being logged.
+				dispatchEvent(new GameResultEvent(String(result)));
+				
+				// Log the button clicks, if any
+				if(result.attributes)
+				{
+					var st:String = result.attributes.ButtonClickLogs;
+					if(st != null)
+					{
+						var arr:Array = st.split(",");
+						for(var i:int = 0; i < arr.length; ++i)
+						{
+							var linkId:int = parseInt(arr[i]);
+							if(linkId != 0)
+							{
+								LoggingUtil.sendClickLogging(linkId);
+							}
+						}
+					}
+				}
+				
+			}
+			
+			public function addPopUp(popUp:DisplayObject):void
+			{
+				var container:IChildList = getPopUpContainer(popUp);
+				
+				// If the pop up is already a child of another
+				// object, remove it.
+				// If it is already a child of container,
+				// do nothing and return from the function.
+				if (popUp.parent)
+				{
+					if (popUp.parent == container) return;
+					
+					popUp.parent.removeChild(popUp);
+				}
+				
+				container.addChild(popUp);
+				if (container != inspectorContainer)
+					_popUpCounter++;
+			}
+			
+			public function removePopUp(popUp:DisplayObject):void
+			{
+				var container:IChildList = getPopUpContainer(popUp);
+				
+				if (container.contains(popUp))
+				{
+					container.removeChild(popUp);
+					
+					if (container != inspectorContainer)
+						_popUpCounter--;
+				}
+			}
+			
+			public function centerPopUp(popUp:DisplayObject):void
+			{
+				var container:IChildList = getPopUpContainer(popUp);
+				
+				if (container.contains(popUp))
+				{
+					LayoutUtil.CenterObject(popUp, width / 2, height / 2);
+				}
+			}
+			
+			public function addQuedPopUp(popUp:DisplayObject):void
+			{
+				// If it's a normal display object use the dialog control.
+				// Otherwise use the MXML popup container.
+				if (popUp is IUIComponent)
+				{
+					addPopUp(popUp);
+				}
+				else
+				{
+					_dialogControl.addDialog(popUp);
+					_popUpCounter++;
+				}
+			}
+			
+			public function removeQuedPopUp(popUp:DisplayObject):void
+			{
+				// If it's a normal display object use the dialog control.
+				// Otherwise use the MXML popup container.
+				if (popUp is IUIComponent)
+				{
+					removePopUp(popUp);
+				}
+				else
+				{
+					_dialogControl.removeDialog(popUp);
+					_popUpCounter--;
+				}
+			}
+			
+			public function fakeGameResult():void
+			{
+				// This is for debugging puposes.
+				// Use this to send a fake game result to the server and recieve one back.
+				// Modify "fake_game_result.xml" in "assets/text" as neccesary.
+				trace('RoomModule.fakeGameResult()');
+				
+				// Load a fake game result and send it to the server.
+				var url:String = 'assets/text/fake_game_result.xml';
+				var request:URLRequest = new URLRequest(url);
+				var loader:URLLoader = new URLLoader(request);
+				loader.addEventListener(Event.COMPLETE, onComplete);
+				loader.addEventListener(IOErrorEvent.IO_ERROR, onError);
+				loader.load(request);
+				
+				function onError(e:IOErrorEvent):void
+				{
+					// Remove listeners.
+					loader.removeEventListener(Event.COMPLETE, onComplete);
+					loader.removeEventListener(IOErrorEvent.IO_ERROR, onError);
+				}
+				
+				function onComplete(e:Event):void
+				{
+					// Remove listeners.
+					loader.removeEventListener(Event.COMPLETE, onComplete);
+					loader.removeEventListener(IOErrorEvent.IO_ERROR, onError);
+					
+					trace('Sending fake game result.');
+					
+					// Get fake game result xml.
+					var fakeGameResult:XML = new XML(loader.data);
+					// Dispatch fake result to server.
+					dispatchEvent(new GameResultEvent(fakeGameResult.toString()));
+				}
+			}
+			
+			//////////////////////
+			// PROTECTED METHODS
+			//////////////////////
+			
+			protected function loadBoardingScreen():void
+			{
+				//MainUtil.showDialog(OnBoardingDialog,null,true,false);
+				MainUtil.showDialog(OnBoardingDialog,null,false,false);
+			}
+
+			protected function roomChanged(room:Room):void
+			{
+				this.room = room;
+				
+				if (room)
+				{
+					// Show the room container.
+					roomContainer.visible = true;
+					
+					// Hide the world map.
+					worldMap.visible = false;
+					
+					if (_editModeWatcher != null)
+						_editModeWatcher.unwatch();
+					_editModeWatcher = BindingUtils.bindSetter(toggleEditMode,room,"editMode");
+					
+					// Increment room enter counters.
+					_sessionRoomEnterCount++;
+					_sinceQuestCompleteRoomEnterCount++;
+					
+					// Dispatch a user action event.
+					var roomIdArr:Array = room.id.split('_', 2);
+					var roomId:String = roomIdArr[1];
+					var params:Object = new Object();
+					params.actionType = UserActionTypes.JOIN_SPECIFIC_ROOM;
+					params.actionValue = roomId;
+					if (Constants.QUEST_ENABLED == true) SocketClient.getInstance().sendPluginMessage('room_manager', SocketRoomEvent.USER_ACTION, params);
+					
+					// Dispatch a user action event.
+					params = new Object();
+					params.actionType = UserActionTypes.JOIN_ROOM;
+					params.actionValue = _sinceQuestCompleteRoomEnterCount.toString();
+					if (Constants.QUEST_ENABLED == true) SocketClient.getInstance().sendPluginMessage('room_manager', SocketRoomEvent.USER_ACTION, params);
+					
+					// if a home turf (and the first time) - get unread messages
+					if (_hasSentMsgRequest == false)
+					{
+						SocketClient.sendMessage("avatar_handler", "unreadMessages");
+						this._hasSentMsgRequest = true;
+					}
+					
+					// Switch GameConsole Button If In Home Turf
+					if (room.ownerId == _userAvatar.avatarId)
+					{
+						console.setConsoleTurfButton("builder");
+					}
+					else
+					{
+						console.setConsoleTurfButton("home");
+					}
+					
+				}
+			}
+			
+			// Called when editMode of current room changes
+			protected function toggleEditMode(editMode:Boolean):void
+			{	
+				//this.votingPanel.visible = !editMode;
+				this.turfInterface.visible = !editMode;
+			}
+			
+			protected function showVotingPanel(room:Room):void
+			{
+				// Reset Visibility
+				//votingPanel.visible = false;
+				turfInterface.visible = false;
+				
+				if (room)
+				{
+					if (room.id.indexOf('private') == 0)
+					{
+						//votingPanel.setRoom(room.id,room.ownerId);
+						//votingPanel.visible = true;
+						turfInterface.setRoom(room.id,room.ownerId);
+						turfInterface.visible = true;
+					}
+				}
+					
+			}
+			
+			protected function getPopUpContainer(popUp:DisplayObject):IChildList
+			{
+				if (popUp is RoomEntityInspector)
+				{
+					return inspectorContainer;
+				}
+				else
+				{
+					return (popUp is IUIComponent) ? popUpContainer : popUpContainer.rawChildren;
+				}
+			}
+			
+			protected function onWorldMapClick():void
+			{
+				// Make sure the user is registered.
+				if (_userAvatar.membershipStatus == MembershipStatus.GUEST)
+				{
+					MainUtil.showDialog(SaveYourGameDialog);
+					return;
+				}
+				
+				showWorldMap();
+				
+				// Play a sound.
+				var soundUrl:String = AssetUtil.GetGameAssetUrl(GameAssetId.WORLD_SOUND, 'map_button_click.mp3');
+				SoundManager.GetInstance().playSound(soundUrl);
+			}
+			
+			protected function onWorldMapRollOver():void
+			{
+				// Play a sound.
+				var soundUrl:String = AssetUtil.GetGameAssetUrl(GameAssetId.WORLD_SOUND, 'map_button_roll_over.mp3');
+				SoundManager.GetInstance().playSound(soundUrl);
+			}
+			
+			protected function showWorldMap():void
+			{
+				// Make map visible.
+				initWorldMap();
+				worldMap.visible = true;
+				addChild(worldMap);
+			}
+			
+			//////////////////////
+			// PRIVATE METHODS
+			//////////////////////
+			
+			private function initWorldMap():void
+			{
+				// Make sure we only do this once.
+				if (_mapInit == true) return;
+				_mapInit = true;
+				
+				com.sdg.model.SdgItemClassId.getIdByClass(com.sdg.model.Avatar);
+				
+				// Load the world map.
+				// Show a load indicator so that the user knows something is going on.
+				_worldMapLoadIndicator = new LoadIndicatorOverlay();
+				_worldMapLoadIndicator.name = 'Loading World Map';
+				rawChildren.addChild(_worldMapLoadIndicator);
+				
+				worldMap.source =  Environment.getAssetUrl() + "/test/gameSwf/gameId/99/gameFile/worldMap.swf";
+				worldMap.addEventListener(Event.INIT, onWorldMapInit);
+			}
+			
+			private function startHeartBeat():void
+			{
+				var timer:Timer = new Timer(60000);
+				timer.addEventListener(TimerEvent.TIMER, onTick);
+				timer.start();
+				
+				function onTick(event:TimerEvent):void
+				{
+					_socket.sendPluginMessage("avatar_handler", "heartbeat");
+				}
+			}
+			
+			private function registerExternalCallbacks():void
+			{
+				if (ExternalInterface.available) 
+				{
+	                try 
+	                {
+	                    trace("Adding callbacks...\n");
+	                    ExternalInterface.addCallback("closeGame", closeGame);
+	                } 
+	                catch (error:SecurityError) 
+	                {
+	                   trace("A SecurityError occurred: " + error.message + "\n");
+	                } 
+	                catch (error:Error) 
+	                {
+	                   trace("An Error occurred: " + error.message + "\n");
+	                }
+	            }
+	            else
+	            {
+	                trace("External interface is not available for this container.");
+	            }
+			}
+			
+			// list of rooms for special exits
+			// see http://192.168.0.222:8181/index.php/Instant_Room_Navigator for room key map
+			private function get _specialExitToWorld():Boolean
+			{
+				switch( room.id )
+				{
+					case 'public_122' : //aka Trivia Game
+					case 'public_123' : //aka Trivia Game
+					case 'public_124' : //aka Trivia Game
+					case 'public_125' : //aka Trivia Game
+					case 'public_126' : //aka Trivia Game
+					case 'public_127' : //aka Trivia Game
+					case 'public_128' : //aka Trivia Game
+					{
+						return true;
+					}
+					default:
+					{
+						return false;
+					}
+				}
+				return false;
+			}
+			
+			private function showGameResultScreen(gameResultXml:XML):void
+			{
+				trace('RoomModule.showGameResultScreen()');
+				trace('gameResultXml = \t' + gameResultXml.toString());
+				
+				var progressAlert:ProgressAlertChrome;
+				var resultScreenLoader:QuickLoader;
+				var resultScreen:DisplayObject;
+				var resultScreenContainer:Sprite;
+				var gameLogoLoader:QuickLoader;
+				var gameLogo:DisplayObject;
+				var gameId:int = int(gameResultXml.gameId);
+				var gamePlayCount:int = GamePlayCounter.getPlayCount(gameId);
+				var isMvp:Boolean = _userAvatar.membershipStatus == MembershipStatus.PREMIUM;
+				var bonus:int = gameResultXml.tokensBonus;
+				var shopLabel:String = 'Shop';
+				var canPlayAgain:Boolean = (isMvp || gamePlayCount < GamePlayCounter.MAX_FREE_PLAYS_PER_DAY);
+				// Exceptions for Baseball Games
+				//if ((gameId==17)||(gameId==18)||(gameId==108))
+				//{
+				//	canPlayAgain = true;
+				//}
+				
+				var highScore:int = gameResultXml.highScoreAllTime;
+				var currentScore:int = int(gameResultXml.finalScore);
+				var tokens:int = int(gameResultXml.tokensEarned);
+				var xp:int = int(gameResultXml.experienceEarned);
+            	// Show a standard game result.
+				progressAlert = ProgressAlertChrome.show('Getting game result.', 'Game Result');
+				var resultScreenUrl:String = AssetUtil.GetGameAssetUrl(99, 'game_finish_screen.swf');
+				resultScreenLoader = new QuickLoader(resultScreenUrl, onResultScreenComplete, onResultScreenError);
+				
+				function onResultScreenError():void
+				{
+					// There was an error while loading the result screen.
+					// Remove progress alert.
+					progressAlert.close(0);
+				}
+				
+				function onGameLogoError():void
+				{
+					// There was an error while loading the game logo.
+					// Use a default game logo.
+					gameLogo = new Sprite();
+					// Show the result screen.
+					showResult();
+				}
+				
+				function onResultScreenComplete():void
+				{
+					trace('Result screen loaded.');
+					// Get loaded game reuslt screen.
+					resultScreen = resultScreenLoader.content;
+					resultScreenLoader = null;
+					// Now load the game logo.
+					gameLogoLoader = new QuickLoader(AssetUtil.GetGameLogoUrl(gameId), onGameLogoComplete, onGameLogoError);
+				}
+				
+				function onGameLogoComplete():void
+				{
+					trace('Game logo loaded.');
+					// Get game logo.
+					gameLogo = gameLogoLoader.content;
+					// Show the result screen.
+					showResult();
+				}
+				
+				function showResult():void
+				{
+					trace('Showing game result screen.');
+					trace('isMvp = ' + isMvp.toString());
+					trace('bonus = ' + bonus);
+					trace('canPlayAgain = ' + canPlayAgain.toString());
+					trace('highScore = ' + highScore);
+					trace('currentScore = ' + currentScore);
+					trace('tokens = ' + tokens);
+					trace('xp = ' + xp);
+					
+					// Remove progress alert.
+					progressAlert.close(0);
+					
+					// Show the result screen.
+					var resultScreenObj:Object = resultScreen;
+					if (resultScreenObj['setResults']) resultScreenObj.setResults(gameLogo, isMvp, bonus, shopLabel, canPlayAgain, highScore, currentScore, tokens, xp);
+					resultScreenContainer = new Sprite();
+					resultScreenContainer.graphics.beginFill(0, 0.8);
+					resultScreenContainer.graphics.drawRect(0, 0, 925, 665);
+					resultScreenContainer.addChild(resultScreen);
+					resultScreen.x = resultScreenContainer.width / 2 - resultScreen.width / 2;
+					resultScreen.y = resultScreenContainer.height / 2 - resultScreen.height / 2;
+					roomContainer.addPopUp(resultScreenContainer);
+					
+					// Add interaction listeners.
+					resultScreen.addEventListener('back', onBackClick);
+					resultScreen.addEventListener('play', onPlayClick);
+					resultScreen.addEventListener('mvp', onMvpClick);
+					resultScreen.addEventListener('shop-click', onShopClick);
+				}
+				
+				function removeResultScreen():void
+				{
+					// Remove listeners.
+					resultScreen.removeEventListener('back', onBackClick);
+					resultScreen.removeEventListener('play', onPlayClick);
+					resultScreen.removeEventListener('mvp', onMvpClick);
+					resultScreen.removeEventListener('shop-click', onShopClick);
+					// Remove result screen.
+					roomContainer.removePopUp(resultScreenContainer);
+				}
+				
+				function onBackClick(e:Event):void
+				{
+					// Remove result screen.
+					removeResultScreen();
+				}
+				
+				function onPlayClick(e:Event):void
+				{
+					// Remove result screen.
+					removeResultScreen();
+					// Load the game again.
+					if (canPlayAgain) RoomManager.getInstance().loadGame(gameId);
+				}
+				
+				function onMvpClick(e:Event):void
+				{
+					// Remove result screen.
+					removeResultScreen();
+					// Send user to MVP page.
+					if (isMvp) return;
+					MainUtil.goToMVP(3744);
+				}
+				
+				function onShopClick(e:Event):void
+				{
+					// Remove result screen.
+					removeResultScreen();
+					// Open store.
+					// Get store id from room.
+					var roomStoreId:uint = RoomManager.getInstance().currentRoom.storeId;
+					var storeId:uint = (roomStoreId > 0) ? roomStoreId : StoreConstants.STORE_ID_RIVERWALK;
+					var params:Object = new Object();
+					params.storeId = storeId;
+					// Open store module.
+					AASModuleLoader.openStoreModule(params);
+				}
+			}
+			
+			//////////////////////
+			// EVENT HANDLERS
+			//////////////////////
+			
+			private function onPluginEvent(event:SocketEvent):void
+			{
+				var action:String = event.params.action;
+				switch (action)
+				{
+					case 'roomConfig' :
+						ModelLocator.getInstance().serverTime = event.params.currentTime;
+						break;
+					case 'serverTime' :
+						ModelLocator.getInstance().serverTime = event.params.serverTime;
+						break;	
+				}
+
+				if (Constants.ENABLE_SOCKET_TRACE_MESSAGES == true)
+					trace("--------- action in RoomModule.mxml " + event.params.action + " ----------");
+					
+				// Check for rewards.
+				if (event.params.reward)
+				{
+					var	rewardXMLList:XMLList = XML(event.params.reward).children();
+					var rewards:Array = [];
+					
+					for each (var rewardXML:XML in rewardXMLList)
+					{
+						var r:Reward = ObjectUtil.mapXMLNodeValues(new Reward(),rewardXML);
+						//in the case of turfRating message the reward is sent to both players.
+						// fix for ticket#387
+						if(r.avatarId == _userAvatar.avatarId)
+						{
+							rewards.push(r);
+						}
+					}
+					
+					// Sort rewards by priority.
+					rewards.sortOn("priority", Array.NUMERIC);
+					
+					// Set rewards on systemAvatar.
+					_userAvatar.currentRewards = rewards;
+				}
+				
+				switch (event.params.action)
+				{
+					case "changeThemeConfig":
+						RoomManager.getInstance().updateRoomTheme(event.params, roomContainer.getRoomController());
+						break;
+					case "gameResult":
+						// This is a message related to game results.
+						// Only the local user recieves this message.
+						var	gameResult:XML = XML(event.params.gameResult);
+						trace("GameResult XML:\n" + gameResult);
+						
+						// The game results need to get sent to the server, otherwise they won't be logged.
+						// but don't need to show a game result.
+						var gamesWithoutScreens:Array = [];
+						gamesWithoutScreens.push(Constants.TOP_SHOT_GAME_ID);
+						gamesWithoutScreens.push(Constants.NFL_PA_PUZZLE_1_GAME_ID);
+						gamesWithoutScreens.push(Constants.NFL_PA_PUZZLE_2_GAME_ID);
+						gamesWithoutScreens.push(Constants.NFL_PA_PUZZLE_3_GAME_ID);
+						gamesWithoutScreens.push(Constants.COMBO_LOCK_GAME_ID);
+						gamesWithoutScreens.push(Constants.ROCK_JENGA_GAME_ID);
+						gamesWithoutScreens.push(Constants.SINGLEPLAYER_MISSION1_GAME_ID);
+						var gameId:int = int(gameResult.gameId);
+						// Determine if this game should use a result screen.
+						if (gamesWithoutScreens.indexOf(gameId) < 0)
+						{
+							showGameResultScreen(gameResult);
+						}
+						
+						break;
+					case "unreadMessages":
+						
+						InboxManager.processUnreadMessages(XML(event.params.unreadMessages));
+						break;
+					case "shutdown":
+						var xml:XML = <shutdown></shutdown>;
+						var shutdown:XMLList = XMLList(event.params.shutdown);
+						xml.appendChild(shutdown);
+						
+						if (xml.hasOwnProperty("reasonCode"))
+						{
+							if (Server.getCurrent().chatMode != 2 && xml.reasonCode == 2)
+								var swfAlert:SwfAlert = SwfAlert.show();
+								swfAlert.backgroundImage.source = "assets/swfs/SafeChatPopup.swf";
+								swfAlert.closeHandler = returnToLogin;
+								swfAlert.button.label = "Login";
+								swfAlert.button.width = 100;
+						}
+						else
+						{
+							var mins:int = int(shutdown[0]);
+							if (mins > 0)
+							{
+								var minutesWord:String = "minutes";
+								if(mins == 1)
+								{
+									minutesWord = "minute";
+								}
+								SdgAlertChrome.show("The server will shut down for maintenance in " + mins + " " + minutesWord + " for an update.", "Notice");
+							}
+							else
+							{
+								var respawn:int = int(shutdown[1]);
+								if (respawn > 0)
+								{
+									SdgAlertChrome.show("Action AllStars is currently being updated. We will be back on line in " +
+										(respawn > 60 ? (int(respawn / 60)) + " hours." : respawn + " minutes."), "Notice", returnToLogin);
+								}
+								else if (respawn == 0)
+								{
+									SdgAlertChrome.show("Action AllStars is currently being updated, and will be back on line soon. " + 
+											"Please check back later.", "Notice", returnToLogin);
+								}
+								else if (respawn == -1)
+								{
+									SdgAlertChrome.show("This Action AllStars server is being updated.  Please choose another server to join.",
+										"Notice", returnToServer);
+								}
+							}
+						}
+						break;
+					case "micro_transaction":
+						var tokenDelivery:XML = XML(event.params.micro_transaction);
+						var numTokens:int = tokenDelivery.token;
+						var message:String = "Hey " + _userAvatar.name + ",\n\nThe " +
+							numTokens + " tokens you've purchased have been added to your account!";
+							
+						var closingMessage:String = "Ready. Set. Shop!";
+						
+						MainUtil.showDialog(TokenDeliveryDialog, {message:message, tokens:numTokens, closingMessage:closingMessage});
+						HudController.getInstance().addNewNotification(numTokens + " tokens have been delivered to your account", NotificationIcon.GENERIC);
+						break;
+					default:					
+						break;	
+				}
+			}
+			
+			private function returnToLogin(e:Event):void
+			{
+				// needs more work
+				//loadModule("Login.swf");
+				//navigateToURL(new URLRequest('login.jsp'), '_self');
+				navigateToURL(new URLRequest('chatApp.jsp'), '_self');
+			}
+			
+			private function returnToServer(e:Event):void
+			{
+				// needs more work
+				//MainUtil.showDialog(ServerSelection);
+				//navigateToURL(new URLRequest('login.jsp'), '_self');
+				navigateToURL(new URLRequest('chatApp.jsp'), '_self');
+				//navigateToURL("chatApp.jsp", '_self');
+			}
+			
+			private function onConnectonClosed(event:SocketEvent):void
+			{
+				//SdgAlert.show("Connection to the server has been lost", "Time Out!");
+				SdgAlertChrome.show("Connection to the server has been lost", "Time Out!", returnToLogin);
+				//var alert:SdgAlert = SdgAlert.show("Connection to the server has been lost", "Time Out!", SdgAlert.OK, SdgAlert.OK, returnToLogin);
+				//alert.setButtonLabel(SdgAlert.OK, "Continue");
+			}
+			
+			private function onScorecardReceived(event:PickemScorecardEvent):void
+			{
+				CairngormEventDispatcher.getInstance().removeEventListener(PickemScorecardEvent.SCORECARD_RECEIVED, onScorecardReceived);
+				if (event.params.questions.@status == "resolved" && event.params.questions.@resultNew == "true")
+				{
+					var so:SharedObject = ModelLocator.getInstance().pickemSharedObject;
+					so.data.newPickemResults = "true";
+					so.data.avatarId = _userAvatar.avatarId;
+					so.flush();
+					
+					HudController.getInstance().addNewNotification(
+						"Sports Psychic Results are in! <FONT color='#C8DFF7'>CLICK HERE</FONT> to view your scorecard.",
+						NotificationIcon.RWS,
+						false, false,
+						onPickemClick);
+				}
+			}
+			
+			private function onPickemClick(event:MouseEvent):void
+			{
+				PDAController.getInstance().showPDA();
+				PDAController.getInstance().openPickemPanel();
+			}
+			
+			protected function popUpHideHandler(event:FlexEvent):void
+			{
+				//removePopUp(event.target as DisplayObject);
+			}
+			
+			protected function popUpShowHandler(event:FlexEvent):void
+			{
+				addPopUp(event.target as DisplayObject);
+			}
+			
+			protected function onWorldMapInit(event:Event):void
+			{
+				// Remove event listener.
+				worldMap.removeEventListener(Event.INIT, onWorldMapInit);
+				
+				// Remove world map load indicator.
+				rawChildren.removeChild(_worldMapLoadIndicator);
+				_worldMapLoadIndicator.destroy();
+				_worldMapLoadIndicator = null;
+				
+				var swf:Object = Object(this.worldMap.content); 
+				
+				
+				
+				try
+				{	
+					// Pass gender to world map.
+					swf.gender = ModelLocator.getInstance().avatar.gender;
+					// pass the application domain to the world map swf
+					swf.domainName = Environment.getApplicationDomain();
+					// turn on glow - always on
+					//swf.setButtonState(true);
+				}
+				catch(e:Error)
+				{
+					trace("worldMap.Swf error: " + e.message);
+				}
+				
+				// Remove pre loader animation.
+				Application.application.closeStarsWaiting();
+			}
+			
+			protected function adjustItemEffect(event:Event):void
+			{
+				var swfButton:Object = event.currentTarget.content;
+				if (!swfButton.effectReady)
+					return;
+				
+				// get the item 
+				var itemTypeId:int = 0;
+				if (event.currentTarget.id == "speedShoesBtn")
+				{
+					itemTypeId=AvatarController(RoomManager.getInstance().userController).getEquppedSpeedItemTypeWithHighestCharge();
+					//itemTypeId = PreviewUtil.SHOES;
+				}
+					
+				// apply the effect	
+				if (itemTypeId)
+				{
+					var item:InventoryItem = ModelLocator.getInstance().avatar.apparel[PreviewUtil.getLayerId(itemTypeId)] as InventoryItem;
+					if (item && item.charges != 0)
+					{
+						// start the effect timer on the button
+						swfButton.startEffect(item.effectDurationSeconds, item.cooldownSeconds);
+						
+						// start the effect	
+						RoomManager.getInstance().userController.applyItemEffects(item, true);
+						
+						// decrement the charges if needed
+						if (item.charges > 0)
+						{
+							if(item.charges>=1000000)
+							{
+								swfButton.charges=" ";								
+							}
+							else
+							{
+								swfButton.charges = --item.charges;							
+								RoomManager.getInstance().userController.setItemCharges(item);
+							}
+						}
+						
+						// add the effect complete (done, over, fini) event handler to the damn button
+						swfButton.addEventListener(Event.COMPLETE, onEffectComplete);
+					}
+				}
+			}
+			
+			protected function onEffectComplete(event:Event):void
+			{
+				// get the item 
+				var itemTypeId:int = 0;
+				if (event.currentTarget.parent.parent.id == "speedShoesBtn")
+				{
+					itemTypeId=AvatarController(RoomManager.getInstance().userController).getEquppedSpeedItemTypeWithHighestCharge();
+					//itemTypeId = PreviewUtil.SHOES;
+				}
+				if (itemTypeId)
+				{
+					var item:InventoryItem = ModelLocator.getInstance().avatar.apparel[PreviewUtil.getLayerId(itemTypeId)] as InventoryItem;
+					if (item)
+					{
+						// stop the effect	
+						AvatarController(RoomManager.getInstance().userController).applyItemEffects(item, false);
+					}
+				}
+			}
+			
+			protected function onEffectsButtonDownloadComplete(event:Event):void
+			{
+				if (event.currentTarget.id == "speedShoesBtn")
+				{
+					var item:InventoryItem = ModelLocator.getInstance().avatar.apparel[PreviewUtil.getLayerId(PreviewUtil.SHOES)] as InventoryItem;
+					if (item)
+					{
+						var swfButton:Object = event.currentTarget.content;
+						swfButton.charges = item.charges;
+					}
+				} 
+			}
+			
+			protected function onSpeedShoeButtonShow(event:Event):void
+			{
+				var itemTypeId:int=AvatarController(RoomManager.getInstance().userController).getEquppedSpeedItemTypeWithHighestCharge();
+				// show the charges left
+				var previewLayer:int = PreviewUtil.getLayerId(itemTypeId);
+				//if called on some invalid layer or itemtype error check
+				if(previewLayer >= 0)
+				{
+					var item:InventoryItem = ModelLocator.getInstance().avatar.apparel[previewLayer] as InventoryItem;
+					var swfButton:Object = event.currentTarget.content;
+					swfButton.visible = true;
+					if(item.charges>=1000000)
+					{
+						swfButton.charges=" ";
+					}
+					else
+					{
+						swfButton.charges = item.charges;	
+					}	
+				}		
+			}
+			
+			private function onRequestForWorldMap(e:Event):void
+			{
+				// Show the world map.
+				showWorldMap();
+			}
+			
+			private function onMusicToggleRequest(e:Event):void
+			{
+				if (_musicOn)
+				{
+					// Turn it off
+					roomContainer.muteRoomMusicVolume();
+				}
+				else
+				{
+					// Turn it on
+					roomContainer.unMuteRoomMusicVolume();
+				}
+					
+				_musicOn = !_musicOn;
+			}
+			
+			private function onQuestComplete(e:Event):void
+			{
+				// Reset value.
+				_sinceQuestCompleteRoomEnterCount = 0;
+			}
+			
+			private function onShopRollOver():void
+			{
+				// Play a sound.
+				var soundUrl:String = AssetUtil.GetGameAssetUrl(GameAssetId.WORLD_SOUND, 'shop_roll_over.mp3');
+				SoundManager.GetInstance().playSound(soundUrl);
+			}
+			
+			private function onActiveQuestsUpdate(e:Event):void
+			{
+				// Make sure the mission where users are tasked
+				// to go pick there favorite teams is active.
+				// If it is active, show the team select control.
+				// If it is NOT active, hide the team select control.
+				var pickYourTeamsMission:AvatarAchievement = QuestManager.getActiveQuest(QuestManager.TEAM_SELECT_QUEST_ID);
+				// REMOVED: topTeamPicker taken out of HUD
+				//topTeamPicker.visible = (pickYourTeamsMission != null) ? true : false;
+			}
+			
+			protected function updateLevelStatus():void
+			{
+				// Make sure level data is available.
+				if (!LevelManager.LevelDataAvailable) return;
+				
+				var levelStatus:AvatarLevelStatus = LevelManager.GetAvatarLevelStatus(_userAvatar);
+				if (!levelStatus)
+				{
+					return;
+				}
+				
+				levelName = levelStatus.levelName;
+				levelNumber = levelStatus.subLevelIndex;
+				rankNumber = levelStatus.levelIndex;
+				percentToNextLevel = 100*((levelStatus.currentXp-levelStatus.currentSubLevelMinXp)/(levelStatus.nextLevelXp-levelStatus.currentSubLevelMinXp));
+				progressToNextLevel = levelStatus.currentXp-levelStatus.currentSubLevelMinXp;
+				nextLevel = levelStatus.nextLevelXp-levelStatus.currentSubLevelMinXp;
+			}
+			
+			private function onAvatarPointsUpdate(e:Event):void
+			{
+				// Update level status.
+				updateLevelStatus();
+			}
+			
+			private function onTokensUpdate(e:AvatarUpdateEvent):void
+			{
+				console.setTokens(_userAvatar.currencyToShow);
+			}
+			
+			private function onLevelDataAvailable(e:Event):void
+			{
+				updateLevelStatus();
+			}
+			
+			/** 
+			 * WARNING: this XML was originally designed to be used for the welcome screen.
+			 * But it was later decided that this should be used for ALL information that the client gets on login.
+			 * As such it is only contained on the local avatar, and does contain some extra information.
+			 * The extra information is stored in case other objects aren't instaciated when this is called initially. - Molly
+			*/
+			private function loadLocalAvatarLoginXML():void
+			{
+				var av:Avatar = ModelLocator.getInstance().avatar;
+				//http://mdr-qa02/test/dyn/avatar/acctLoginInfo?avatarId=123
+				var url:String = Environment.getApplicationUrl() + '/test/dyn/avatar/acctLoginInfo?avatarId='+av.avatarId;
+				var request:URLRequest = new URLRequest(url);
+				var loader:URLLoader = new URLLoader();
+				loader.addEventListener(Event.COMPLETE, onComplete);
+				loader.addEventListener(IOErrorEvent.IO_ERROR, onComplete);
+				loader.load(request);
+				
+				// We don't hang, so dispatch a complete whether we're successful or not.
+				// its up to things using this function to do their own error checking
+				function onComplete(e:Event):void
+				{
+					loader.removeEventListener(Event.COMPLETE, onComplete);
+					loader.removeEventListener(IOErrorEvent.IO_ERROR, onComplete);
+					av.localAvatarLogInXML = new XML(loader.data);
+					av.dispatchEvent(new Event(Avatar.EVENT_LOCAL_AVATAR_XML_DONE_LOADING));
+				}
+			}
+			
+			////////////////////
+			// GET/SET METHODS
+			////////////////////
+			
+			public function set percentToNextLevel(value:uint):void
+			{
+				if (value > 100)
+				{
+					_percentToNextLevel = 100;
+				}
+				else if (value < 1)
+				{
+					_percentToNextLevel = 1;
+				}
+				else
+				{
+					_percentToNextLevel = value;
+				}
+				
+				levelPanel.xpPercent = _percentToNextLevel;
+				//levelPanel.setXPPercent(_percentToNextLevel);
+			}
+			
+			public function set levelName(value:String):void
+			{
+				_levelName = value;
+				levelPanel.rankField = value;
+				//levelPanel.setLevelName(_levelName);
+				//levelPanel.setLevelName("Veteran");
+			}
+			
+			public function set levelNumber(value:uint):void
+			{
+				_levelNumber = value;
+				levelPanel.level = value.toString();
+				//levelPanel.setLevelNumber("20");
+			}
+			
+			public function set rankNumber(value:uint):void
+			{
+				_rankNumber = value;
+				levelPanel.setRank(value);
+				//levelPanel.setLevelNumber(3);
+			}
+			
+			public function set progressToNextLevel(value:uint):void
+			{
+				_progressToNextLevel = value;
+				levelPanel.setXP(value);
+			}
+			
+			public function set nextLevel(value:uint):void
+			{
+				_nextLevel = value;
+				levelPanel.setXPGoal(value);
+			}	
+
+		]]>
+	</mx:Script>
+	<!-- room container -->
+	<controls:RoomContainer id="roomContainer" 	addPopUp="addPopUp(event.popUp)"
+												removePopUp="removePopUp(event.popUp)" 
+												centerPopUp="centerPopUp(event.popUp)" 
+												addQuedPopUp="addQuedPopUp(event.popUp)" 
+												removeQuedPopUp="removeQuedPopUp(event.popUp)"/>
+	
+	<!-- room edit panel -->
+	<mx:Canvas id="inspectorContainer" mouseEnabled="false" width="100%" height="100%"
+		horizontalScrollPolicy="off" verticalScrollPolicy="off" creationPolicy="all"/>
+	<controls:TurfBuilder2 id="turfBuilder" bottom="0" visible="{room.editMode}"
+		saveRoom="{dispatchEvent(new PrivateRoomEditEvent(PrivateRoomEditEvent.SAVE_PRIVATE_ROOM))}"
+		updateRoom="{dispatchEvent(new PrivateRoomEditEvent(PrivateRoomEditEvent.UPDATE_PRIVATE_ROOM))}"/>
+		
+	<!-- room voting/hometurf panel -->
+	<!--<controls:HomeTurfVotingPanel id="votingPanel" />-->
+	<controls:HomeTurfTopUI id="turfInterface" />
+	
+	<!-- avatar action effects -->
+	<mx:HBox styleName="transparent" x="-20" y="142" visible="true">
+	
+		<!-- speed shoes -->
+		<mx:Image id="speedShoesBtn" source="assets/swfs/speedShoesButton.swf"  
+			visible="{AvatarController(RoomManager.getInstance().userController).speedShoesOn}" includeInLayout="{AvatarController(RoomManager.getInstance().userController).speedShoesOn}"
+			click="adjustItemEffect(event)" complete="onEffectsButtonDownloadComplete(event)" show="onSpeedShoeButtonShow(event)"  />
+			
+	</mx:HBox>
+	
+	<!-- invite panel -->
+	<gameControls:InvitePanel id="invitePanel" visible="{RoomManager.getInstance().userController.invitePanelOn}" horizontalCenter="0" top="25" />
+	
+	<!-- ASN Button Panel -->
+	<controls:AsnButtonPanel id="asnButton"/>
+	
+	<!-- Rank/Level Panel -->
+	<controls:LevelIndicatorPanel id="levelPanel" />
+	
+	<!-- console -->
+	<controls:GameConsole id="console" bottom="0" enabled="{!worldMap.visible}" visible="{!turfBuilder.visible}"/>
+	
+	<mx:Canvas backgroundAlpha=".6" width="70" height="77" right="0" bottom="0"
+		visible="{Constants.PDA_ENABLED}"/>
+	
+	<!-- popUp container -->
+	<mx:Canvas id="popUpContainer" mouseEnabled="false" width="100%" height="100%"
+		horizontalScrollPolicy="off" verticalScrollPolicy="off" creationPolicy="all"/>
+	
+	<!--<mx:Image id="counter" visible="false" top="10" horizontalCenter="0" init="initCounter()"/>-->
+	<mx:Fade id="fade" />
+		
+</mx:Module>

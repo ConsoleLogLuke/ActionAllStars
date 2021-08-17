@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Module xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="925" height="665" creationComplete="init()">
+	<mx:Script>
+		<![CDATA[
+			import com.sdg.store.catalog.StoreCatalogEvent;
+			import com.sdg.store.catalog.StoreCatalogView;
+			import com.sdg.store.catalog.IStoreCatalogView;
+
+			protected var _view:IStoreCatalogView;
+
+			public function init():void
+			{
+				// Instantiate store catalog view.
+				_view = new StoreCatalogView(925, 665);
+				_view.addEventListener(StoreCatalogEvent.CLOSE_CLICK, onCloseClick);
+
+				// Add to display.
+				rawChildren.addChild(_view.display);
+			}
+
+			private function onCloseClick(e:StoreCatalogEvent):void
+			{
+				// Remove event listener.
+				_view.removeEventListener(StoreCatalogEvent.CLOSE_CLICK, onCloseClick);
+
+				// Dispatch module close.
+				dispatchEvent(new Event('closeModule', true));
+
+				// Destroy view.
+				_view.destroy();
+			}
+		]]>
+	</mx:Script>
+
+	<mx:Style source="styles/store.css"/>
+
+</mx:Module>

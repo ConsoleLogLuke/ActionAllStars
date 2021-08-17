@@ -1,0 +1,388 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Application
+	xmlns:mx="http://www.adobe.com/2006/mxml"
+	xmlns:forms="com.sdg.components.forms.*"
+	xmlns:business="com.sdg.business.*"
+	xmlns:sdgcontrols="com.sdg.components.controls.*"
+	layout="absolute"
+	width="925"
+	height="665" backgroundGradientColors="[#50aeff, #50aeff]"
+    preloader="com.sdg.components.controls.DownloadProgressBar"
+    horizontalScrollPolicy="off"
+    verticalScrollPolicy="off"
+    applicationComplete="init();">
+	<mx:Script>
+		<![CDATA[
+			import com.sdg.view.LoadIndicatorOverlay;
+			import com.flashdynamix.utils.SWFProfiler;
+			import com.boostworthy.animation.easing.Transitions;
+			import com.boostworthy.animation.rendering.RenderMethod;
+			import com.boostworthy.animation.management.AnimationManager;
+			import com.boostworthy.events.AnimationEvent;
+			import mx.effects.Resize;
+			import mx.effects.Zoom;
+			import mx.containers.Canvas;
+			import mx.effects.Fade;
+			import com.sdg.control.HudController;
+			import mx.events.ModuleEvent;
+			import com.sdg.components.games.InvitePanel;
+			import com.sdg.control.PSAController;
+			import mx.collections.ArrayCollection;
+			import mx.modules.*;
+			import mx.events.CloseEvent;
+			import mx.binding.utils.*;
+			import mx.controls.Button;
+          	import mx.events.FlexEvent;
+          	import mx.events.PropertyChangeEvent;
+			import mx.logging.targets.*;
+        	import mx.logging.*;
+        	import mx.managers.PopUpManager;
+
+			import flash.external.*;
+			import flash.events.Event;
+			import flash.ui.ContextMenu;
+			import flash.ui.ContextMenuItem;
+
+			import flash.system.Capabilities;
+			import flash.display.StageAlign;
+   			import flash.display.StageScaleMode;
+
+			import com.sdg.business.Services;
+			import com.sdg.commands.*;
+			import com.sdg.components.controls.*;
+			import com.sdg.components.dialog.*
+			import com.sdg.control.BuddyManager;
+        	import com.sdg.control.InboxManager;
+        	import com.sdg.control.SdgFrontController;
+        	import com.sdg.display.SpritesheetImages;
+			import com.sdg.events.*;
+			import com.sdg.model.*;
+			import com.sdg.net.Environment;
+          	import com.sdg.net.SdgModuleLoader;
+			import com.sdg.net.socket.SocketClient;
+			import com.sdg.net.Version;
+			import com.sdg.utils.*;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			import flash.net.navigateToURL;
+
+			protected var modelLocator:ModelLocator = ModelLocator.getInstance();
+			protected var systemAvatar:Avatar = ModelLocator.getInstance().avatar;
+			protected var _isStoreModuleOpened:Boolean = false;
+
+			private var _postGameDialog:ISdgDialog;
+			private	var _postStarsWaitingDialog:ISdgDialog;
+
+			private var _forceFailOver:Boolean = false;
+
+			private function init():void
+			{
+				// Here is where we implement a visiual profiling tool.
+				// To use it while running the game, right click anywhere
+				// in the game and choose "Show Profiler".
+				//
+				// IMPORTANT
+				//
+				// This should not be used on live.
+				//SWFProfiler.init(stage, this);
+
+				var flashvars:Object = {};
+
+				this.stage.align = StageAlign.TOP_LEFT;
+				this.stage.scaleMode = StageScaleMode.NO_BORDER;
+
+				for (var liStr:String in loaderInfo.parameters)
+				{
+					flashvars[liStr] = loaderInfo.parameters[liStr];
+				}
+
+				registerFlashVars(flashvars);
+
+				registerCommands();
+
+				ChangeWatcher.watch(modelLocator.user, "avatarId", avatarSelectionWatcher);
+				ChangeWatcher.watch(modelLocator.application, "isConfigLoaded", onConfigLoaded);
+				ChangeWatcher.watch(ModelLocator.getInstance().user, "isSocketLoggedIn", onSocketIdChange);
+
+				registerExternalCallbacks();
+
+				setupContextMenu();
+
+				// load config
+				loadConfig();
+
+				// Set startingModule to OneStepReg to initialize
+				// the registration module. From there you can
+				// create a new avatar.
+				//flashvars.startingModule = "OneStepReg";
+				beginLogin(flashvars.startingModule);
+
+				// Get badge manager insatnce.
+				//var badgeManager:BadgeManager = BadgeManager.GetInstance();
+			}
+
+			private function beginLogin(startingModule:String):void
+			{
+				loadModule("Login.swf");
+
+				mainLoader.addEventListener(ModuleEvent.READY, onModuleReady);
+				mainLoader.addEventListener(ModuleEvent.ERROR, onModuleError);
+
+				function onModuleReady(event:ModuleEvent):void
+				{
+					mainLoader.removeEventListener(ModuleEvent.READY, onModuleReady);
+					mainLoader.removeEventListener(ModuleEvent.ERROR, onModuleError);
+
+					Object(mainLoader.child).init(startingModule);
+				}
+
+				function onModuleError(event:ModuleEvent):void
+				{
+					mainLoader.removeEventListener(ModuleEvent.READY, onModuleReady);
+					mainLoader.removeEventListener(ModuleEvent.ERROR, onModuleError);
+				}
+			}
+
+			public function postStarsWaiting(path:String):void
+			{
+    	    	var data:Object = new Object();
+    	    	data.swfPath = path;
+    	    	trace( "posting stars");
+    	    	_postStarsWaitingDialog = MainUtil.showDialog(OverlayDialog2, data, false, false);
+   			}
+
+			public function closeStarsWaiting():void
+			{
+				_postStarsWaitingDialog.close();
+			}
+
+			private function registerExternalCallbacks():void
+			{
+				if (ExternalInterface.available)
+				{
+	                try
+	                {
+	                   trace("Adding callbacks...\n");
+	                   ExternalInterface.addCallback("pageClosing", onPageClose);
+	                }
+	                catch (error:SecurityError)
+	                {
+	                   trace("A SecurityError occurred: " + error.message + "\n");
+	                }
+	                catch (error:Error)
+	                {
+	                   trace("An Error occurred: " + error.message + "\n");
+	                }
+	            }
+	            else
+	            {
+	                trace("External interface is not available for this container.");
+	            }
+			}
+
+			private function registerCommands():void
+			{
+				var sdg:SdgFrontController = SdgFrontController.getInstance();
+				sdg.addCommand(LoginEvent.LOGIN, LoginCommand);
+				sdg.addCommand(ServerListEvent.LIST, ServerListCommand);
+
+				sdg.addCommand(SocketLoginEvent.SOCKET_LOGIN, SocketLoginCommand);
+				// hack but this is how we are setting the avatar
+
+				// inventory commands
+				sdg.addCommand(InventoryListEvent.LIST, InventoryListCommand);
+				sdg.addCommand(ItemTypeListEvent.ITEM_TYPE_LIST, ItemTypeListCommand);
+
+				// avatar commands
+				sdg.addCommand(AvatarEvent.AVATAR, AvatarCommand);
+				sdg.addCommand(AvatarApparelEvent.AVATAR_APPAREL, AvatarApparelCommand);
+				sdg.addCommand(AvatarApparelSaveEvent.AVATAR_APPAREL_SAVE, AvatarApparelSaveCommand);
+				sdg.addCommand(AvatarListEvent.LIST, AvatarListCommand);
+				sdg.addCommand(InventoryAttributeSaveEvent.INVENTORY_ATTRIBUTE_SAVE, InventoryAttributeSaveCommand);
+
+				// store commands
+				sdg.addCommand(StoreCategoriesEvent.STORE_CATEGORIES, StoreCategoriesCommand);
+				sdg.addCommand(StoreItemsEvent.STORE_ITEMS, StoreItemsCommand);
+				sdg.addCommand(ItemPurchaseEvent.ITEM_PURCHASE,ItemPurchaseCommand);
+
+				// other commands
+				sdg.addCommand(ModeratorSaveReportEvent.MODERATOR_REPORT_SAVE, SaveModeratorReportCommand);
+				sdg.addCommand(ApplicationConfigurationEvent.LOAD, ApplicationConfigurationCommand);
+				sdg.addCommand(ResendActivationEvent.RESEND_ACTIVATION, ResendActivationCommand);
+				sdg.addCommand(GetAsnEvent.GET_ASN, GetAsnCommand);
+				//sdg.addCommand(BuddyListEvent.BUDDYLIST, BuddyListCommand);
+				sdg.addCommand(GuestAccountEvent.SAVE_GUEST, GuestAccountCommand);
+				sdg.addCommand(TutorialResetEvent.TUTORIAL_RESET, TutorialResetCommand);
+				sdg.addCommand(TickerEvent.GET_FEED, TickerCommand);
+				sdg.addCommand(PickemScorecardEvent.GET_SCORECARD, PickemScorecardCommand);
+				sdg.addCommand(GetJabsEvent.GET_JABS, GetJabsCommand);
+				sdg.addCommand(GetEmotesEvent.GET_EMOTES, GetEmotesCommand);
+				sdg.addCommand(GetItemSetEvent.GET_ITEM_SETS, GetItemSetsCommand);
+				sdg.addCommand(ValidateUsernameEvent.VALIDATE_USERNAME, ValidateUsernameCommand);
+				sdg.addCommand(RegistrationSaveEvent.SAVE_REGISTRATION, RegistrationSaveCommand);
+
+				sdg.addCommand(SaveFavTeamsEvent.SAVE_FAV_TEAM, SaveFavTeamsCommand);
+				sdg.addCommand(GetFavTeamsEvent.GET_FAV_TEAM, GetFavTeamsCommand);
+				sdg.addCommand(GetStatsEvent.GET_STATS, GetStatsCommand);
+				sdg.addCommand(GetTeamsEvent.GET_TEAMS, GetTeamsCommand);
+				sdg.addCommand(VerifyFriendEvent.VERIFY_FRIEND, VerifyFriendCommand);
+				sdg.addCommand(ButtonClickLoggingEvent.BUTTON_CLICK_LOGGING, ButtonClickLoggingCommand);
+			}
+
+			private function registerFlashVars(vars:Object):void
+			{
+				applyEnvVars(vars);
+
+				modelLocator.affiliate = vars.partnerId;
+				modelLocator.hasUnity = vars.hasUnity;
+
+				if (vars.version) Environment.serverVersion = vars.version;
+				if (vars.returnUrl) Environment.returnUrl = vars.returnUrl;
+			}
+
+			private static function applyEnvVars(vars:Object):void
+			{
+				if (vars.applicationDomain)
+				{
+					Environment.setApplicationDomain(vars.applicationDomain);
+
+					// this url is prepened to HTTPService urls
+					Services.setBaseUrl(Environment.getApplicationUrl());
+				}
+
+				if (vars.assetDomain)
+				{
+					Environment.setAssetDomain(vars.assetDomain);
+				}
+
+				trace("app domain " + Environment.getApplicationDomain());
+				trace("asset domain " + Environment.getAssetDomain());
+				trace("app url " + Environment.getApplicationUrl());
+				trace("standalone " + Environment.isStandalone());
+			}
+
+			private function initLogging():void
+			{
+            	// Create a target.
+	            var logTarget:TraceTarget = new TraceTarget();
+
+				// Log all log levels.
+	            logTarget.level = LogEventLevel.ALL;
+
+	            // Add date, time, category, and log level to the output.
+	            logTarget.includeDate = true;
+	            logTarget.includeTime = true;
+	            logTarget.includeCategory = true;
+	            logTarget.includeLevel = true;
+
+	            // Begin logging.
+	            Log.addTarget(logTarget);
+        	}
+
+        	private function avatarSelectionWatcher(event:Event):void
+		   	{
+		   		MainUtil.showDialog(ServerSelection, {forceFailOver:this._forceFailOver},false);
+
+		   		// THIS NEEDS TO BE DISCUSSED...SHOULD GUEST USER HAVE SERVER SELECTION...if we send guest to free chat server they will be able
+		   		// to chat even if they select safe chat during registration for the current session
+		   		//
+//		   		if (ModelLocator.getInstance().avatar.membershipStatus == 3)
+//		   		{
+//		   			socketLogin();
+//		   		}
+//				else
+//				{
+//					MainUtil.showDialog(ServerSelection, {forceFailOver:this._forceFailOver});
+//				}
+			}
+
+			public function socketLogin():void
+			{
+				postStarsWaiting("assets/swfs/preloader.swf");
+				dispatchEvent(new SocketLoginEvent(Server.getCurrentId()));
+			}
+
+	        private function onSocketIdChange(event:Event):void
+			{
+				CairngormEventDispatcher.getInstance().removeEventListener(GuestAccountEvent.REENABLE_BUTTON, arguments.callee);
+
+				if (ModelLocator.getInstance().user.isSocketLoggedIn)
+				{
+					Application.application.loadModule("RoomModule.swf");
+				}
+				else
+				{
+					closeStarsWaiting();
+					SdgAlertChrome.show("You were disconnected.", "Time Out!");
+				}
+			}
+
+			private function loadConfig():void
+			{
+				dispatchEvent(new ApplicationConfigurationEvent(ApplicationConfigurationEvent.LOAD));
+			}
+
+			private function onConfigLoaded(e:Event):void
+			{
+				if (!modelLocator.application.isConfigLoaded)
+				{
+					SdgAlert.show("Unable to load configuration", "Time Out!");
+				}
+			}
+
+			public function loadModule(src:String):void
+			{
+				if (!Environment.isStandalone())
+				{
+					src += "?version=" + Environment.serverVersion;
+				}
+
+				mainLoader.applicationDomain = new ApplicationDomain(ApplicationDomain.currentDomain);
+				mainLoader.url = src;
+				mainLoader.loadModule();
+        	}
+
+	        public function unloadModule(m:ModuleLoader):void
+	        {
+	            m.unloadModule();
+	        }
+
+			/**
+	        * Should be called from a container web page's javascript when it detects that the page is closing
+	        */
+	        public function onPageClose(isIE:Boolean = true):void
+	        {
+	        	if (isIE)
+	        		SocketClient.sendMessage("avatar_handler", "logout");
+	        }
+
+	        private function onContextMenuAbout(event:ContextMenuEvent):void
+			{
+				SdgAlert.show("Client Version " + Version.major + "." + Version.minor + "." + Version.inline + "." +
+							  Version.buildNum + "  " + Version.releaseType + "\nServer Version " + Environment.serverVersion,
+							  "Action AllStars");
+			}
+
+			private function setupContextMenu():void
+			{
+				// create a new menu item
+				var menuItem:ContextMenuItem = new ContextMenuItem("About Action AllStars");
+    	        menuItem.addEventListener(ContextMenuEvent.MENU_ITEM_SELECT, onContextMenuAbout);
+
+    	        // add it the the context menu
+				contextMenu.customItems.push(menuItem);
+			}
+		]]>
+	</mx:Script>
+
+	<mx:Style source="styles/style.css"/>
+	<business:Services/>
+
+	<!-- Module loader does not fire a COMPLETE event, rather it fires a READY event -->
+	<mx:ModuleLoader id="mainLoader" horizontalCenter="0" verticalCenter="0"/><!--
+		loading="{ProgressAlertChrome.show('Loading section... please wait.', 'Just A Moment', null, mainLoader)}"
+		ready="mainLoader.dispatchEvent(new Event(Event.COMPLETE))"
+		error="mainLoader.dispatchEvent(new Event(Event.COMPLETE))"/>-->
+
+	<!-- logo header -->
+	<!--<mx:Image id="mainLogoHeader" source="@Embed(source='images/logoHeader.swf')"  left="10" top="10"/>-->
+</mx:Application>

@@ -1,0 +1,1106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Application
+	xmlns:mx="http://www.adobe.com/2006/mxml"
+	xmlns:business="com.sdg.business.*"
+	xmlns:controls="com.sdg.components.controls.*"
+	implements="com.sdg.model.ISetAvatar"
+	width="925" height="665" layout="absolute"
+	applicationComplete="init()">
+	<business:Services/>
+
+	<mx:Script>
+		<![CDATA[
+			import com.sdg.business.SdgServiceDelegate;
+			import com.sdg.commands.AvatarApparelCommand;
+			import com.sdg.events.AvatarApparelEvent;
+			import com.sdg.commands.AvatarCommand;
+			import com.sdg.events.AvatarEvent;
+			import mx.containers.Box;
+			import mx.core.UIComponent;
+			import mx.containers.GridItem;
+			import mx.containers.GridRow;
+			import mx.containers.Canvas;
+			import mx.controls.CheckBox;
+
+			import com.sdg.utils.MainUtil;
+			import com.sdg.utils.PreviewUtil;
+			import com.sdg.components.dialog.ConfirmRegistrationDialog;
+			import com.sdg.events.ValidateUsernameEvent;
+			import com.sdg.commands.ValidateUsernameCommand;
+			import com.sdg.events.RegistrationSaveEvent;
+			import com.sdg.commands.RegistrationSaveCommand;
+			import com.sdg.events.InventoryListEvent;
+			import com.sdg.commands.InventoryListCommand;
+			import com.sdg.control.SdgFrontController;
+			import com.sdg.model.Avatar;
+			import com.sdg.model.InventoryItem;
+			import com.sdg.model.ModelLocator;
+			import mx.collections.ArrayCollection;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			import com.sdg.components.dialog.ISdgDialog;
+
+			import flash.display.StageAlign;
+			import flash.display.StageScaleMode;
+
+			import flash.display.DisplayObject;
+			import mx.core.Application;
+
+			import com.sdg.net.Environment;
+			import com.sdg.business.Services;
+
+			import mx.binding.utils.ChangeWatcher;
+
+			private var _pageNum:int = 1;
+			private var _avatar:Avatar = ModelLocator.getInstance().avatar;
+			private var _itemListToGetCount:uint = 7;
+			private var _doRandomize:Boolean = true;
+
+			private var _pointArrowAt:String = null;
+			private var _displayError:Boolean = false;
+			private var _continuePressed:Boolean = false;
+			private var loader:URLLoader;
+			private var _chatWatcher:ChangeWatcher;
+			private var _ccValue:int;
+			private var _needsRedirect:Array = [1, 7, 8, 9, 10, 12, 13, 14, 15];
+			private var _validatedNameEvent:ValidateUsernameEvent;
+
+			[Embed(source="images/registration/errorBubble.png")]
+			public var errorBubble:Class;
+			[Embed(source="images/registration/clickArrow.swf")]
+			public var clickArrow:Class;
+			[Embed(source="images/registration/completeArrow.swf")]
+			public var completeArrow:Class;
+			[Embed(source="images/registration/largeCheckBox_default.png")]
+			public var checkBoxDefault:Class;
+			[Embed(source="images/registration/largeCheckBox_selected.png")]
+			public var checkBoxSelected:Class;
+
+			public function set avatar(value:Avatar):void
+			{
+				_avatar.avatarId = value.avatarId;
+				_avatar.currency = value.currency;
+				_avatar.gender = value.gender;
+
+				_doRandomize = false;
+			}
+
+			private function init():void
+			{
+				var sdg:SdgFrontController = SdgFrontController.getInstance();
+				sdg.addCommand(ValidateUsernameEvent.VALIDATE_USERNAME, ValidateUsernameCommand);
+				sdg.addCommand(RegistrationSaveEvent.SAVE_REGISTRATION, RegistrationSaveCommand);
+				sdg.addCommand(InventoryListEvent.LIST, InventoryListCommand);
+				sdg.addCommand(AvatarEvent.AVATAR, AvatarCommand);
+				sdg.addCommand(AvatarApparelEvent.AVATAR_APPAREL, AvatarApparelCommand);
+
+				this.stage.align = StageAlign.TOP_LEFT;
+				this.stage.scaleMode = StageScaleMode.NO_BORDER;
+
+				var flashvars:Object = {};
+
+				for (var str:String in loaderInfo.parameters)
+				{
+					flashvars[str] = loaderInfo.parameters[str];
+				}
+				registerFlashVars(flashvars);
+
+				ModelLocator.getInstance().affiliate = flashvars.partnerId;
+
+				//testing
+				//flashvars.cc = 2;
+
+				_ccValue = flashvars.cc;
+
+				//flashvars.avatarId = 760;
+				// if this came from guest registration
+				if (flashvars.guestId)
+					dispatchEvent(new AvatarEvent(flashvars.guestId, this));
+
+				// load terms of service
+				loadTOS();
+			}
+
+			private function registerFlashVars(vars:Object):void
+			{
+				applyEnvVars(vars);
+				//applyUserVars(vars);
+
+				if (vars.version) Environment.serverVersion = vars.version;
+			}
+
+			private static function applyEnvVars(vars:Object):void
+			{
+				if (vars.applicationDomain)
+				{
+					Environment.setApplicationDomain(vars.applicationDomain);
+					Services.setBaseUrl(Environment.getApplicationUrl());
+				}
+
+				if (vars.assetDomain)
+				{
+					Environment.setAssetDomain(vars.assetDomain);
+				}
+
+				trace("app domain " + Environment.getApplicationDomain());
+				trace("asset domain " + Environment.getAssetDomain());
+				trace("app url " + Environment.getApplicationUrl());
+				trace("standalone " + Environment.isStandalone());
+			}
+
+			private function highlightBox(boxToHighlight:RegistrationFieldBox, focusObj:UIComponent = null):void
+			{
+				// check if it is not already highlighted
+				if (!boxToHighlight.highlighted)
+				{
+					var parentBox:Canvas = boxToHighlight.parent as Canvas;
+					var childrenArray:Array = parentBox.getChildren();
+					var box:RegistrationFieldBox;
+
+					// turn highlight off for all the boxes
+					for each (box in childrenArray)
+					{
+						box.highlighted = false;
+					}
+
+					// set highlight on box
+					boxToHighlight.highlighted = true;
+
+					// display the boxes
+					for each (box in childrenArray)
+					{
+						box.display();
+					}
+
+					// move highlight box to the front
+					parentBox.setChildIndex(boxToHighlight, childrenArray.length - 1);
+
+					checkForErrors();
+
+					// set focus if specified
+					if (focusObj)
+						focusObj.setFocus();
+				}
+			}
+
+			private function showPage(_pageNum:int):void
+			{
+				try
+				{
+					var swf:Object = Object(swfBg);
+					swf.content.setBackgroundPage(_pageNum);
+				}
+				catch(e:Error)
+				{
+					trace("set background page error = " + e.message);
+				}
+			}
+
+			private function setButtonText(label:String, showArrow:Boolean):void
+			{
+				try
+				{
+					var swf:Object = Object(continueButton);
+					swf.content.setButtonText(label, showArrow);
+				}
+				catch(e:Error)
+				{
+					trace("set button error = " + e.message);
+				}
+			}
+
+			private function setButtonState(animate:Boolean):void
+			{
+				try
+				{
+					var swf:Object = Object(continueButton);
+					swf.content.setButtonState(animate);
+				}
+				catch(e:Error)
+				{
+					trace("set button error = " + e.message);
+				}
+			}
+
+			private function checkMatchingFields(input:String):Boolean
+			{
+				var inputText1:TextInput = this[input + "Input"];
+				var inputText2:TextInput = this[input + "Input2"];
+
+				if (inputText1.text != inputText2.text)
+					return false;
+
+				return true;
+			}
+
+			private function checkValidEmail():Boolean
+			{
+				// verify the email syntax with a regular expression
+				// got this regular expression from http://www.webdeveloper.com/forum/archive/index.php/t-9970.html
+				var pattern:RegExp = /^[^\x00-\x20()<>@,;:\\".[\]\x7f-\xff]+(?:\.[^\x00-\x20()<>@,;:\\".[\]\x7f-\xff]+)*\@[^\x00-\x20()<>@,;:\\".[\]\x7f-\xff]+(?:\.[^\x00-\x20()<>@,;:\\".[\]\x7f-\xff]+)+$/i;
+				if (!pattern.test(emailInput.text))
+					return false;
+
+				return true;
+			}
+
+			private function displayError(errorMessage:String, box:RegistrationFieldBox):void
+			{
+				if (error.visible == false && _displayError == true)
+				{
+					status.htmlText = errorMessage;
+					error.y = box.y + (box.height/2) - 81 + 120;
+					error.visible = true;
+				}
+			}
+
+			private function checkEmail():void
+			{
+				emailBox.completed = false;
+				emailStatus.htmlText = " ";
+
+				if (emailInput.text.length > 0)
+				{
+					if (_pointArrowAt == "email")
+						_pointArrowAt = null;
+
+					// check that email is valid
+					if (!checkValidEmail())
+						displayError("Invalid email address.", emailBox);
+					// check that the email inputs match
+					else if (!checkMatchingFields("email"))
+						displayError("Emails do not match.", emailBox);
+					else
+					{
+						emailBox.completed = true;
+						if (!emailBox.highlighted)
+							emailStatus.htmlText = "<FONT color='#ffc600'>Thank you!</FONT>";
+					}
+				}
+				else
+					setArrow("email", 215, 120, false);
+			}
+
+			private function checkPassword():void
+			{
+				passwordBox.completed = false;
+
+				if (passwordInput.text.length > 0)
+				{
+					if (_pointArrowAt == "password")
+						_pointArrowAt = null;
+
+					// check that password is not less than 5 characters
+					if (!checkTextLength("password", 5))
+						displayError("Password should be at least 5 characters.", passwordBox);
+					// check that password has only letters and numbers
+					else if (!checkTextCharacters("password"))
+						displayError("Password must contain only letters and numbers.", passwordBox);
+					// check that the password inputs match
+					else if (!checkMatchingFields("password"))
+						displayError("Passwords do not match.", passwordBox);
+					else if (!checkNotSameAsUsername())
+						displayError("Passwords can not be the same as Athlete name.", passwordBox);
+					else
+						passwordBox.completed = true;
+				}
+				else
+					setArrow("password", 215, 270, false);
+			}
+
+			private function checkNotSameAsUsername():Boolean
+			{
+				return passwordInput.text != nameInput.text;
+			}
+
+			private function checkName():void
+			{
+				nameBox.completed = false;
+
+				// if text area is not blank
+				if (nameInput.text.length > 0)
+				{
+					if (_pointArrowAt == "name")
+						_pointArrowAt = null;
+
+					// check that username starts with a letter
+					if (!checkTextStartsWithLetter("name"))
+						displayError("Username must start with a letter.", nameBox);
+					// check that username has only letters and numbers
+					else if (!checkTextCharacters("name"))
+						displayError("Username must contain only letters and numbers.", nameBox);
+					// check that username is not less than 4 characters
+					else if (!checkTextLength("name", 4))
+						displayError("Username must be at least 4 characters.", nameBox);
+					else
+						nameBox.completed = true;
+				}
+				else
+					setArrow("name", 215, 390, false);
+			}
+
+			private function checkTextLength(input:String, minLength:int):Boolean
+			{
+				var inputText:TextInput = this[input + "Input"];
+
+				return inputText.text.length >= minLength;
+			}
+
+			private function checkTextCharacters(input:String):Boolean
+			{
+				var pattern:RegExp = /^[a-zA-Z0-9]+$/;
+				var inputText:TextInput = this[input + "Input"];
+
+				if (!pattern.test(inputText.text))
+					return false;
+
+				return true;
+			}
+
+			private function checkTextStartsWithLetter(input:String):Boolean
+			{
+				var pattern:RegExp = /^[a-zA-Z]/;
+				var inputText:TextInput = this[input + "Input"];
+
+				if (!pattern.test(inputText.text))
+					return false;
+
+				return true;
+			}
+
+			private function checkTOS():void
+			{
+				if (tosCheckBox.selected)
+				{
+					if (_pointArrowAt == "tos")
+						_pointArrowAt = null;
+				}
+				else
+					setArrow("tos", 197, 467);
+
+				tosBox.completed = tosCheckBox.selected;
+			}
+
+			private function selectGender(gender:String):void
+			{
+				if (gender == "boy")
+				{
+					girlButton.styleName = "deselected";
+					boyButton.styleName = "selected";
+				}
+				else if (gender == "girl")
+				{
+					boyButton.styleName = "deselected";
+					girlButton.styleName = "selected";
+				}
+
+				genderBox.completed = true;
+				highlightBox(genderBox);
+				genderBox.setFocus();
+			}
+
+			private function verifyFields():Boolean
+			{
+				var pageCanvas:Canvas = this["stack_" + _pageNum] as Canvas;
+				for each (var box:RegistrationFieldBox in pageCanvas.getChildren())
+				{
+					if (box.completed == false)
+						return false;
+				}
+				return true;
+			}
+
+			private function checkRules():void
+			{
+				if (rulesCheckBox.selected)
+				{
+					if (_pointArrowAt == "rules")
+						_pointArrowAt = null;
+				}
+				else
+					setArrow("rules", 95, 545);
+			}
+
+			private function checkChat():void
+			{
+				if (chatGroup.selection)
+				{
+					if (_pointArrowAt == "chat")
+						_pointArrowAt = null;
+
+					_chatWatcher.unwatch();
+					_avatar.chatModeStatus = uint(chatGroup.selectedValue);
+				}
+				else
+					setArrow("chat", 200, 200);
+			}
+
+			private function checkGender():void
+			{
+				if (genderBox.completed)
+				{
+					if (_pointArrowAt == "gender")
+						_pointArrowAt = null;
+				}
+				else
+					setArrow("gender", 180, 170);
+			}
+
+			private function setArrow(pointAt:String, x:int, y:int, isClickArrow:Boolean = true):void
+			{
+				if (!_pointArrowAt)
+				{
+					_pointArrowAt = pointAt;
+					orangeArrow.x = x;
+					orangeArrow.y = y;
+					orangeArrow.source = isClickArrow ? clickArrow : completeArrow;
+				}
+			}
+
+			private function checkPage(event:Event = null):Boolean
+			{
+				var bool:Boolean = true;
+				error.visible = false;
+				_pointArrowAt = null;
+
+				switch (_pageNum)
+				{
+					case 1:
+						checkRules();
+						bool = rulesCheckBox.selected;
+						break;
+					case 2:
+						checkGender();
+						checkName();
+						bool = verifyFields();
+						break;
+					case 4:
+					    bool = _avatar.isFullyClothed;
+						break;
+					case 5:
+						checkEmail();
+						checkPassword();
+						checkTOS();
+						bool = verifyFields();
+						break;
+					case 6:
+						checkChat();
+						bool = chatGroup.selection != null;
+						break;
+					default:
+						break;
+				}
+
+				if (!_pointArrowAt)
+					orangeArrow.visible = false;
+
+				if (bool)
+					setButtonState(true);
+				else
+					setButtonState(false);
+
+				if (_pageNum != 2)
+					_continuePressed = false;
+
+				return bool;
+			}
+
+			private function checkForErrors(doCheckPage:Boolean = true):void
+			{
+				if (doCheckPage)
+				{
+					_displayError = true;
+					checkPage();
+				}
+				if (_pageNum == 2 && nameBox.completed)
+				{
+					if (_validatedNameEvent != null && nameInput.text == _validatedNameEvent.userName)
+						onUsernameValidate(_validatedNameEvent);
+					else
+						validateName();
+				}
+				else
+				{
+					if (error.visible == false)
+						_displayError = false;
+				}
+			}
+
+			private function goToPreviousPage():void
+			{
+				goToPage(--_pageNum);
+			}
+
+			private function goToNextPage():void
+			{
+				_displayError = true;
+				_continuePressed = true;
+
+				if (checkPage() && _pageNum != 2)
+				{
+					//_continuePressed =  false;
+					if (_pageNum == 6)
+					{
+						// create Athlete
+						if (_needsRedirect.indexOf(_ccValue) != -1)
+						{
+							var url:String = Environment.getApplicationUrl() + "/test/avatar/add";
+							var request:URLRequest = new URLRequest(url);
+							request.method = URLRequestMethod.POST;
+
+							var variables:URLVariables = new URLVariables();
+
+							var requestParams:Object = {gender:_avatar.gender,
+														userName:_avatar.name,
+														password:passwordInput.text,
+														parentEmail:emailInput.text,
+														affiliateid:ModelLocator.getInstance().affiliate,
+														chatmode:_avatar.chatModeStatus,
+														tokens:_avatar.currency,
+														cc:_ccValue};
+							var	requestXML:String = SdgServiceDelegate.makeItemListXml(_avatar.apparel, "item", ["inventoryItemId", "itemId"]);
+
+							variables.payload = SdgServiceDelegate.makePayloadXml(requestParams, requestXML);
+							request.data = variables;
+							navigateToURL(request,'_self');
+						}
+						else
+						{
+							CairngormEventDispatcher.getInstance().addEventListener(RegistrationSaveEvent.REGISTRATION_SAVED, onRegistrationSaved);
+							dispatchEvent(new RegistrationSaveEvent( {avatar:_avatar, password:passwordInput.text, parentEmail:emailInput.text, cc:_ccValue} ));
+						}
+					}
+					else
+					{
+						goToPage(++_pageNum);
+						return;
+					}
+				}
+				else
+				{
+					if (_pointArrowAt)
+						orangeArrow.visible = true;
+				}
+
+				checkForErrors(false);
+			}
+
+			private function goToPage(page:int):void
+			{
+				showPage(page);
+				var stackNum:int = page != 4 ? page : 3;
+				pageStack.selectedChild = this["stack_" + stackNum];
+				setupPage(page)
+			}
+
+			private function onRegistrationSaved(event:RegistrationSaveEvent):void
+			{
+				trace(event.status);
+				if (event.status == 1)
+				{
+					MainUtil.showDialog(ConfirmRegistrationDialog, {avatarPreview:avatarPreview, emailAddress:emailInput.text, cc:_ccValue}, true, true);
+				}
+				CairngormEventDispatcher.getInstance().removeEventListener(RegistrationSaveEvent.REGISTRATION_SAVED, onRegistrationSaved);
+			}
+
+			private function getRandomAvatar():void
+			{
+				_avatar.removeAllApparel();
+
+				_avatar.setApparel(getRandomItem(_avatar.getInventoryListById(1)));
+				_avatar.setApparel(getRandomItem(_avatar.getInventoryListById(8)));
+				_avatar.setApparel(getRandomItem(_avatar.getInventoryListById(2)));
+				_avatar.setApparel(getRandomItem(_avatar.getInventoryListById(3)));
+				_avatar.setApparel(getRandomItem(_avatar.getInventoryListById(5)));
+				_avatar.setApparel(getRandomItem(_avatar.getInventoryListById(6)));
+				_avatar.setApparel(getRandomItem(_avatar.getInventoryListById(7)));
+
+				avatarPreview.loadAvatar(_avatar);
+				_doRandomize = false;
+			}
+
+			private function getInventoryItems(avatarId:uint):void
+			{
+				CairngormEventDispatcher.getInstance().addEventListener(InventoryListEvent.LIST_COMPLETED, onInventoryListRetrieved);
+
+				dispatchEvent(new InventoryListEvent(avatarId, 1));
+				dispatchEvent(new InventoryListEvent(avatarId, 8));
+				dispatchEvent(new InventoryListEvent(avatarId, 2));
+				dispatchEvent(new InventoryListEvent(avatarId, 3));
+				dispatchEvent(new InventoryListEvent(avatarId, 5));
+				dispatchEvent(new InventoryListEvent(avatarId, 6));
+				dispatchEvent(new InventoryListEvent(avatarId, 7));
+			}
+
+			private function commitGender():void
+			{
+				if (boyButton.styleName == "selected")
+				{
+					if (_avatar.gender != 1)
+					{
+						_doRandomize = true;
+						_avatar.gender = 1;
+						_itemListToGetCount = 7;
+					}
+
+					if (_itemListToGetCount > 0)
+						getInventoryItems(4);
+				}
+				else if (girlButton.styleName == "selected")
+				{
+					if (_avatar.gender != 2)
+					{
+						_doRandomize = true;
+						_avatar.gender = 2;
+						_itemListToGetCount = 7;
+					}
+
+					if (_itemListToGetCount > 0)
+						getInventoryItems(5);
+				}
+			}
+
+			private function setupPage(page:int):void
+			{
+				if (page == 1)
+				{
+					leftNav.selectedChild = checkBox;
+				}
+				else if (page == 2)
+				{
+					leftNav.selectedChild = backBox;
+
+					if (genderBox != null)
+						highlightBox(genderBox);
+				}
+				else if (page == 3)
+				{
+					if (usernameText)
+						usernameText.text = nameInput.text;
+
+					commitGender();
+
+					if (buttonStack != null)
+						buttonStack.selectedChild = this["buttons_" + page];
+				}
+				else if (page == 4)
+				{
+					if (buttonStack != null)
+						buttonStack.selectedChild = this["buttons_" + page];
+					if (shirts != null)
+						updateItemList(7);
+
+					setButtonState(true);
+				}
+				else if (page == 5)
+				{
+					setButtonText("Continue", true);
+
+					if (emailBox)
+					{
+						highlightBox(emailBox);
+						emailInput.setFocus();
+					}
+				}
+				else if (page == 6)
+				{
+					setButtonText("Create Athlete", false);
+				}
+
+				try
+				{
+					checkForErrors();
+				}
+				catch (error:Error) {}
+			}
+
+			private function validateName():void
+			{
+				CairngormEventDispatcher.getInstance().addEventListener(ValidateUsernameEvent.USERNAME_VALIDATED, onUsernameValidate);
+				dispatchEvent(new ValidateUsernameEvent(nameInput.text));
+			}
+
+			private function onUsernameValidate(event:ValidateUsernameEvent):void
+			{
+				trace(event.status);
+				if (event.status == "available")
+				{
+					nameBox.completed = true;
+					_avatar.name = nameInput.text;
+					if (verifyFields())
+					{
+						setButtonState(true);
+						_validatedNameEvent = event;
+						if (_continuePressed)
+							goToPage(++_pageNum);
+					}
+				}
+				else if (event.status == "unvalidated" || event.status == "unacceptable")
+				{
+					displayError("Username is " + event.status + ". Please try again.", nameBox);
+				}
+				else
+				{
+					displayError("Username is " + event.status +
+						". <FONT color='#172d5f'>How about this one? <FONT size='+2'><u>" +
+						event.suggestion.toUpperCase() + "</u></FONT></FONT>", nameBox);
+				}
+
+				CairngormEventDispatcher.getInstance().removeEventListener(ValidateUsernameEvent.USERNAME_VALIDATED, onUsernameValidate);
+				_continuePressed = false;
+			}
+
+			private function onInventoryListRetrieved(event:InventoryListEvent):void
+			{
+				// remove the listener if this is our last list
+				if (--_itemListToGetCount == 0)
+				{
+					trace("removing inventoryListComleted listener");
+					CairngormEventDispatcher.getInstance().removeEventListener(InventoryListEvent.LIST_COMPLETED, onInventoryListRetrieved);
+
+					if (_doRandomize)
+						getRandomAvatar();
+					else
+						avatarPreview.loadAvatar(_avatar);
+
+					if (body != null)
+						updateItemList(1);
+				}
+			}
+
+			private function getRandomItem(list:ArrayCollection):InventoryItem
+			{
+				var index:uint = Math.round(Math.random() * (list.length - 1));
+				return InventoryItem(list[index]);
+			}
+
+			private function updateItemList(id:int):void
+			{
+				var arrayList:ArrayCollection = _avatar.getInventoryListById(id);
+				itemList.dataProvider = arrayList;
+
+				// make all the buttons smaller
+				for each (var gridRow:GridRow in Grid(this["buttons_" + _pageNum]).getChildren())
+				{
+					var gridItem:GridItem = gridRow.getChildAt(0) as GridItem;
+					var button:Button = gridItem.getChildAt(0) as Button;
+
+					button.selected = false;
+					button.width = 70;
+					button.height = 70;
+				}
+
+				// make the selected buttons bigger
+				var selectedButton:Button = this[PreviewUtil.getTypeNameById(id)] as Button;
+				selectedButton.selected = true;
+				selectedButton.width = 100;
+				selectedButton.height = 100;
+
+				if (arrayList.length > 10)
+				{
+					itemList.width = 190;
+					itemList.verticalScrollPolicy = "on";
+				}
+				else
+				{
+					itemList.width = 170;
+					itemList.verticalScrollPolicy = "off";
+				}
+			}
+
+			private function onSelection():void
+			{
+				selectApparel(InventoryItem(itemList.selectedItem));
+			}
+
+			private function selectApparel(apparel:InventoryItem):void
+			{
+				trace("item id is: " + apparel.itemId);
+				avatarPreview.selectApparel(apparel);
+				_avatar.setApparel(apparel);
+			}
+
+			private function loadTOS():void
+			{
+				var request:URLRequest = new URLRequest("termsText.jsp");
+				loader = new URLLoader();
+				try
+				{
+					loader.load(request);
+				}
+				catch (error:SecurityError)
+				{
+					trace("A SecurityError has occurred.");
+				}
+			}
+
+			private function printTOS():void
+			{
+				highlightBox(tosBox);
+				tosBox.setFocus();
+				if (ExternalInterface.available)
+					ExternalInterface.call("window.open('termsTextPopup.jsp?print=true','Terms','height='+250+',width='+250+',top='+25+',left='+25+',scrollbars=0,location=0,resizable=0')");
+					//ExternalInterface.call("openWindow('termsTextPopup.jsp?print=true', 250, 250, 'Terms')");
+			}
+		]]>
+	</mx:Script>
+
+	<mx:Style source="styles/style2.css"/>
+
+	<mx:Style>
+		.selected
+		{
+			skin: Embed("images/registration/gender_selected.png");
+			color: #ffffff;
+			textRollOverColor: #ffffff;
+			textSelectedColor: #ffffff;
+		}
+		.deselected
+		{
+			skin: Embed("images/registration/gender_default.png");
+			color: #a4c8f2;
+			textRollOverColor: #a4c8f2;
+			textSelectedColor: #a4c8f2;
+		}
+	</mx:Style>
+
+	<mx:Image id="swfBg" source="assets/swfs/registration.swf" complete="goToPage(_pageNum)"/>
+
+	<!-- body -->
+	<mx:ViewStack id="pageStack" width="100%" height="460" top="120">
+		<!-- page 1 -->
+		<mx:VBox id="stack_1"/>
+
+		<!-- page 2 -->
+		<mx:Canvas id="stack_2" width="100%" height="100%" creationComplete="goToPage(2)">
+			<controls:RegistrationFieldBox id="genderBox" verticalGap="0" y="10" click="highlightBox(genderBox, genderBox)" boxStyle="twoBox" horizontalCenter="0">
+				<mx:Text text="I am a" fontSize="30" fontThickness="120" click="highlightBox(genderBox, genderBox)" selectable="false"/>
+
+				<mx:Grid>
+					<mx:GridRow width="360">
+						<mx:GridItem width="50%" height="97" verticalAlign="middle" horizontalAlign="center">
+							<mx:Button id="boyButton" label="Boy" styleName="deselected" click="selectGender('boy')" fontSize="30"
+								buttonMode="true" focusEnabled="false"/>
+						</mx:GridItem>
+						<mx:GridItem width="50%" height="97" verticalAlign="middle" horizontalAlign="center">
+							<mx:Button id="girlButton" label="Girl" styleName="deselected" click="selectGender('girl')" fontSize="30"
+								buttonMode="true" focusEnabled="false"/>
+						</mx:GridItem>
+					</mx:GridRow>
+				</mx:Grid>
+			</controls:RegistrationFieldBox>
+
+			<controls:RegistrationFieldBox id="nameBox" verticalGap="8" y="233" click="highlightBox(nameBox, nameInput)" boxStyle="twoBox" horizontalCenter="0">
+				<mx:Text text="My Athlete's Name is" fontSize="30" fontThickness="120" click="highlightBox(nameBox, nameInput)" selectable="false"/>
+				<mx:TextInput id="nameInput" width="260" borderColor="#4c6fa4" borderStyle="solid" borderThickness="3"
+					cornerRadius="13" fontSize="25" fontWeight="bold" maxChars="13" textAlign="center"
+					focusIn="highlightBox(nameBox)" creationComplete="ChangeWatcher.watch(nameInput, 'text', checkPage, true)"/>
+				<mx:Text textAlign="center" text="Minimum 4 characters:&#xa;Use only number and letters" fontSize="16"
+					click="highlightBox(nameBox, nameInput)" selectable="false"/>
+				<!-- <mx:Text id="nameStatus" fontSize="12" click="highlightBox(nameBox, nameInput)"/> -->
+			</controls:RegistrationFieldBox>
+		</mx:Canvas>
+
+		<!-- page 3 and 4 -->
+		<mx:HBox id="stack_3" width="100%" height="100%" horizontalAlign="center" verticalAlign="middle" horizontalGap="0">
+
+			<!-- avatar preview -->
+			<mx:Canvas width="333" height="{itemList.height}">
+				<controls:AvatarPreview id="avatarPreview" width="309" height="{itemList.height}"
+					backgroundImage="@Embed('images/registration/reg_preview_bg.swf')"
+					avatarWidthAdjust="-50" avatarHeightAdjust="-66" avatarVerticalAlign="-18"/>
+				<mx:Text left="0" id="usernameText" width="297" bottom="10" textAlign="center" text="{nameInput.text}" fontSize="18" fontWeight="bold" color="#4c6fa4"/>
+				<mx:Image right="0" top="4" click="getRandomAvatar()"
+					source="@Embed('images/registration/shuffle_button.swf')"/>
+			</mx:Canvas>
+
+			<mx:HBox height="80%" verticalAlign="middle" horizontalGap="10">
+				<mx:ViewStack id="buttonStack">
+
+					<!-- page 3's buttons -->
+					<mx:Grid id="buttons_3" verticalGap="0" creationComplete="updateItemList(1)">
+						<mx:GridRow width="100" height="100">
+							<mx:GridItem width="100%" height="100%" verticalAlign="middle" horizontalAlign="center">
+								<mx:Button id="body" buttonMode="true" focusEnabled="false"
+									skin="@Embed('images/registration/skinDefault_button.png')"
+									overSkin="@Embed('images/registration/skinOver_button.png')"
+									selectedOverSkin="@Embed('images/registration/skinSelected_button.png')"
+									selectedUpSkin="@Embed('images/registration/skinSelected_button.png')"
+									click="updateItemList(1)"/>
+							</mx:GridItem>
+						</mx:GridRow>
+						<mx:GridRow width="100" height="100">
+							<mx:GridItem width="100%" height="100%" verticalAlign="middle" horizontalAlign="center">
+								<mx:Button id="hair" buttonMode="true" focusEnabled="false"
+									skin="@Embed('images/registration/hairDefault_button.png')"
+									overSkin="@Embed('images/registration/hairOver_button.png')"
+									selectedOverSkin="@Embed('images/registration/hairSelected_button.png')"
+									selectedUpSkin="@Embed('images/registration/hairSelected_button.png')"
+									click="updateItemList(8)"/>
+							</mx:GridItem>
+						</mx:GridRow>
+						<mx:GridRow width="100" height="100">
+							<mx:GridItem width="100%" height="100%" verticalAlign="middle" horizontalAlign="center">
+								<mx:Button id="eyes" buttonMode="true" focusEnabled="false"
+									skin="@Embed('images/registration/eyesDefault_button.png')"
+									overSkin="@Embed('images/registration/eyesOver_button.png')"
+									selectedOverSkin="@Embed('images/registration/eyesSelected_button.png')"
+									selectedUpSkin="@Embed('images/registration/eyesSelected_button.png')"
+									click="updateItemList(2)"/>
+							</mx:GridItem>
+						</mx:GridRow>
+						<mx:GridRow width="100" height="100">
+							<mx:GridItem width="100%" height="100%" verticalAlign="middle" horizontalAlign="center">
+								<mx:Button id="mouth" buttonMode="true" focusEnabled="false"
+									skin="@Embed('images/registration/mouthDefault_button.png')"
+									overSkin="@Embed('images/registration/mouthOver_button.png')"
+									selectedOverSkin="@Embed('images/registration/mouthSelected_button.png')"
+									selectedUpSkin="@Embed('images/registration/mouthSelected_button.png')"
+									click="updateItemList(3)"/>
+							</mx:GridItem>
+						</mx:GridRow>
+					</mx:Grid>
+
+					<!-- page 4's buttons -->
+					<mx:Grid id="buttons_4" verticalGap="0" creationComplete="updateItemList(7)">
+						<mx:GridRow width="100" height="100">
+							<mx:GridItem width="100%" height="100%" verticalAlign="middle" horizontalAlign="center">
+								<mx:Button id="shirts" buttonMode="true" focusEnabled="false"
+									skin="@Embed('images/registration/shirtDefault_button.png')"
+									overSkin="@Embed('images/registration/shirtOver_button.png')"
+									selectedOverSkin="@Embed('images/registration/shirtSelected_button.png')"
+									selectedUpSkin="@Embed('images/registration/shirtSelected_button.png')"
+									click="updateItemList(7)"/>
+							</mx:GridItem>
+						</mx:GridRow>
+						<mx:GridRow width="100" height="100">
+							<mx:GridItem width="100%" height="100%" verticalAlign="middle" horizontalAlign="center">
+								<mx:Button id="pants" buttonMode="true" focusEnabled="false"
+									skin="@Embed('images/registration/pantsDefault_button.png')"
+									overSkin="@Embed('images/registration/pantsOver_button.png')"
+									selectedOverSkin="@Embed('images/registration/pantsSelected_button.png')"
+									selectedUpSkin="@Embed('images/registration/pantsSelected_button.png')"
+									click="updateItemList(6)"/>
+							</mx:GridItem>
+						</mx:GridRow>
+						<mx:GridRow width="100" height="100">
+							<mx:GridItem width="100%" height="100%" verticalAlign="middle" horizontalAlign="center">
+								<mx:Button id="shoes" buttonMode="true" focusEnabled="false"
+									skin="@Embed('images/registration/shoeDefault_button.png')"
+									overSkin="@Embed('images/registration/shoeOver_button.png')"
+									selectedOverSkin="@Embed('images/registration/shoeSelected_button.png')"
+									selectedUpSkin="@Embed('images/registration/shoeSelected_button.png')"
+									click="updateItemList(5)"/>
+							</mx:GridItem>
+						</mx:GridRow>
+					</mx:Grid>
+				</mx:ViewStack>
+
+				<mx:VBox width="200" verticalAlign="middle">
+					<controls:ItemTileList id="itemList" verticalScrollPolicy="off"
+						borderThickness="5" borderColor="#172d5f" focusEnabled="false"
+						columnCount="2" rowCount="5" change="onSelection()"/>
+				</mx:VBox>
+			</mx:HBox>
+		</mx:HBox>
+
+		<!-- page 5 -->
+		<mx:Canvas id="stack_5" width="100%" height="100%" creationComplete="goToPage(5)">
+			<controls:RegistrationFieldBox id="emailBox" y="5" click="highlightBox(emailBox, emailInput)" boxStyle="threeBox" horizontalCenter="0" >
+				<mx:Text text="Enter your parent's email address" fontSize="15" click="highlightBox(emailBox, emailInput)"
+					letterSpacing="1" selectable="false"/>
+				<mx:TextInput id="emailInput" borderColor="#4c6fa4" borderStyle="solid" borderThickness="2" cornerRadius="10" fontSize="15"
+					textAlign="center" width="280" height="35" creationComplete="ChangeWatcher.watch(emailInput, 'text', checkPage, true)"
+					focusIn="highlightBox(emailBox)" enter="emailInput2.setFocus()"/>
+				<mx:Text text="Confirm your parent's email address" fontSize="15" click="highlightBox(emailBox, emailInput)"
+					letterSpacing="1" selectable="false"/>
+				<mx:TextInput id="emailInput2" borderColor="#4c6fa4" borderStyle="solid" borderThickness="2" cornerRadius="10" fontSize="15"
+					textAlign="center" width="280" height="35" creationComplete="ChangeWatcher.watch(emailInput2, 'text', checkPage, true)"
+					focusIn="highlightBox(emailBox)"/>
+				<mx:Text id="emailStatus" fontSize="12" click="highlightBox(emailBox, emailInput)" selectable="false"/>
+			</controls:RegistrationFieldBox>
+
+
+			<controls:RegistrationFieldBox id="passwordBox" y="156" click="highlightBox(passwordBox, passwordInput)" boxStyle="threeBox" horizontalCenter="0">
+				<mx:Text text="Create Athlete's password" fontSize="15"	click="highlightBox(passwordBox, passwordInput)"
+					letterSpacing="1" selectable="false"/>
+				<mx:TextInput id="passwordInput" borderColor="#4c6fa4" borderStyle="solid" borderThickness="2" cornerRadius="10" fontSize="15"
+					displayAsPassword="true" maxChars="10" textAlign="center" width="200" height="35"
+					creationComplete="ChangeWatcher.watch(passwordInput, 'text', checkPage, true)"
+					focusIn="highlightBox(passwordBox)" enter="passwordInput2.setFocus()"/>
+				<mx:Text text="Confirm Athlete's password" fontSize="15" click="highlightBox(passwordBox, passwordInput)"
+					letterSpacing="1" selectable="false"/>
+				<mx:TextInput id="passwordInput2" borderColor="#4c6fa4" borderStyle="solid" borderThickness="2" cornerRadius="10" fontSize="15"
+					displayAsPassword="true" maxChars="10" textAlign="center" width="200" height="35"
+					creationComplete="ChangeWatcher.watch(passwordInput2, 'text', checkPage, true)"
+					focusIn="highlightBox(passwordBox)"/>
+				<!-- <mx:Text id="passwordStatus" fontSize="12" click="highlightBox(passwordBox, passwordInput)"/> -->
+			</controls:RegistrationFieldBox>
+
+			<controls:RegistrationFieldBox id="tosBox" y="307" click="highlightBox(tosBox, tosBox)" boxStyle="threeBox" displayCheck="false" horizontalCenter="0" >
+				<mx:Text text="Terms of Service" click="highlightBox(tosBox, tosBox)" selectable="false"/>
+				<mx:TextArea id="tosText" width="320" height="80" color="#172d5f" fontSize="10"
+					borderStyle="solid" borderColor="#4c6fa4" backgroundColor="#ffffff"
+					horizontalScrollPolicy="off" editable="false" focusEnabled="false"
+					htmlText="{String(loader.data).substring(2, String(loader.data).length-2).replace('\n','')}"/>
+				<mx:HBox verticalAlign="middle">
+					<mx:CheckBox id="tosCheckBox" label="I agree to the Action AllStars Rules" click="highlightBox(tosBox, tosBox)"
+						paddingTop="0" paddingBottom="0" buttonMode="true" focusEnabled="false"
+						icon="@Embed('images/registration/checkBox_default.png')"
+						selectedUpIcon="@Embed('images/registration/checkBox_selected.png')"
+						selectedOverIcon="@Embed('images/registration/checkBox_selected.png')"
+						creationComplete="ChangeWatcher.watch(tosCheckBox, 'selected', checkPage, true)"/>
+					<mx:Button label="Print" click="printTOS()" width="80" height="30" styleName="darkBlue" cornerRadius="10"
+						buttonMode="true" focusEnabled="false"/>
+				</mx:HBox>
+			</controls:RegistrationFieldBox>
+		</mx:Canvas>
+
+		<!-- page 6 -->
+		<mx:Canvas id="stack_6" width="100%" creationComplete="_chatWatcher = ChangeWatcher.watch(chatGroup, 'selection', checkPage, true)">
+			<mx:RadioButtonGroup id="chatGroup"/>
+			<mx:RadioButton left="240" y="290" groupName="chatGroup" value="{Avatar.SAFE_CHAT}"
+				icon="{checkBoxDefault}" selectedUpIcon="{checkBoxSelected}" focusEnabled="false"
+				selectedOverIcon="{checkBoxSelected}" selectedDownIcon="{checkBoxSelected}"/>
+			<mx:RadioButton right="240" y="290" groupName="chatGroup" value="{Avatar.ULTRA_SAFE_CHAT}"
+				icon="{checkBoxDefault}" selectedUpIcon="{checkBoxSelected}" focusEnabled="false"
+				selectedOverIcon="{checkBoxSelected}" selectedDownIcon="{checkBoxSelected}"/>
+		</mx:Canvas>
+	</mx:ViewStack>
+
+	<!-- footer -->
+	<mx:HBox width="530" height="69" y="580" horizontalCenter="0">
+		<mx:ViewStack id="leftNav" width="70%" height="100%">
+			<mx:VBox id="checkBox" width="100%" height="100%" verticalAlign="middle" horizontalAlign="left">
+				<mx:CheckBox id="rulesCheckBox" label="I agree to the Action AllStars Rules" buttonMode="true"
+					color="#4c6fa4" textRollOverColor="#4c6fa4" fontSize="16" fontWeight="bold" focusEnabled="false"
+					icon="@Embed('images/registration/checkBox_default.png')"
+					selectedUpIcon="@Embed('images/registration/checkBox_selected.png')"
+					selectedOverIcon="@Embed('images/registration/checkBox_selected.png')"
+					creationComplete="ChangeWatcher.watch(rulesCheckBox, 'selected', checkPage, true)"/>
+			</mx:VBox>
+			<mx:VBox id="backBox" width="100%" height="100%" verticalAlign="middle" horizontalAlign="left">
+				<mx:Button id="backButton" click="goToPreviousPage()" buttonMode="true" focusEnabled="false"
+					skin="@Embed('images/registration/back_button.png')"
+					overSkin="@Embed('images/registration/backOver_button.png')"/>
+			</mx:VBox>
+		</mx:ViewStack>
+
+		<mx:VBox id="continueBox" width="30%" height="100%" verticalAlign="middle" horizontalAlign="right">
+			<mx:Image id="continueButton" source="assets/swfs/continueButton.swf" click="goToNextPage()"
+				complete="setButtonText('Continue', true)"/>
+		</mx:VBox>
+	</mx:HBox>
+
+	<!-- orange arrow -->
+	<mx:Image id="orangeArrow" visible="false"/>
+
+	<!-- error box -->
+	<mx:Canvas id="error" x="85" visible="false">
+		<mx:Image source="{errorBubble}"/>
+		<mx:VBox width="200" height="161" horizontalAlign="center" verticalAlign="middle"
+			paddingLeft="20" paddingRight="20" verticalGap="0">
+			<mx:Text text="Sorry!" fontWeight="bold" fontSize="28" color="#a92035"/>
+			<mx:Text id="status" width="100%" textAlign="center" color="#4c6fa4" fontSize="15" fontWeight="bold"/>
+		</mx:VBox>
+	</mx:Canvas>
+</mx:Application>

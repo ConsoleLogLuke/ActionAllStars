@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Module xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="400" height="300">
+	<mx:Script>
+		<![CDATA[
+			import com.sdg.control.game.SkateboardTrainingGameController;
+			import com.sdg.control.room.RoomUIController;
+			import com.sdg.control.room.RoomController;
+			import com.sdg.control.game.SkateboardGameController;
+			
+			public function createController(params:Object = null):RoomUIController
+			{
+				var gameId:int = (params && params.gameId) ? params.gameId : 0;
+				return (params && params.isPractice) ? new SkateboardTrainingGameController(gameId) : new SkateboardGameController(gameId);
+			}
+		]]>
+	</mx:Script>
+</mx:Module>

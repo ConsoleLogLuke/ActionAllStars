@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Application xmlns:mx="http://www.adobe.com/2006/mxml" 
+	xmlns:business="com.sdg.business.*" 
+	xmlns:sdgcontrols="com.sdg.components.controls.*" 
+	layout="absolute" width="900" height="600" applicationComplete="init()">
+	<business:Services/>
+<mx:Style source="assets/styles/style.css"/>
+	<mx:Script>
+        <![CDATA[
+        	import mx.events.PropertyChangeEvent;
+        	import mx.controls.Image;
+        	import com.sdg.components.dialog.*;
+        	
+            import mx.containers.Canvas;
+            import mx.managers.PopUpManager;
+            
+            import com.sdg.control.SdgFrontController;
+			import com.sdg.events.*;
+			
+			import com.sdg.commands.*;
+			import com.sdg.components.dialog.CardKiosk;
+			import com.sdg.components.dialog.CardTradingLobby;
+			import com.sdg.components.dialog.CardAlbum;
+			
+			import com.sdg.model.*;
+			import mx.binding.utils.*;
+			import com.sdg.components.skins.*;
+			import com.sdg.net.Environment;
+			import com.sdg.net.socket.SocketClient;
+			import mx.collections.ArrayCollection;
+			import mx.logging.targets.*;
+        	import mx.logging.*;
+        	import com.sdg.utils.*;
+			
+			[Bindable]
+			private var _avatar:Avatar;
+			private var _userId:int;
+
+			
+			private function init():void
+			{
+				var sdg:SdgFrontController = SdgFrontController.getInstance();
+				sdg.addCommand(LoginEvent.LOGIN, LoginCommand);
+
+				sdg.addCommand(InventoryListEvent.LIST, InventoryListCommand);
+				sdg.addCommand(AvatarApparelEvent.AVATAR_APPAREL, AvatarApparelCommand);
+				sdg.addCommand(AvatarApparelSaveEvent.AVATAR_APPAREL_SAVE, AvatarApparelSaveCommand);
+				sdg.addCommand(AvatarListEvent.LIST, AvatarListCommand);
+				sdg.addCommand(StoreCategoriesEvent.STORE_CATEGORIES, StoreCategoriesCommand);
+				sdg.addCommand(StoreItemsEvent.STORE_ITEMS, StoreItemsCommand);
+				sdg.addCommand(ItemPurchaseEvent.ITEM_PURCHASE,ItemPurchaseCommand);
+				sdg.addCommand(ModeratorSaveReportEvent.MODERATOR_REPORT_SAVE, SaveModeratorReportCommand);
+				sdg.addCommand(SocketLoginEvent.SOCKET_LOGIN, SocketLoginCommand);
+				sdg.addCommand(ServerListEvent.LIST, ServerListCommand);
+				sdg.addCommand(ApplicationConfigurationEvent.LOAD, ApplicationConfigurationCommand);
+
+				
+				ChangeWatcher.watch(ModelLocator.getInstance().application, "isConfigLoaded", onConfigLoaded);
+				ChangeWatcher.watch(ModelLocator.getInstance().user, "avatarId", avatarSelectionWatcher);
+				ChangeWatcher.watch(ModelLocator.getInstance().user, "loggedInStatus", loginWatcher);
+
+				MainUtil.initialize(this);
+				dispatchEvent(new ApplicationConfigurationEvent(ApplicationConfigurationEvent.LOAD));
+		
+			}
+			
+			private function onConfigLoaded(event:Event):void
+			{
+				//dispatchEvent(new AvatarListEvent("lance"));
+				dispatchEvent(new LoginEvent("lance", "sanders"));
+			}
+			
+			private function loginWatcher(event:PropertyChangeEvent):void
+			{
+				dispatchEvent(new AvatarListEvent("lance"));
+			}
+			private function avatarSelectionWatcher(event:Event):void
+			{
+				_avatar = ModelLocator.getInstance().avatar;
+				trace("avatar selected ="+_avatar.avatarId);
+				
+				var s:Server = new Server();
+				s.serverId = 101;
+				s.name = "okay";
+				s.port = 9898;
+				s.domain = "127.0.0.1";
+				ModelLocator.getInstance().servers.addItem(s);
+				Server.setCurrentServer(s);
+				dispatchEvent(new SocketLoginEvent(101));
+			}
+			
+
+			
+			
+            private function popOut(cl:Class, params:Object=null):void 
+            {
+            	var p:URLVariables = new URLVariables();
+            	MainUtil.showDialog(cl,params);
+            }
+ 
+  
+        ]]>
+	</mx:Script>
+	<mx:HBox width="100%">
+		<mx:VBox>
+			<mx:Button label="Kiosk" click="popOut(CardKiosk)"/>
+			<mx:Button label="Album" click="popOut(CardAlbum)"/>
+			<mx:Button label="Trading" click="popOut(CardTradingLobby)"/>    
+		</mx:VBox>
+	</mx:HBox>
+
+	       
+</mx:Application>

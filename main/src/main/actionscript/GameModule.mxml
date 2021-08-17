@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Module xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="925" height="665">
+	<mx:Script>
+		<![CDATA[
+			import com.sdg.gameMenus.GameController;
+
+			protected var _controller:GameController;
+
+			public function init(gameId:int):void
+			{
+				_controller = new GameController(gameId);
+				_controller.addEventListener("quit game", onQuitGame);
+
+				rawChildren.addChild(_controller.view.display);
+			}
+
+			protected function onQuitGame(event:Event):void
+			{
+				_controller.removeEventListener("quit game", onQuitGame);
+				dispatchEvent(new Event('closeModule', true));
+			}
+		]]>
+	</mx:Script>
+
+	<mx:Style source="styles/leaderboard.css"/>
+</mx:Module>

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Application xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="100%" height="100%" creationComplete="init()">
+	<mx:Script>
+		<![CDATA[
+			import com.sdg.tileeditor.TileEditorModel;
+			
+			
+			protected var _model:TileEditorModel;
+		
+			protected function init():void
+			{
+				// Create model.
+				_model = new TileEditorModel();
+				
+				// Size view.
+				resizeView();
+				
+				// Add view.
+				rawChildren.addChild(_model.view);
+				
+				addEventListener(Event.RESIZE, onResize);
+			}
+			
+			private function resizeView():void
+			{
+				_model.view.width = width;
+				_model.view.height = height;
+			}
+			
+			private function onResize(e:Event):void
+			{
+				resizeView()
+			}
+		]]>
+	</mx:Script>
+</mx:Application>

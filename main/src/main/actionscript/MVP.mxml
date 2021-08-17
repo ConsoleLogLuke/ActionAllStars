@@ -1,0 +1,277 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Application
+	xmlns:mx="http://www.adobe.com/2006/mxml" backgroundAlpha="0"
+	width="852" height="577" layout="absolute" applicationComplete="init()" xmlns:business="com.sdg.business.*">
+	<business:Services/>
+	<mx:Script>
+		<![CDATA[
+			import com.sdg.utils.MainUtil;
+			import com.sdg.commands.MVPLogProcessCommand;
+			import com.sdg.events.MVPLogProcessEvent;
+			import com.sdg.model.GameAssetId;
+			import com.sdg.util.AssetUtil;
+			import com.sdg.net.Environment;
+			import com.sdg.model.ModelLocator;
+			import com.sdg.model.User;
+			import mx.binding.utils.ChangeWatcher;
+			import com.sdg.commands.MVPLoginCommand;
+			import com.sdg.events.LoginEvent;
+			import com.sdg.commands.LoginCommand;
+			import com.sdg.control.SdgFrontController;
+			import com.sdg.utils.Constants;
+			import flash.net.navigateToURL;
+
+			private const MONTHLY:int = 6;
+			private const SIX_MONTHS:int = 2;
+			private const TWELVE_MONTHS:int = 3;
+
+			private var _plan:int;
+			private var _linkId:int;
+
+			private function init():void
+			{
+				var sdg:SdgFrontController = SdgFrontController.getInstance();
+				sdg.addCommand(LoginEvent.MVPLOGIN, MVPLoginCommand);
+				sdg.addCommand(MVPLogProcessEvent.PROCESS_LOGGING, MVPLogProcessCommand);
+
+				this.stage.align = StageAlign.TOP_LEFT;
+				this.stage.scaleMode = StageScaleMode.NO_BORDER;
+
+				var flashvars:Object = {};
+
+				for (var str:String in loaderInfo.parameters)
+				{
+					flashvars[str] = loaderInfo.parameters[str];
+				}
+				registerFlashVars(flashvars);
+
+				var introPage:Image = new Image();
+				introPage.source = AssetUtil.GetGameAssetUrl(GameAssetId.WORLD, 'mvp_promotion.swf');
+				addChild(introPage);
+
+				introPage.addEventListener(Event.INIT, onIntroPageInit);
+
+				ChangeWatcher.watch(ModelLocator.getInstance().user, "loggedInStatus", loginWatcher);
+
+				function onIntroPageInit(event:Event):void
+				{
+					introPage.removeEventListener(Event.INIT, onIntroPageInit);
+					introPage.content.addEventListener("MVPEvent", onPlanSelect);
+				}
+
+				function onPlanSelect(event:Event):void
+				{
+					introPage.content.removeEventListener("MVPEvent", onPlanSelect);
+
+					plan = Object(event).planType;
+
+					//logging
+					dispatchEvent(new MVPLogProcessEvent(1, _linkId, _plan));
+
+					page2.visible = true;
+					removeChild(introPage);
+				}
+			}
+
+			private function registerFlashVars(vars:Object):void
+			{
+				applyEnvVars(vars);
+				//applyUserVars(vars);
+
+				ModelLocator.getInstance().affiliate = vars.partnerId;
+				_linkId = vars.linkId;
+				//if (vars.version) Environment.serverVersion = vars.version;
+				if (vars.returnUrl) Environment.returnUrl = vars.returnUrl;
+			}
+
+			private static function applyEnvVars(vars:Object):void
+			{
+				if (vars.applicationDomain)
+				{
+					Environment.setApplicationDomain(vars.applicationDomain);
+					Services.setBaseUrl(Environment.getApplicationUrl());
+				}
+
+				if (vars.assetDomain)
+				{
+					Environment.setAssetDomain(vars.assetDomain);
+				}
+
+				trace("app domain " + Environment.getApplicationDomain());
+				trace("asset domain " + Environment.getAssetDomain());
+				trace("app url " + Environment.getApplicationUrl());
+				trace("standalone " + Environment.isStandalone());
+			}
+
+			private function goToFormPage():void
+			{
+				var userId:uint = ModelLocator.getInstance().user.userId;
+
+				if (paymentType.selectedValue == Constants.CREDIT_CARD)
+				{
+					navigateToURL(new URLRequest('http://' + Environment.returnUrl +
+						'/premium/co/ccard?userId=' + userId + '&pm=' + paymentType.selectedValue + '&plan=' + _plan + '&linkId=' + _linkId +
+						'&affiliateId=' + ModelLocator.getInstance().affiliate), '_blank');
+				}
+				else if (paymentType.selectedValue == Constants.PAYPAL)
+				{
+					navigateToURL(new URLRequest('http://' + Environment.returnUrl +
+						'/premium/paypal/setpaypal?userId=' + userId + '&planId=' + _plan + '&linkId=' + _linkId +
+						'&affiliateId=' + ModelLocator.getInstance().affiliate), '_blank');
+				}
+			}
+
+			private function set plan(value:int):void
+			{
+				_plan = value;
+				var planImage:DisplayObject;
+
+				if (value == MONTHLY)
+				{
+					planImage = monthly;
+					paypalGreyOut.visible = true;
+					paymentType.selectedValue = Constants.CREDIT_CARD;
+				}
+				else
+				{
+					paypalGreyOut.visible = false;
+
+					if (value == SIX_MONTHS)
+						planImage = sixMonths;
+					else if (value == TWELVE_MONTHS)
+						planImage = twelveMonths;
+				}
+
+				planImage.parent.addChildAt(selectedPlan, 0);
+			}
+
+			private function onContinueClick(event:MouseEvent):void
+			{
+				errorMessage.text = "";
+				var paymentMethodId:int = paymentType.selectedValue as int;
+
+				if (tosCheckBox.selected == false)
+				{
+					errorMessage.text = "You must agree to our Terms of Use."
+					dispatchEvent(new MVPLogProcessEvent(2, _linkId, _plan, paymentMethodId));
+				}
+				else
+				{
+					ModelLocator.getInstance().user.loggedInStatus = -1; // reset loggedInStatus
+					dispatchEvent(new LoginEvent(username.text, password.text, _linkId, _plan, paymentMethodId, LoginEvent.MVPLOGIN));
+				}
+			}
+
+			private function loginWatcher(event:Event):void
+			{
+				var user:User = ModelLocator.getInstance().user;
+
+				switch (user.loggedInStatus)
+				{
+					case 1:
+						goToFormPage();
+						break;
+					case 101:
+						errorMessage.text = "We did not recognize your user name or password.";
+						break;
+					case 422:
+						MainUtil.goToUrl("alreadyAMember.jsp", {userId:user.userId});
+						break;
+					case 0:
+						errorMessage.text = "Your login was unsuccessful. Please try again.";
+						break;
+					case -1: // ignore... for resetting loggedInStatus
+						break;
+				}
+			}
+		]]>
+	</mx:Script>
+
+	<mx:Style>
+		@font-face
+		{
+			font-family: EuroStyle;
+			fontWeight: bold;
+			src: url('fonts/EurostileLTStd-Bold.otf');
+		}
+		Button.login
+		{
+			color: #9d330b;
+			fillColors: #f7d85b, #d88616;
+			fillAlphas: 1, 1;
+			borderColor: #9d330b;
+			selectionColor: #f0b242;
+			textRollOverColor: #9d330b;
+			textSelectedColor: #9d330b;
+			borderThickness: 1;
+			cornerRadius: 8;
+			fontSize: 18;
+			fontWeight: bold;
+			fontThickness: 150;
+			fontFamily: EuroStyle;
+			paddingLeft: 8; paddingTop: 8; paddingRight: 8; paddingBottom: 8;
+			skin:ClassReference("com.sdg.components.skins.ButtonSkin");
+		}
+	</mx:Style>
+
+	<mx:Canvas id="page2" visible="false">
+		<mx:Image source="assets/swfs/mvp/mvplogin.swf"/>
+
+		<mx:Canvas x="39" y="100">
+			<mx:Label text="You must have" fontFamily="EuroStyle" fontSize="11" fontWeight="bold" color="0x666666"/>
+			<mx:Label text="an account" fontFamily="EuroStyle" fontSize="11" fontWeight="bold" textDecoration="underline" color="0x06394c"
+				x="90" buttonMode="true" mouseChildren="false"
+				click="MainUtil.goToUrl('chatApp.jsp?account=New');"/>
+			<mx:Label text="before buying a membership" fontFamily="EuroStyle" fontSize="11" fontWeight="bold" color="0x666666" x="159"/>
+		</mx:Canvas>
+
+		<mx:VBox x="160" y="128" verticalGap="20">
+			<mx:TextInput id="username" fontFamily="EuroStyle" fontSize="15" fontWeight="bold"
+				color="0x4087ae" maxChars="13" width="185"/>
+			<mx:TextInput id="password" fontFamily="EuroStyle" fontSize="15" fontWeight="bold" fontThickness="200"
+				color="0x4087ae" maxChars="10" width="185" displayAsPassword="true"/>
+		</mx:VBox>
+
+		<mx:Label text="Forgot Athlete Name or Password?" fontFamily="EuroStyle" fontSize="11" fontWeight="bold" textDecoration="underline" color="0x06394c"
+				x="157" y="214" buttonMode="true" mouseChildren="false"
+				click="MainUtil.goToUrl('retrieveInformation.jsp');"/>
+
+		<mx:Image id="selectedPlan" source="assets/swfs/mvp/SelectedPlan.swf"/>
+
+		<mx:HBox x="374" y="120" horizontalGap="6">
+			<mx:Canvas width="146" height="110">
+				<mx:Image id="monthly" source="assets/swfs/mvp/monthly.swf" horizontalCenter="0" y="30" click="plan = MONTHLY" buttonMode="true"/>
+			</mx:Canvas>
+			<mx:Canvas width="146" height="110">
+				<mx:Image id="sixMonths" source="assets/swfs/mvp/6month.swf" horizontalCenter="0" y="30" click="plan = SIX_MONTHS" buttonMode="true"/>
+			</mx:Canvas>
+			<mx:Canvas width="146" height="110">
+				<mx:Image id="twelveMonths" source="assets/swfs/mvp/12month.swf" horizontalCenter="0" y="30" click="plan = TWELVE_MONTHS" buttonMode="true"/>
+			</mx:Canvas>
+		</mx:HBox>
+		<!--<mx:Image source="assets/swfs/mvp/bestDeal.swf" x="794" y="140"/>-->
+
+		<mx:RadioButtonGroup id="paymentType" selectedValue="{Constants.CREDIT_CARD}"/>
+		<mx:VBox x="50" y="330" verticalGap="40">
+			<mx:RadioButton groupName="paymentType" value="{Constants.CREDIT_CARD}" label="Credit Card" textIndent="15"
+				fontFamily="EuroStyle" fontSize="16" fontWeight="bold" color="0x06394c" buttonMode="true"/>
+			<mx:RadioButton groupName="paymentType" value="{Constants.PAYPAL}" label="Paypal" textIndent="15"
+				fontFamily="EuroStyle" fontSize="16" fontWeight="bold" color="0x06394c" buttonMode="true"/>
+		</mx:VBox>
+
+		<mx:Canvas id="paypalGreyOut" width="781" height="66" backgroundColor="0x6ba7bf" backgroundAlpha=".85" x="33" y="383" visible="false"/>
+
+		<mx:Canvas x="597" y="460">
+			<mx:CheckBox id="tosCheckBox"/>
+			<mx:Label text="I agree to the" x="20" fontFamily="EuroStyle" fontSize="13" fontWeight="bold" color="0x666666"/>
+			<mx:Label text="Terms of Use" x="117" fontFamily="EuroStyle" fontSize="13" fontWeight="bold" textDecoration="underline" color="0x06394c"
+				buttonMode="true" mouseChildren="false"
+				click="navigateToURL(new URLRequest('terms.jsp'),'_blank');"/>
+		</mx:Canvas>
+
+		<mx:Button id="continueButton" width="122" height="38" x="680" y="492" buttonMode="true" styleName="login" label="Continue" click="onContinueClick(event)"/>
+
+		<mx:Label id="errorMessage" fontFamily="EuroStyle" fontSize="14" fontWeight="bold" color="#ff0000"
+			right="240" y="500"/>
+	</mx:Canvas>
+</mx:Application>

@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Application
+	xmlns:mx="http://www.adobe.com/2006/mxml"
+	xmlns:business="com.sdg.business.*"
+	applicationComplete="init()"
+	width="925" height="665" layout="absolute"
+	backgroundImage="@Embed('images/monthFree/bg_SpecialOffer.swf')">
+	<business:Services/>
+
+	<mx:Script>
+		<![CDATA[
+			import com.sdg.utils.Constants;
+			import com.sdg.utils.MainUtil;
+			import com.sdg.net.Environment;
+			import com.sdg.components.controls.SdgAlert;
+			import com.sdg.model.ModelLocator;
+			import mx.binding.utils.ChangeWatcher;
+			import com.sdg.events.LoginEvent;
+			import com.sdg.commands.LoginCommand;
+			import com.sdg.control.SdgFrontController;
+
+			private function init():void
+			{
+				this.stage.align = StageAlign.TOP_LEFT;
+				this.stage.scaleMode = StageScaleMode.NO_BORDER;
+
+				var flashvars:Object = {};
+
+				for (var str:String in loaderInfo.parameters)
+				{
+					flashvars[str] = loaderInfo.parameters[str];
+				}
+				registerFlashVars(flashvars);
+
+				var sdg:SdgFrontController = SdgFrontController.getInstance();
+				sdg.addCommand(LoginEvent.LOGIN, LoginCommand);
+
+				ChangeWatcher.watch(ModelLocator.getInstance().user, "loggedInStatus", loginWatcher);
+
+				username.addEventListener("enter", returnListener);
+			 	password.addEventListener("enter", returnListener);
+			 	username.setFocus();
+			}
+
+			private function returnListener(evt_obj:Event):void
+			{
+				if((username.length > 0) && (password.length > 0 ))
+				{
+					login();
+				}
+			}
+
+			private function registerFlashVars(vars:Object):void
+			{
+				applyEnvVars(vars);
+				//applyUserVars(vars);
+				ModelLocator.getInstance().affiliate = vars.partnerId;
+				if (vars.version) Environment.serverVersion = vars.version;
+				if (vars.returnUrl) Environment.returnUrl = vars.returnUrl;
+			}
+
+			private static function applyEnvVars(vars:Object):void
+			{
+				if (vars.applicationDomain)
+				{
+					Environment.setApplicationDomain(vars.applicationDomain);
+					Services.setBaseUrl(Environment.getApplicationUrl());
+				}
+
+				if (vars.assetDomain)
+				{
+					Environment.setAssetDomain(vars.assetDomain);
+				}
+
+				trace("app domain " + Environment.getApplicationDomain());
+				trace("asset domain " + Environment.getAssetDomain());
+				trace("app url " + Environment.getApplicationUrl());
+				trace("standalone " + Environment.isStandalone());
+			}
+
+//			private function getMonthFree():void
+//			{
+//				if (ModelLocator.getInstance().user.freeMonthEligible)
+//				{
+//					navigateToURL(new URLRequest('http://' + Environment.returnUrl +
+//						'/premium/co/ccard?userId=' + ModelLocator.getInstance().user.userId +
+//						'&pm=' + Constants.CREDIT_CARD + '&plan=' + 7 + '&affiliateId=' + ModelLocator.getInstance().affiliate), '_self');
+//				}
+//				else
+//					SdgAlert.show("Month Free offer for new users only.", "Time Out!");
+//			}
+
+			private function login():void
+			{
+				dispatchEvent(new LoginEvent(username.text, password.text));
+			}
+
+			private function loginWatcher(event:Event):void
+			{
+				switch (ModelLocator.getInstance().user.loggedInStatus)
+				{
+					case 1:
+						//getMonthFree();
+						break;
+					case 100:
+						SdgAlert.show("Your avatar has been banned.", "Time Out!");
+						break;
+					case 101:
+						SdgAlert.show("We did not recognize your user name or password. Please try again.", "Time Out!");
+						break;
+					case 102:
+						SdgAlert.show("Your registration process was incomplete. Please register again.", "Time Out!");
+						break;
+					case 103:
+						var request:URLRequest = new URLRequest('changeUserName.jsp');
+						request.method = URLRequestMethod.POST;
+
+						var variables:URLVariables = new URLVariables();
+						variables.userId = ModelLocator.getInstance().user.userId;
+						request.data = variables;
+
+						navigateToURL(request,'_self');
+						break;
+					case 104:
+						SdgAlert.show("Your account has not been activated yet.", "Time Out!");
+						break;
+					case 0:
+						SdgAlert.show("Your login was unsuccessful. Please try again.", "Time Out!");
+						break;
+					case -1:
+						break;
+					default:
+						SdgAlert.show("Your login was unsuccessful. Please try again.", "Time Out!");
+						break;
+				}
+			}
+		]]>
+	</mx:Script>
+
+	<mx:Style source="styles/style2.css"/>
+	<mx:Style>
+		.retrieveStyle
+		{
+			fontFamily: GillSans;
+			fontSize: 12;
+			fontWeight: bold;
+			fontThickness: 100;
+			color: #dcebff;
+		}
+
+		.textStyle
+		{
+			fontFamily: GillSans;
+			fontSize: 16;
+			fontWeight: bold;
+			fontThickness: 200;
+			color: #ffffff;
+			letterSpacing: 1;
+		}
+
+		TextInput.input
+		{
+			borderColor: #06193c;
+			borderThickness: 3;
+			borderStyle: solid;
+			cornerRadius: 10;
+			textAlign: center;
+			fontFamily: GillSans;
+			fontSize: 16;
+			fontWeight: bold;
+			fontThickness: 100;
+			color: #243e75;
+			letterSpacing: 1;
+		}
+	</mx:Style>
+
+
+	<mx:Canvas x="452" y="448">
+		<mx:Text text="My Athlete's Name is" styleName="textStyle" selectable="false"/>
+		<mx:TextInput id="username" y="23" width="235" styleName="input" borderStyle="solid" maxChars="13" paddingTop="1" paddingBottom="1"/>
+
+		<mx:Text text="My Password is" y="60" styleName="textStyle" selectable="false"/>
+		<mx:TextInput id="password" y="83" width="235" styleName="input" displayAsPassword="true" maxChars="10" paddingTop="1" paddingBottom="1"/>
+
+		<mx:Text text="I Forgot My Athlete Name" y="125" selectable="false" styleName="retrieveStyle"
+			textDecoration="underline" mouseChildren="false" buttonMode="true"
+			click="navigateToURL(new URLRequest('retrieveInformation.jsp'),'_self')"/>
+		<mx:Text text="I Forgot My Password" y="143" selectable="false" styleName="retrieveStyle"
+			textDecoration="underline" mouseChildren="false" buttonMode="true"
+			click="navigateToURL(new URLRequest('retrieveInformation.jsp'),'_self')"/>
+
+		<mx:Image id="loginButton" source="@Embed('images/guestRegistration/login.swf')" right="0" y="133" buttonMode="true" click="login()"/>
+	</mx:Canvas>
+
+	<mx:Image source="@Embed('images/monthFree/getMonthFree.swf')" x="99" y="490"
+		click="{MainUtil.postAvatarIdToURL('register.jsp', 0, 8)}"/>
+
+</mx:Application>

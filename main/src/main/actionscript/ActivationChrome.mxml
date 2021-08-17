@@ -1,0 +1,252 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Module
+	xmlns:mx="http://www.adobe.com/2006/mxml"
+	xmlns:renderers="com.sdg.components.renderers.*"
+	xmlns:controls="com.sdg.components.controls.*"
+	width="925" height="665" layout="absolute" initialize="init()">
+	
+	<mx:Script>
+		<![CDATA[
+			import com.sdg.events.ResendActivationEvent;
+			import mx.controls.Text;
+			import com.sdg.graphics.RoundRectStyle;
+			import com.sdg.display.LineStyle;
+			import com.sdg.graphics.GradientStyle;
+			import com.sdg.components.controls.store.StoreNavBar;
+		
+			private var _continueButton:StoreNavBar;
+			private var _backButton:StoreNavBar;
+			private var _pageNum:int = 1;
+			
+			private function init():void
+			{
+				// Continue button.
+				_continueButton = new StoreNavBar(200, 40);
+				_continueButton.roundRectStyle = new RoundRectStyle(10, 10);
+				_continueButton.buttonMode = true;
+				setDefaultButton(_continueButton);
+				setButtonLabel(_continueButton, "Continue");
+				_continueButton.addEventListener(MouseEvent.CLICK, onContinueClick);
+				_continueButton.addEventListener(MouseEvent.MOUSE_OVER, onButtonMouseOver);
+				_continueButton.addEventListener(MouseEvent.MOUSE_OUT, onButtonMouseOut);
+				
+				buttonBar.rawChildren.addChild(_continueButton);
+				_continueButton.x = buttonBar.width - _continueButton.width;
+				_continueButton.y = buttonBar.height/2 - _continueButton.height/2;
+				
+				
+				// Back button.
+				_backButton = new StoreNavBar(150, 30);
+				_backButton.roundRectStyle = new RoundRectStyle(10, 10);
+				_backButton.buttonMode = true;
+				setDefaultButton(_backButton);
+				setButtonLabel(_backButton, "Back");
+				_backButton.addEventListener(MouseEvent.CLICK, onBackClick);
+				_backButton.addEventListener(MouseEvent.MOUSE_OVER, onButtonMouseOver);
+				_backButton.addEventListener(MouseEvent.MOUSE_OUT, onButtonMouseOut);
+				
+				buttonBar.rawChildren.addChild(_backButton);
+				_backButton.y = buttonBar.height/2 - _backButton.height/2;
+				
+				function onButtonMouseOver(event:MouseEvent):void
+				{
+					setMouseOverButton(StoreNavBar(event.currentTarget));
+				}
+				
+				function onButtonMouseOut(event:MouseEvent):void
+				{
+					setDefaultButton(StoreNavBar(event.currentTarget));
+				}
+				
+				function onContinueClick(event:MouseEvent):void
+				{
+					if (_pageNum == 2)
+					{
+						resendActivation();
+					}
+					else
+						goToPage(++_pageNum);
+				}
+				
+				function onBackClick(event:MouseEvent):void
+				{
+					if (_pageNum == 1)
+						navigateToURL(new URLRequest('chatApp.jsp'), '_self');
+						//navigateToURL(new URLRequest('login.jsp'), '_self');
+					else
+						goToPage(--_pageNum);
+				}
+			}
+			
+			private function resendActivation():void
+			{
+				errorArea.removeAllChildren();
+				errorArea.visible = false;
+				if (checkName() && checkEmail())
+				{
+					dispatchEvent(new ResendActivationEvent(nameInput.text.toLowerCase(), emailInput.text));
+				}
+			}
+			
+			private function checkName():Boolean
+			{
+				var success:Boolean = true;
+				
+				// check that username starts with a letter
+				if (!checkTextStartsWithLetter(nameInput.text))
+				{
+					addError("Athlete name must start with a letter.");
+					success = false;
+				}
+				// check that username has only letters and numbers
+				if (!checkTextCharacters(nameInput.text))
+				{
+					addError("Athlete name must contain only letters and numbers.");
+					success = false;
+				}
+				// check that username is not less than 4 characters
+				if (!checkTextLength(nameInput.text, 4))
+				{
+					addError("Athlete name must be at least 4 characters.");
+					success = false;
+				}
+				
+				return success;
+			}
+			
+			private function checkEmail():Boolean
+			{
+				var success:Boolean = true;
+				
+				// check that email is valid
+				if (!checkValidEmail(emailInput.text))
+				{
+					addError("Invalid email address.");
+					success = false;
+				}
+				
+				return success
+			}
+			
+			private function checkValidEmail(input:String):Boolean
+			{
+				// verify the email syntax with a regular expression
+				// got this regular expression from http://www.webdeveloper.com/forum/archive/index.php/t-9970.html
+				var pattern:RegExp = /^[^\x00-\x20()<>@,;:\\".[\]\x7f-\xff]+(?:\.[^\x00-\x20()<>@,;:\\".[\]\x7f-\xff]+)*\@[^\x00-\x20()<>@,;:\\".[\]\x7f-\xff]+(?:\.[^\x00-\x20()<>@,;:\\".[\]\x7f-\xff]+)+$/i;
+				if (!pattern.test(input))
+					return false;
+				
+				return true;
+			}
+			
+			private function addError(message:String):void
+			{
+				var errorText:Text = new Text();
+				errorText.htmlText = message;
+				errorText.setStyle("fontSize", 12);
+				errorText.setStyle("color", 0xffffff);
+				errorText.setStyle("fontWeight", "bold");
+				errorText.width = 160;
+				
+				errorArea.addChild(errorText);
+				errorArea.visible = true;
+			}
+			
+			private function setButtonLabel(button:StoreNavBar, lbl:String):void
+			{
+				button.label = lbl;
+				button.labelX = button.width/2 - button.labelWidth/2;
+			}
+			
+			private function checkTextLength(input:String, minLength:int):Boolean
+			{
+				return input.length >= minLength;
+			}
+			
+			private function checkTextCharacters(input:String):Boolean
+			{
+				var pattern:RegExp = /^[a-zA-Z0-9]+$/;
+				
+				if (!pattern.test(input))
+					return false;
+				
+				return true;
+			}
+			
+			private function checkTextStartsWithLetter(input:String):Boolean
+			{
+				var pattern:RegExp = /^[a-zA-Z]/;
+				
+				if (!pattern.test(input))
+					return false;
+				
+				return true;
+			}
+			
+			private function setDefaultButton(button:StoreNavBar):void
+			{
+				button.labelFormat = new TextFormat('EuroStyle', 22, 0x913300, true);
+				button.borderStyle = new LineStyle(0x913300, 1, 1);
+				
+				var gradientBoxMatrix:Matrix = new Matrix();
+				gradientBoxMatrix.createGradientBox(button.width, button.height, Math.PI/2, 0, 0);
+				button.gradient = new GradientStyle(GradientType.LINEAR, [0xf8db5c, 0xd28602], [1, 1], [0, 255], gradientBoxMatrix);
+			}
+			
+			private function setMouseOverButton(button:StoreNavBar):void
+			{
+				button.labelFormat = new TextFormat('EuroStyle', 22, 0xffcc33, true);
+				button.borderStyle = new LineStyle(0xff9900, 1, 1);
+				
+				var gradientBoxMatrix:Matrix = new Matrix();
+				gradientBoxMatrix.createGradientBox(button.width, button.height, Math.PI/2, 0, 0);
+				button.gradient = new GradientStyle(GradientType.LINEAR, [0xd18500, 0xa54c0a], [1, 1], [0, 255], gradientBoxMatrix);
+			}
+			
+			private function goToPage(page:int):void
+			{
+				showPage(page);
+				
+				inputs.visible = page == 2;
+			}
+			
+			private function showPage(page:int):void
+			{
+				try
+				{
+					var swf:Object = Object(swfBg);
+					swf.content.setBackgroundPage(page);
+				}
+				catch(e:Error)
+				{
+					trace("set background page error = " + e.message);
+				}
+			}
+		]]>
+	</mx:Script>
+	<mx:Style>
+		TextInput.activation
+		{
+			borderColor: #999999;
+			borderThickness: 3;
+			borderStyle: "solid";
+			textAlign: center;
+			fontWeight: bold;
+			fontFamily: "EuroStyle";
+			cornerRadius: 0;
+		}
+	</mx:Style>
+	
+	<mx:Image id="swfBg" source="assets/swfs/activation.swf"/>
+	
+	<mx:VBox id="inputs" height="405" horizontalAlign="center" verticalGap="65" horizontalCenter="0" y="165" paddingTop="130" visible="false">
+		<mx:TextInput id="nameInput" width="408" height="50" styleName="activation" maxChars="13" fontSize="25" paddingTop="3"/>
+		<mx:TextInput id="emailInput" width="408" height="50" styleName="activation" fontSize="20" paddingTop="5"/>
+	</mx:VBox>
+	
+	<mx:VBox id="errorArea" backgroundColor="#A92036" backgroundAlpha=".9" visible="false" x="680" verticalCenter="45"
+		paddingLeft="5" paddingRight="5" paddingTop="5" paddingBottom="5"
+		borderColor="#820B1E" borderStyle="solid" borderThickness="2" cornerRadius="5"/>
+
+	<mx:Canvas id="buttonBar" horizontalCenter="0" bottom="20" width="600" height="60"/>
+</mx:Module>

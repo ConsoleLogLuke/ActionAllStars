@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Module xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="925" height="665" backgroundColor="#000000">
+	<mx:Script>
+		<![CDATA[
+			import com.sdg.ui.RoundCornerCloseButton;
+			import com.sdg.leaderboard.Leaderboard;
+
+			protected var _leaderBoard:Leaderboard;
+			protected var _closeBtn:RoundCornerCloseButton;
+
+			public function init(avatarId:uint,gameTypeIn:uint=0,startIndexIn:uint=0):void
+			{
+				_leaderBoard = new Leaderboard(avatarId,gameTypeIn,startIndexIn);
+				_leaderBoard.x = width / 2 - _leaderBoard.width / 2;
+				_leaderBoard.y = height / 2 - _leaderBoard.height / 2;
+				_leaderBoard.addEventListener(Event.CLOSE, onClose);
+				rawChildren.addChild(_leaderBoard);
+
+				_closeBtn = new RoundCornerCloseButton('Close Leaderboard');
+				_closeBtn.x = width - _closeBtn.width - 10;
+				_closeBtn.y = 10;
+				_closeBtn.buttonMode = true;
+				_closeBtn.addEventListener(MouseEvent.CLICK, onClose);
+				rawChildren.addChild(_closeBtn);
+			}
+
+			private function onClose(e:Event):void
+			{
+				_leaderBoard.removeEventListener(Event.CLOSE, onClose);
+				_closeBtn.removeEventListener(MouseEvent.CLICK, onClose);
+
+				dispatchEvent(new Event('closeModule', true));
+			}
+		]]>
+	</mx:Script>
+
+	<mx:Style source="styles/leaderboard.css"/>
+
+</mx:Module>

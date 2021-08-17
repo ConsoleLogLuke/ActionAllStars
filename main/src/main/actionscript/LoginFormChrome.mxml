@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Module
+	xmlns:mx="http://www.adobe.com/2006/mxml"
+	xmlns:sdgcontrols="com.sdg.components.controls.*"
+	width="925" height="665" layout="absolute"
+	creationComplete="init()" backgroundImage="assets/swfs/registration/LoginBackground.swf">
+	<mx:Image source="{Environment.getApplicationUrl() + '/test/static/upsell/loginPage?partnerId=0'}"/>
+
+	<mx:Script>
+		<![CDATA[
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			import com.sdg.events.LoginEvent;
+			import com.sdg.net.Environment;
+
+			private var _sharedObject:SharedObject;
+
+			private function init():void
+			{
+				reEnableLogin();
+
+				_sharedObject = SharedObject.getLocal("loginData");
+				if (_sharedObject.data.username != undefined && _sharedObject.data.password != undefined)
+				{
+					rememberMe.selected = true;
+					username.text = _sharedObject.data.username;
+					password.text = _sharedObject.data.password;
+				}
+			}
+
+			private function onCreateAthleteClick(event:MouseEvent):void
+			{
+				navigateToURL(new URLRequest('chatApp.jsp?account=New'), '_self');
+			}
+
+			private	function onLoginClick(event:MouseEvent):void
+			{
+				login();
+			}
+
+			private function onEnterKeyPressed(evt_obj:Event):void
+			{
+				if((username.length > 0) && (password.length > 0 ))
+				{
+					login();
+				}
+			}
+
+			private function login():void
+			{
+				loginButton.enabled = false;
+				username.removeEventListener("enter", onEnterKeyPressed);
+				password.removeEventListener("enter", onEnterKeyPressed);
+
+				dispatchEvent(new LoginEvent(username.text, password.text));
+				if (rememberMe.selected)
+				{
+					_sharedObject.data.username = username.text;
+					_sharedObject.data.password = password.text;
+					_sharedObject.flush();
+				}
+				else
+				{
+					_sharedObject.clear();
+				}
+			}
+
+			public function reEnableLogin():void
+			{
+				loginButton.enabled = true;
+				username.addEventListener("enter", onEnterKeyPressed);
+				password.addEventListener("enter", onEnterKeyPressed);
+			}
+
+			private function onForgotMouseOver(event:MouseEvent):void
+			{
+				Label(event.currentTarget).setStyle("textDecoration", "underline");
+			}
+
+			private function onForgotMouseOut(event:MouseEvent):void
+			{
+				Label(event.currentTarget).setStyle("textDecoration", "none");
+			}
+
+			private function onForgotClick(event:MouseEvent):void
+			{
+				navigateToURL(new URLRequest('retrieveInformation.jsp'),'_self');
+			}
+		]]>
+	</mx:Script>
+
+	<mx:Style source="styles/style2.css"/>
+	<mx:Style>
+		TextInput.input
+		{
+			borderColor: #0C61A9;
+			borderThickness: 3;
+			fontFamily: EuroStyle;
+			borderStyle: solid;
+			textAlign: left;
+			fontSize: 20;
+			fontWeight: bold;
+			cornerRadius: 10;
+			paddingLeft:8;
+			paddingRight:8;
+			paddingTop: 2;
+			paddingBottom: 2;
+		}
+	</mx:Style>
+	<mx:TextInput id="username" width="220" styleName="input" maxChars="13" x="550" y="552"/>
+	<mx:TextInput id="password" width="220" styleName="input" displayAsPassword="true" maxChars="10" x="550" y="605"/>
+
+	<mx:Label text="FORGOT?" selectable="false" fontSize="12" color="#7FAEDD" buttonMode="true" mouseChildren="false"
+		fontWeight="bold" fontFamily="EuroStyle" right="386" y="572"
+		mouseOver="onForgotMouseOver(event)" mouseOut="onForgotMouseOut(event)"	click="onForgotClick(event)"/>
+	<mx:Label text="FORGOT?" selectable="false" fontSize="12" color="#7FAEDD" buttonMode="true" mouseChildren="false"
+		fontWeight="bold" fontFamily="EuroStyle" right="386" y="625"
+		mouseOver="onForgotMouseOver(event)" mouseOut="onForgotMouseOut(event)"	click="onForgotClick(event)"/>
+
+
+	<mx:CheckBox id="rememberMe" label="REMEMBER ME" x="786" y="610" fontWeight="bold"
+		fontSize="11" color="#052240" textRollOverColor="#7FAEDD" horizontalGap="1" buttonMode="true"
+		icon="@Embed('images/registration/uncheckBlueBorder.png')"
+		selectedUpIcon="@Embed('images/registration/checkedBlueBorder.png')"
+		selectedOverIcon="@Embed('images/registration/checkedBlueBorder.png')"/>
+
+	<mx:Image source="assets/swfs/registration/Button_NewAthlete.swf" x="38" y="555" click="onCreateAthleteClick(event)"/>
+	<mx:Image source="assets/swfs/registration/Login_Kid.swf" x="205" y="540"/>
+	<mx:Image id="loginButton" source="assets/swfs/registration/Button_Login.swf" x="786" y="552" click="onLoginClick(event)"/>
+</mx:Module>

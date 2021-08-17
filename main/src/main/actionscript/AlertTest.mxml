@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Application xmlns:mx="http://www.adobe.com/2006/mxml" xmlns:controls="com.sdg.components.controls.*"
+	width="925" height="665" layout="absolute" horizontalScrollPolicy="off" verticalScrollPolicy="off"
+	applicationComplete="init()"
+	>
+		<mx:Style source="assets/styles/style.css"/>
+		
+		<mx:Script>
+		<![CDATA[
+			import com.sdg.components.controls.*;
+			import com.sdg.utils.ProgressMonitor;
+			
+			private var longMsg:String = "asdfasdf asdf asjdflk jlkasd jfkl asldfjkl asdklfj klasjdf klas jdklf asdf asdf asdlfj asdflk  asjldkfj lasjdf ljsdl fjlaksdf jaksdf asdfk askl asdf jasdflkj asdf jklasjdf jasdf jlkj asdfjlk asdfj kljas dflk ."
+			
+			private function init():void
+			{
+				//SdgAlert.show(longMsg, "asdfasdf");
+				ProgressAlert.show("Loading map, please wait.", "Here We Go...", null, this, false, true);
+			}
+		]]>
+	</mx:Script>
+	
+	<controls:SdgAlert message="{longMsg}" buttonFlags="0x01">
+		<mx:ProgressBar labelPlacement="center" width="100%"/>
+	</controls:SdgAlert>
+	
+</mx:Application>

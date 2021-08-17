@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Module xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="925" height="665">
+	<mx:Script>
+		<![CDATA[
+			import com.sdg.store.StoreEvent;
+			import com.sdg.store.models.StoreModelFactory;
+			import com.sdg.store.IStoreModel;
+
+			private var _model:IStoreModel;
+
+			public function init(storeId:uint):void
+			{
+				// Instantiate and initialize the model.
+				_model = StoreModelFactory.createStoreModel(storeId);
+				_model.init();
+
+				// Listen for store close.
+				_model.controller.addEventListener(StoreEvent.CLOSE_STORE, onStoreClose);
+
+				// Add the view to display.
+				rawChildren.addChild(_model.view.display);
+			}
+
+			private function onStoreClose(e:StoreEvent):void
+			{
+				_model.controller.removeEventListener(StoreEvent.CLOSE_STORE, onStoreClose);
+				dispatchEvent(new Event('closeModule', true));
+			}
+
+		]]>
+	</mx:Script>
+
+	<mx:Style source="styles/store.css"/>
+
+</mx:Module>

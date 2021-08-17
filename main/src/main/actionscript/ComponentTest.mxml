@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Application xmlns:mx="http://www.adobe.com/2006/mxml" 
+	xmlns:business="com.sdg.business.*" 
+	xmlns:sdgcontrols="com.sdg.components.controls.*" 
+	xmlns:games="com.sdg.components.games.*" 
+	layout="absolute" width="925" height="665" applicationComplete="init()">
+	<business:Services/>
+<mx:Style source="assets/styles/style.css"/>
+	<mx:Script>
+        <![CDATA[
+        	import mx.containers.VBox;
+        	import mx.controls.Label;
+        	import com.sdg.components.games.Concentration;
+        	import com.boostworthy.examples.animation_template.AnimationTemplateExample;
+        	import mx.controls.Image;
+        	import mx.logging.targets.*;
+        	
+			import mx.binding.utils.*;
+			import mx.collections.ArrayCollection;
+            import mx.containers.Canvas;
+        	import mx.logging.*;
+            import mx.managers.PopUpManager;
+            
+			import com.sdg.commands.*;
+        	import com.sdg.components.controls.*;
+			import com.sdg.components.dialog.*;
+			import com.sdg.components.skins.*;
+            import com.sdg.control.SdgFrontController;
+			import com.sdg.events.*;
+			import com.sdg.model.*;
+			import com.sdg.net.Environment;
+			import com.sdg.net.socket.SocketClient;
+			
+			[Bindable]
+			private var _avatar:Avatar;
+			private var _userId:int;
+
+			[Bindable]
+			[Embed(source="assets/images/iconTickets.png")]
+            private var _ticketIcon:Class;
+			
+			private function init():void
+			{ 
+				var sdg:SdgFrontController = SdgFrontController.getInstance();
+				sdg.addCommand(InventoryListEvent.LIST, InventoryListCommand);
+				sdg.addCommand(AvatarApparelEvent.AVATAR_APPAREL, AvatarApparelCommand);
+				sdg.addCommand(AvatarApparelSaveEvent.AVATAR_APPAREL_SAVE, AvatarApparelSaveCommand);
+				sdg.addCommand(AvatarListEvent.LIST, AvatarListCommand);
+				sdg.addCommand(AvatarEvent.AVATAR, AvatarCommand);
+				sdg.addCommand(StoreCategoriesEvent.STORE_CATEGORIES, StoreCategoriesCommand);
+				sdg.addCommand(StoreItemsEvent.STORE_ITEMS, StoreItemsCommand);
+				sdg.addCommand(ItemPurchaseEvent.ITEM_PURCHASE,ItemPurchaseCommand);
+				sdg.addCommand(ModeratorSaveReportEvent.MODERATOR_REPORT_SAVE, SaveModeratorReportCommand);
+				sdg.addCommand(SocketLoginEvent.SOCKET_LOGIN, SocketLoginCommand);
+				sdg.addCommand(ServerListEvent.LIST, ServerListCommand);
+				sdg.addCommand(ApplicationConfigurationEvent.LOAD, ApplicationConfigurationCommand);
+				sdg.addCommand(TradingCardBackgroundsEvent.TRADING_CARD_BACKGROUNDS, TradingCardBackgroundsCommand);
+				sdg.addCommand(TradingCardFrameEvent.TRADING_CARD_FRAME, TradingCardFrameCommand);
+				sdg.addCommand(TradingCardSaveEvent.TRADING_CARD_SAVE, TradingCardSaveCommand);
+				
+				ChangeWatcher.watch(ModelLocator.getInstance().application, "isConfigLoaded", onConfigLoaded);
+				ChangeWatcher.watch(ModelLocator.getInstance().user, "avatarId", avatarSelectionWatcher);
+
+				dispatchEvent(new ApplicationConfigurationEvent(ApplicationConfigurationEvent.LOAD));		
+				initLogging();
+			}
+			
+			private function onConfigLoaded(event:Event):void
+			{
+				dispatchEvent(new AvatarListEvent("kevinchat5"));
+				trace("config loaded");
+			}
+			private function avatarSelectionWatcher(event:Event):void
+			{
+				_avatar = ModelLocator.getInstance().avatar;
+				
+//				//avatarPortrait.avatar = _avatar;
+//				multiPlayerStatus.addPlayer(_avatar);
+//				
+//				// test: add mikey
+//				multiPlayerStatus.addPlayerByAvatarId(438);
+//				multiPlayerStatus.addPlayerByAvatarId(590);
+			}
+			
+            private function popOut(cl:Class, params:Object = null, callInit:Boolean = true):void 
+            {
+                var dlg:ISdgDialog = PopUpManager.createPopUp(this, cl, true) as ISdgDialog;
+                if (callInit)
+                	dlg.init(params);
+                PopUpManager.centerPopUp(dlg);
+            }
+            
+ 			private function initLogging():void 
+			{
+            	// Create a target.
+	            var logTarget:TraceTarget = new TraceTarget();
+	
+	            // Log only messages for the classes in the mx.rpc.* and 
+	            // mx.messaging packages.
+	            //logTarget.filters=["mx.rpc.*","mx.messaging.*"];
+	
+	            // Log all log levels.
+	            logTarget.level = LogEventLevel.ALL;
+	
+	            // Add date, time, category, and log level to the output.
+	            logTarget.includeDate = true;
+	            logTarget.includeTime = true;
+	            logTarget.includeCategory = true;
+	            logTarget.includeLevel = true;
+
+	            // Begin logging.
+	            Log.addTarget(logTarget);
+        	}
+        	
+            private function TestBoostStuff():void
+            {
+				var example:AnimationTemplateExample = new AnimationTemplateExample();
+				hbox.addChild(example);
+            }
+            
+            private function showConcentrationDialog():void
+            {
+            	for (var i:int = 1; i < 64; i++)
+            	{
+            		var vBox:VBox = new VBox();
+            		
+            		var label:Label = new Label();
+            		label.text = i.toString();
+            		label.width = 80;
+            		label.setStyle("textAlign", "center");
+            		vBox.addChild(label);
+            		
+            		var image:Image = new Image();
+            		image.source = Environment.getApplicationUrl() + "/test/static/clipart/teamLogoTemplate?teamId=" + i;;
+            		image.width = 80;
+            		image.height = 80;
+            		vBox.addChild(image);
+            		
+            		
+            		hbox.addChild(vBox);
+            	}
+            } 
+
+        ]]>
+	</mx:Script>
+	<mx:HBox id="hbox">
+		<mx:VBox>
+			<mx:Button label="Test Boost Stuff" click="TestBoostStuff()" />
+			<mx:Button label="Launch Server Selector" click="popOut(ServerSelection)" />
+			<mx:Button label="Launch Avatar Inspector" click="popOut(AvatarCustomizer, {avatar:_avatar})" />
+		    <mx:Button label="Launch Avatar Customizer" click="popOut(AvatarCustomizer, {avatar:_avatar})" />
+		    <mx:Button label="Launch Moderator Behavior Dialog" click="popOut(ModeratorBehaviorDialog, {accused:_avatar} )"/>
+		    <mx:Button label="Launch Moderator Scene Dialog" click="popOut(ModeratorSceneDialog )"/>
+		    <mx:Button label="Launch Store" click="popOut(StoreDialog, {storeId:1} )"/>
+		    <mx:Button label="Launch AvatarPortrait" click="popOut(AvatarPortrait, null, false)"/>
+		    <mx:Button label="Launch Concentration Dialog" click="showConcentrationDialog()"/>
+		</mx:VBox>
+		<!--<sdgcontrols:AvatarCard id="avatarCard" />-->
+		<!--<sdgcontrols:AvatarPortrait id="avatarPortrait" />-->
+		
+	</mx:HBox>
+</mx:Application>

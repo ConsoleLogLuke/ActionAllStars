@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Application xmlns:mx="http://www.adobe.com/2006/mxml"
+	layout="absolute" width="925"
+	height="665"
+	applicationComplete="init();">
+	<mx:Script>
+		<![CDATA[
+		import com.sdg.event.UIDialogueEvent;
+		import com.sdg.ui.UITriviaResult;
+		import com.sdg.ui.UITriviaStamps;
+		
+		import flash.display.Sprite;
+		
+		private var _triviaRewardUI:UITriviaResult;
+		private var _tiviaStampsUI:UITriviaStamps;
+		
+		private function init()
+		{
+			_triviaRewardUI = new UITriviaResult(300);
+			_triviaRewardUI.addEventListener(UIDialogueEvent.OK, _triviaRewardOk);
+			rawChildren.addChild(_triviaRewardUI);
+			
+			_tiviaStampsUI = new UITriviaStamps(7, true, true, 'http://dev/test/static/layerLoad/itemId/3953/layerId/9500');
+		}
+		
+		private function _triviaRewardOk(e:UIDialogueEvent):void
+		{
+			rawChildren.removeChild(_triviaRewardUI);
+			_tiviaStampsUI.addEventListener(UIDialogueEvent.OK, _triviaStampsOk);
+			rawChildren.addChild(_tiviaStampsUI);
+			_tiviaStampsUI.animate();
+		}
+		
+		private function _triviaStampsOk(e:UIDialogueEvent):void
+		{
+			rawChildren.removeChild(_tiviaStampsUI);
+		}
+		]]>
+	</mx:Script>
+</mx:Application>

@@ -1,0 +1,605 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Module xmlns:mx="http://www.adobe.com/2006/mxml" xmlns:controls="com.sdg.components.controls.*" layout="absolute"
+	width="925" height="665" creationComplete="init()">
+
+	<mx:Image width="100%" height="100%" source="{Environment.getApplicationUrl() + '/test/static/upsell/guestLoginPage?partnerId=0'}"/>
+
+	<mx:Script>
+		<![CDATA[
+			import com.sdg.events.ButtonClickLoggingEvent;
+			import com.sdg.logging.LoggingUtil;
+			import com.sdg.model.Buddy;
+			import mx.utils.StringUtil;
+			import com.sdg.events.VerifyFriendEvent;
+			import com.sdg.view.LayeredImage;
+			import mx.core.Application;
+			import com.sdg.commands.GuestAccountCommand;
+			import com.sdg.events.GuestAccountEvent;
+			import com.sdg.graphics.GradientStyle;
+			import com.sdg.display.LineStyle;
+			import com.sdg.graphics.RoundRectStyle;
+			import com.sdg.components.controls.store.StoreNavBar;
+			import com.sdg.utils.PreviewUtil;
+			import mx.collections.ArrayCollection;
+			import com.sdg.model.InventoryItem;
+			import com.sdg.events.SelectedEvent;
+			import com.sdg.commands.InventoryListCommand;
+			import com.sdg.control.SdgFrontController;
+			import com.sdg.business.Services;
+			import com.sdg.net.Environment;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			import com.sdg.model.ModelLocator;
+			import com.sdg.model.Avatar;
+			import com.sdg.events.InventoryListEvent;
+
+			private var _itemListToGetCount:int;
+			private var _avatar:Avatar;
+			private var _currentCategoryButton:RegRadioButton;
+			private var _currentGenderButton:RegRadioButton;
+			private var _currentItemTypeButton:RegRadioButton;
+			private var _layeredAvatarImage:LayeredImage;
+			private var _fName:String;
+			private var _verifyFriendCounter:int = 0;
+
+			private function init():void
+			{
+				_avatar = ModelLocator.getInstance().avatar;
+
+				boy.selected = true;
+				myLook.selected = true;
+
+				// avatar preview
+				_layeredAvatarImage = new LayeredImage();
+
+				// play now button
+				var playButton:StoreNavBar = new StoreNavBar(160, 50);
+				playButton.roundRectStyle = new RoundRectStyle(15, 15);
+				playButton.labelFormat = new TextFormat('EuroStyle', 20, 0x913300, true);
+				playButton.buttonMode = true;
+				setDefaultButton(playButton);
+				setPlayButtonLabel("PLAY NOW");
+				setPlayButtonEnabled(true);
+
+				//playButton.addEventListener(MouseEvent.CLICK, onPlayButtonClick);
+				//playButton.addEventListener(MouseEvent.MOUSE_OVER, onButtonMouseOver);
+				//playButton.addEventListener(MouseEvent.MOUSE_OUT, onButtonMouseOut);
+
+				this.rawChildren.addChild(playButton);
+				playButton.x = width - playButton.width - 50;
+				playButton.y = height - playButton.height - 27;
+
+				// login button
+				var loginButton:StoreNavBar = new StoreNavBar(50, 20, "Login");
+				loginButton.roundRectStyle = new RoundRectStyle(15, 15);
+				loginButton.labelFormat = new TextFormat('EuroStyle', 12, 0x913300, true);
+				loginButton.buttonMode = true;
+
+				loginButton.addEventListener(MouseEvent.CLICK, onLoginButtonClick);
+				loginButton.addEventListener(MouseEvent.MOUSE_OVER, onButtonMouseOver);
+				loginButton.addEventListener(MouseEvent.MOUSE_OUT, onButtonMouseOut);
+
+				this.rawChildren.addChild(loginButton);
+				loginButton.labelX = loginButton.width/2 - loginButton.labelWidth/2;
+				setDefaultButton(loginButton);
+
+				loginButton.x = width - loginButton.width - 36;
+				loginButton.y = 33;
+
+				function setPlayButtonLabel(buttonLabel:String, textFormat:TextFormat = null):void
+				{
+					if (textFormat)
+						playButton.labelFormat = textFormat;
+
+					playButton.label = buttonLabel;
+					playButton.labelX = playButton.width/2 - playButton.labelWidth/2;
+				}
+
+				function setPlayButtonEnabled(value:Boolean):void
+				{
+					if (value)
+					{
+						playButton.addEventListener(MouseEvent.CLICK, onPlayButtonClick);
+						playButton.addEventListener(MouseEvent.MOUSE_OVER, onButtonMouseOver);
+						playButton.addEventListener(MouseEvent.MOUSE_OUT, onButtonMouseOut);
+					}
+					else
+					{
+						playButton.removeEventListener(MouseEvent.CLICK, onPlayButtonClick);
+						playButton.removeEventListener(MouseEvent.MOUSE_OVER, onButtonMouseOver);
+						playButton.removeEventListener(MouseEvent.MOUSE_OUT, onButtonMouseOut);
+						CairngormEventDispatcher.getInstance().addEventListener(GuestAccountEvent.REENABLE_BUTTON, onReenableButton);
+					}
+
+					function onReenableButton(event:GuestAccountEvent):void
+					{
+						CairngormEventDispatcher.getInstance().removeEventListener(GuestAccountEvent.REENABLE_BUTTON, onReenableButton);
+						setPlayButtonEnabled(true);
+					}
+				}
+
+				function onLoginButtonClick(event:MouseEvent):void
+				{
+					navigateToURL(new URLRequest('chatApp.jsp'), '_self');
+					//navigateToURL(new URLRequest('login.jsp'), '_self');
+				}
+
+				function onPlayButtonClick(event:MouseEvent):void
+				{
+					if (_avatar.isFullyClothed)
+					{
+						setPlayButtonLabel("Creating Avatar...", new TextFormat('EuroStyle', 15, 0x913300, true));
+						setPlayButtonEnabled(false);
+
+						if (_fName != null)
+						{
+							var referFriend:Buddy = new Buddy();
+							referFriend.name = _fName;
+							ModelLocator.getInstance().referFriend = referFriend;
+						}
+						dispatchEvent(new GuestAccountEvent(_avatar));
+					}
+				}
+
+				function onButtonMouseOver(event:MouseEvent):void
+				{
+					setMouseOverButton(event.currentTarget);
+				}
+
+				function onButtonMouseOut(event:MouseEvent):void
+				{
+					setDefaultButton(event.currentTarget);
+				}
+
+				function setDefaultButton(button:StoreNavBar):void
+				{
+					button.labelColor = 0x913300;
+					button.borderStyle = new LineStyle(0x913300, 1, 1);
+
+					var gradientBoxMatrix:Matrix = new Matrix();
+					gradientBoxMatrix.createGradientBox(button.width, button.height, Math.PI/2, 0, 0);
+					button.gradient = new GradientStyle(GradientType.LINEAR, [0xf8db5c, 0xd28602], [1, 1], [0, 255], gradientBoxMatrix);
+				}
+
+				function setMouseOverButton(button:StoreNavBar):void
+				{
+					button.labelColor = 0xffcc33;
+					button.borderStyle = new LineStyle(0xff9900, 1, 1);
+
+					var gradientBoxMatrix:Matrix = new Matrix();
+					gradientBoxMatrix.createGradientBox(button.width, button.height, Math.PI/2, 0, 0);
+					button.gradient = new GradientStyle(GradientType.LINEAR, [0xd18500, 0xa54c0a], [1, 1], [0, 255], gradientBoxMatrix);
+				}
+			}
+
+			private function updateAvatarInventory():void
+			{
+				dispatchEvent(new Event('load new avatar'));
+				var loadComplete:Boolean = false;
+				addEventListener('load new avatar', onLoadNewAvatar);
+
+				_layeredAvatarImage.addEventListener(Event.COMPLETE, onAvatarImageComplete);
+				if (avatarPreviewContainer.contains(_layeredAvatarImage)) avatarPreviewContainer.removeChild(_layeredAvatarImage);
+				_layeredAvatarImage.loadItemImage(_avatar);
+
+				function onLoadNewAvatar(e:Event):void
+				{
+					// If a new avatar is gonna be loaded before this one has finished loading,
+					// cancel this load in favor of the new one.
+					if (loadComplete == false)
+					{
+						// Remove event listeners.
+						_layeredAvatarImage.removeEventListener(Event.COMPLETE, onAvatarImageComplete);
+						removeEventListener('load new avatar', onLoadNewAvatar);
+						// Cancel load.
+						_layeredAvatarImage.close();
+					}
+				}
+
+				function onAvatarImageComplete(e:Event):void
+				{
+					// Remove event listener.
+					_layeredAvatarImage.removeEventListener(Event.COMPLETE, onAvatarImageComplete);
+
+					// Add to display.
+					avatarPreviewContainer.addChild(_layeredAvatarImage);
+				}
+			}
+
+			private function getRandomAvatar():void
+			{
+				_avatar.setApparel(getRandomItem(_avatar.getInventoryListById(1)));
+				_avatar.setApparel(getRandomItem(_avatar.getInventoryListById(8)));
+				_avatar.setApparel(getRandomItem(_avatar.getInventoryListById(2)));
+				_avatar.setApparel(getRandomItem(_avatar.getInventoryListById(3)));
+				_avatar.setApparel(getRandomItem(_avatar.getInventoryListById(5)));
+				_avatar.setApparel(getRandomItem(_avatar.getInventoryListById(6)));
+				_avatar.setApparel(getRandomItem(_avatar.getInventoryListById(7)));
+
+				updateAvatarInventory();
+
+				//avatarPreview.loadAvatar(_avatar);
+
+				function getRandomItem(list:ArrayCollection):InventoryItem
+				{
+					var index:uint = Math.round(Math.random() * (list.length - 1));
+					return InventoryItem(list[index]);
+				}
+			}
+
+			private function getInventoryItems(avatarId:uint):void
+			{
+				CairngormEventDispatcher.getInstance().addEventListener(InventoryListEvent.LIST_COMPLETED, onInventoryListRetrieved);
+				getInventoryItem(1);
+				getInventoryItem(8);
+				getInventoryItem(2);
+				getInventoryItem(3);
+				getInventoryItem(5);
+				getInventoryItem(6);
+				getInventoryItem(7);
+
+				function getInventoryItem(itemTypeId:uint):void
+				{
+					_itemListToGetCount++;
+					dispatchEvent(new InventoryListEvent(avatarId, itemTypeId));
+				}
+			}
+
+			private function onInventoryListRetrieved(event:InventoryListEvent):void
+			{
+				// remove the listener if this is our last list
+				if (--_itemListToGetCount == 0)
+				{
+					trace("removing inventoryListComleted listener");
+					CairngormEventDispatcher.getInstance().removeEventListener(InventoryListEvent.LIST_COMPLETED, onInventoryListRetrieved);
+
+					getRandomAvatar();
+					updateItemList();
+				}
+			}
+
+			private function selectApparel(item:InventoryItem):void
+			{
+				trace("item id is: " + item.itemId);
+
+				//_layeredAvatarImage.mergeUrlArray(_model.currentApparelUrls);
+				//avatarPreview.selectApparel(item);
+				_avatar.setApparel(item);
+
+				updateAvatarInventory();
+			}
+
+			private function onItemChange():void
+			{
+				selectApparel(InventoryItem(itemList.selectedItem));
+			}
+
+			private function updateItemList():void
+			{
+				var arrayList:ArrayCollection;
+
+				if(_currentCategoryButton != null)
+					arrayList = _avatar.getInventoryListById(uint(_currentItemTypeButton.value));
+
+				itemList.dataProvider = arrayList;
+
+				if (arrayList.length > 10)
+				{
+					itemList.width = 190;
+					itemList.verticalScrollPolicy = "on";
+				}
+				else
+				{
+					itemList.width = 170;
+					itemList.verticalScrollPolicy = "off";
+				}
+			}
+
+			private function onItemTypeSelection(event:SelectedEvent):void
+			{
+				if (_currentItemTypeButton != null)
+					_currentItemTypeButton.selected = false;
+
+				_currentItemTypeButton = RegRadioButton(event.currentTarget);
+				_currentItemTypeButton.selected = true;
+
+				updateItemList();
+			}
+
+			private function onGenderSelection(event:SelectedEvent):void
+			{
+				if (_currentGenderButton != null)
+					_currentGenderButton.selected = false;
+
+				_currentGenderButton = RegRadioButton(event.currentTarget);
+				_currentGenderButton.selected = true;
+
+				_avatar.gender = uint(_currentGenderButton.value);
+				var godAvatarId:uint = _avatar.gender == Avatar.MALE ? 4: 5;
+				getInventoryItems(godAvatarId);
+			}
+
+			private function onCategorySelection(event:SelectedEvent):void
+			{
+				if (_currentCategoryButton != null)
+					_currentCategoryButton.selected = false;
+
+				_currentCategoryButton = RegRadioButton(event.currentTarget);
+				_currentCategoryButton.selected = true;
+
+				_currentCategoryButton.value == "myLook" ? body.selected = true : shirts.selected = true;
+			}
+
+			private function drawGradient():void
+			{
+				var gradientBoxMatrix:Matrix = new Matrix();
+				gradientBoxMatrix.createGradientBox(referAFriend.width, referAFriend.height, Math.PI/2, 0, 0);
+
+				referAFriend.graphics.clear();
+				referAFriend.graphics.beginGradientFill(GradientType.LINEAR, [0xffffff, 0x5299d4], [1, 1], [0, 255], gradientBoxMatrix);
+				referAFriend.graphics.moveTo(15, 0);
+				referAFriend.graphics.lineTo(referAFriend.width, 0);
+				referAFriend.graphics.lineTo(referAFriend.width, referAFriend.height);
+				referAFriend.graphics.lineTo(0, referAFriend.height);
+				referAFriend.graphics.lineTo(0, 15);
+				referAFriend.graphics.lineTo(15, 0);
+				referAFriend.graphics.endFill();
+
+				referAFriend.graphics.lineStyle(2, 0x195f87);
+				referAFriend.graphics.moveTo(referAFriend.width -1, 0);
+				referAFriend.graphics.lineTo(15, 0);
+				referAFriend.graphics.lineTo(0, 15);
+				referAFriend.graphics.lineTo(0, referAFriend.height);
+				referAFriend.graphics.lineTo(referAFriend.width -1, referAFriend.height);
+
+				referAFriend.filters = [new DropShadowFilter(4, 90)];
+			}
+
+			private function verifyName():void
+			{
+				Object(getPrizeButton.content).verify = true;
+				getPrizeButton.enabled = false;
+				_verifyFriendCounter++;
+
+				friendStatusTitle.visible = friendStatusTitle.includeInLayout = false;
+				friendStatusText.visible = friendStatusText.includeInLayout = false;
+
+				dispatchEvent(new ButtonClickLoggingEvent(LoggingUtil.RAF_GET_PRIZE_BUTTON));
+
+				_fName = StringUtil.trim(friendInput.text);
+
+				dispatchEvent(new VerifyFriendEvent(_fName));
+				CairngormEventDispatcher.getInstance().addEventListener(VerifyFriendEvent.FRIEND_VERIFIED, onVerifyName);
+			}
+
+			private function onVerifyName(event:VerifyFriendEvent):void
+			{
+				// remove the listener
+				CairngormEventDispatcher.getInstance().removeEventListener(VerifyFriendEvent.FRIEND_VERIFIED, onVerifyName);
+
+				// check to see if the name verified is the same name inputted
+				if (event.friendName != _fName) return;
+
+				showStatus(event.status);
+			}
+
+			private function showStatus(status:Boolean):void
+			{
+				verified = status;
+				friendStatusTitle.visible = friendStatusTitle.includeInLayout = true;
+				friendStatusText.visible = friendStatusText.includeInLayout = true;
+				getPrizeButton.enabled = true;
+				Object(getPrizeButton.content).verify = false;
+
+				if (status == true)
+				{
+					dispatchEvent(new ButtonClickLoggingEvent(LoggingUtil.RAF_ALMOST_DONE));
+					friendStatusTitle.source = "assets/swfs/registration/referAFriend_text_almost.swf";
+					friendStatusText.text = "Click Play Now to activate your account and claim your prize.";
+					getPrizeButton.setFocus();
+
+					_verifyFriendCounter = 0;
+				}
+				else
+				{
+					dispatchEvent(new ButtonClickLoggingEvent(LoggingUtil.RAF_MISSPELLED_REFERRER_NAME));
+					friendStatusTitle.source = "assets/swfs/registration/referAFriend_text_oops.swf";
+					friendStatusText.text = "Make sure you spelled your friend's Athlete name correctly and try again.";
+
+					if (_verifyFriendCounter >= 3)
+					{
+						friendInput.enabled = false;
+						getPrizeButton.enabled = false;
+						Object(getPrizeButton.content).disable = true;
+						clickPlayNow.visible = true;
+					}
+				}
+			}
+
+			private function changeName():void
+			{
+				verified = false;
+
+				friendStatusTitle.visible = friendStatusTitle.includeInLayout = false;
+				friendStatusText.visible = friendStatusText.includeInLayout = false;
+				friendInput.setFocus();
+			}
+
+			private function onGetPrizeInit():void
+			{
+				getPrizeButton.visible = true;
+			}
+
+			private function set verified(value:Boolean):void
+			{
+				if (value == true)
+					friendName.text = _fName;
+				else
+					_fName = null;
+
+				friendName.visible = friendName.includeInLayout = changeLink.visible = changeLink.includeInLayout = value;
+				getPrizeButton.visible = getPrizeButton.includeInLayout = friendInput.visible = friendInput.includeInLayout = !value;
+			}
+		]]>
+	</mx:Script>
+	<mx:Style>
+		RegRadioButton.default
+		{
+			backgroundColor: #1F6181;
+			borderColor: #184E67;
+			color: #184E67;
+		}
+		RegRadioButton.selected
+		{
+			backgroundColor: #549ACF;
+			borderColor: #B4D0EF;
+			color: #ffffff;
+		}
+		RegRadioButton.mouseOver
+		{
+			backgroundColor: #549ACF;
+			borderColor: #184E67;
+			color: #184E67;
+		}
+		Button
+		{
+			fillColors: #5376ac, #98bff4;
+			fillAlphas: 1, 1;
+			highlightAlphas: .15, .2;
+			borderColor: #133870;
+			borderThickness: 1;
+			cornerRadius: 6;
+			paddingLeft: 8; paddingTop: 8; paddingRight: 8; paddingBottom: 8;
+		}
+	</mx:Style>
+	<mx:Image id="clickPlayNow" source="assets/swfs/registration/ClickPlayNow.swf" right="16" y="515" visible="false"/>
+	<!--<mx:Label id="clickPlayNow" text="Click Play Now" textAlign="center" fontFamily="EuroStyle"
+		color="#ffffff" fontWeight="bold" fontSize="16" visible="false" right="68" y="550"/>-->
+	<mx:VBox id="referAFriend" width="247" render="drawGradient()" right="8" y="170" horizontalAlign="center" verticalGap="0"
+		paddingTop="18" paddingBottom="15">
+		<mx:Canvas>
+			<mx:Image source="assets/swfs/registration/referAFriend_text_accept.swf" horizontalCenter="0"/>
+			<!--<mx:Label text="Invited By a Friend?" horizontalCenter="0"
+				fontSize="19" fontWeight="bold" fontFamily="EuroStyle" color="#549acf" fontThickness="100"/>-->
+			<mx:Text width="208" textAlign="center" y="35" horizontalCenter="0" selectable="false"
+				fontSize="13" fontWeight="bold" fontFamily="EuroStyle" color="#154561" fontThickness="50"
+				text="Enter your friend's Athlete name when you sign up and win a FREE PRIZE."/>
+
+			<mx:TextInput id="friendInput" width="180" y="108" horizontalCenter="0" textAlign="center" maxChars="13"
+				cornerRadius="10" borderStyle="solid" borderThickness="3" borderColor="#1e436d"
+				fontSize="15" fontWeight="bold" fontFamily="EuroStyle" color="#154561"
+				paddingTop="0" paddingBottom="0" paddingLeft="0" paddingRight="0"/>
+			<mx:Image id="getPrizeButton" source="assets/swfs/registration/getPrizeButton.swf" init="onGetPrizeInit()"
+				y="147" horizontalCenter="0" click="verifyName()" visible="false"/>
+
+			<mx:Label id="friendName" y="104" horizontalCenter="0" textAlign="center" visible="false" includeInLayout="false"
+				fontSize="25" fontWeight="bold" fontFamily="EuroStyle" color="#009900" selectable="false"/>
+			<mx:Label id="changeLink" y="155" horizontalCenter="0" textAlign="center" textDecoration="underline"
+				text="Change" visible="false" includeInLayout="false" fontSize="12" fontFamily="EuroStyle" color="#154561"
+				click="changeName()" buttonMode="true" mouseChildren="false" selectable="false"/>
+
+			<mx:Image id="friendStatusTitle" horizontalCenter="0" y="208" visible="false" includeInLayout="false" width="232" height="30"/>
+			<mx:Text id="friendStatusText" width="208" textAlign="center" y="238" horizontalCenter="0" selectable="false"
+				fontSize="13" fontWeight="bold" fontFamily="EuroStyle" color="#154561" fontThickness="50" visible="false" includeInLayout="false"/>
+		</mx:Canvas>
+	</mx:VBox>
+
+	<mx:Canvas y="160">
+		<mx:HBox id="genderButtons" x="{previewContainer.x + previewContainer.width/2 - genderButtons.width/2}"
+			y="{previewContainer.y/2 - genderButtons.height/2}">
+			<controls:RegRadioButton id="boy" width="150" height="61" borderThickness="2" buttonMode="true" focusEnabled="false"
+				value="{Avatar.MALE}" select="onGenderSelection(event)" label="Boy" fontSize="34" fontWeight="bold" fontFamily="EuroStyle"
+				styleName="{boy.selected ? 'selected' : boy.mouseOver ? 'mouseOver' : 'default'}"/>
+			<controls:RegRadioButton id="girl" width="150" height="61" borderThickness="2" buttonMode="true" focusEnabled="false"
+				value="{Avatar.FEMALE}" select="onGenderSelection(event)" label="Girl" fontSize="34" fontWeight="bold" fontFamily="EuroStyle"
+				styleName="{girl.selected ? 'selected' : girl.mouseOver ? 'mouseOver' : 'default'}"/>
+		</mx:HBox>
+		<mx:HBox id="customizationButtons" x="{customization.x}"
+			y="{previewContainer.y/2 - customizationButtons.height/2 + 5}">
+			<controls:RegRadioButton id="myLook" width="131" height="43" borderThickness="2" buttonMode="true" focusEnabled="false"
+				value="myLook" select="onCategorySelection(event)" label="My Look" fontSize="17" fontWeight="bold" fontFamily="EuroStyle"
+				styleName="{myLook.selected ? 'selected' : myLook.mouseOver ? 'mouseOver' : 'default'}"/>
+			<controls:RegRadioButton id="myStyle" width="131" height="43" borderThickness="2" buttonMode="true" focusEnabled="false"
+				value="myStyle" select="onCategorySelection(event)" label="My Clothes" fontSize="17" fontWeight="bold" fontFamily="EuroStyle"
+				styleName="{myStyle.selected ? 'selected' : myStyle.mouseOver ? 'mouseOver' : 'default'}"/>
+		</mx:HBox>
+
+		<mx:Canvas id="previewContainer" x="33" y="69">
+			<mx:Image source="@Embed('images/registration/reg_preview_bg.swf')"/>
+			<mx:UIComponent id="avatarPreviewContainer" x="24" y="22"/>
+			<!--<controls:AvatarPreview id="avatarPreview" width="309" height="410"
+				backgroundImage="@Embed('images/registration/reg_preview_bg.swf')"
+				avatarWidthAdjust="-50" avatarHeightAdjust="-66" avatarVerticalAlign="-18"/>-->
+
+			<mx:Image source="@Embed('images/registration/shuffle_button.swf')" width="50" x="205"
+				click="getRandomAvatar()"/>
+		</mx:Canvas>
+
+		<mx:HBox id="customization" x="{previewContainer.x + previewContainer.width + 15}" y="{previewContainer.y}" horizontalGap="5">
+			<mx:Canvas>
+				<mx:Grid verticalGap="0" visible="{myLook.selected}" includeInLayout="{myLook.selected}">
+					<mx:GridRow width="100" height="100">
+						<mx:GridItem width="100%" height="100%" verticalAlign="middle" horizontalAlign="center">
+							<controls:RegRadioButton id="body" width="{body.selected ? 100 : 70}" height="{body.selected ? 100 : 70}"
+								borderThickness="{body.selected ? 3 : 2}" buttonMode="true" focusEnabled="false"
+								value="{PreviewUtil.BODY}" select="onItemTypeSelection(event)" iconSource="assets/swfs/registration/icon_Body.swf"
+								styleName="{body.selected ? 'selected' : body.mouseOver ? 'mouseOver' : 'default'}"/>
+						</mx:GridItem>
+					</mx:GridRow>
+					<mx:GridRow width="100" height="100">
+						<mx:GridItem width="100%" height="100%" verticalAlign="middle" horizontalAlign="center">
+							<controls:RegRadioButton id="hair" width="{hair.selected ? 100 : 70}" height="{hair.selected ? 100 : 70}"
+								borderThickness="{hair.selected ? 3 : 2}" buttonMode="true" focusEnabled="false"
+								value="{PreviewUtil.HAIR}" select="onItemTypeSelection(event)" iconSource="assets/swfs/registration/icon_Hair.swf"
+								styleName="{hair.selected ? 'selected' : hair.mouseOver ? 'mouseOver' : 'default'}"/>
+						</mx:GridItem>
+					</mx:GridRow>
+					<mx:GridRow width="100" height="100">
+						<mx:GridItem width="100%" height="100%" verticalAlign="middle" horizontalAlign="center">
+							<controls:RegRadioButton id="eyes" width="{eyes.selected ? 100 : 70}" height="{eyes.selected ? 100 : 70}"
+								borderThickness="{eyes.selected ? 3 : 2}" buttonMode="true" focusEnabled="false"
+								value="{PreviewUtil.EYES}" select="onItemTypeSelection(event)" iconSource="assets/swfs/registration/icon_Eyes.swf"
+								styleName="{eyes.selected ? 'selected' : eyes.mouseOver ? 'mouseOver' : 'default'}"/>
+						</mx:GridItem>
+					</mx:GridRow>
+					<mx:GridRow width="100" height="100">
+						<mx:GridItem width="100%" height="100%" verticalAlign="middle" horizontalAlign="center">
+							<controls:RegRadioButton id="mouth" width="{mouth.selected ? 100 : 70}" height="{mouth.selected ? 100 : 70}"
+								borderThickness="{mouth.selected ? 3 : 2}" buttonMode="true" focusEnabled="false"
+								value="{PreviewUtil.MOUTH}" select="onItemTypeSelection(event)" iconSource="assets/swfs/registration/icon_Mouth.swf"
+								styleName="{mouth.selected ? 'selected' : mouth.mouseOver ? 'mouseOver' : 'default'}"/>
+						</mx:GridItem>
+					</mx:GridRow>
+				</mx:Grid>
+
+				<mx:Grid verticalGap="0" visible="{myStyle.selected}" includeInLayout="{myStyle.selected}">
+					<mx:GridRow width="100" height="100">
+						<mx:GridItem width="100%" height="100%" verticalAlign="middle" horizontalAlign="center">
+							<controls:RegRadioButton id="shirts" width="{shirts.selected ? 100 : 70}" height="{shirts.selected ? 100 : 70}"
+								borderThickness="{shirts.selected ? 3 : 2}" buttonMode="true" focusEnabled="false"
+								value="{PreviewUtil.SHIRTS}" select="onItemTypeSelection(event)" iconSource="assets/swfs/registration/icon_Shirt.swf"
+								styleName="{shirts.selected ? 'selected' : shirts.mouseOver ? 'mouseOver' : 'default'}"/>
+						</mx:GridItem>
+					</mx:GridRow>
+					<mx:GridRow width="100" height="100">
+						<mx:GridItem width="100%" height="100%" verticalAlign="middle" horizontalAlign="center">
+							<controls:RegRadioButton id="pants" width="{pants.selected ? 100 : 70}" height="{pants.selected ? 100 : 70}"
+								borderThickness="{pants.selected ? 3 : 2}" buttonMode="true" focusEnabled="false"
+								value="{PreviewUtil.PANTS}" select="onItemTypeSelection(event)" iconSource="assets/swfs/registration/icon_Pants.swf"
+								styleName="{pants.selected ? 'selected' : pants.mouseOver ? 'mouseOver' : 'default'}"/>
+						</mx:GridItem>
+					</mx:GridRow>
+					<mx:GridRow width="100" height="100">
+						<mx:GridItem width="100%" height="100%" verticalAlign="middle" horizontalAlign="center">
+							<controls:RegRadioButton id="shoes" width="{shoes.selected ? 100 : 70}" height="{shoes.selected ? 100 : 70}"
+								borderThickness="{shoes.selected ? 3 : 2}" buttonMode="true" focusEnabled="false"
+								value="{PreviewUtil.SHOES}" select="onItemTypeSelection(event)" iconSource="assets/swfs/registration/icon_Shoes.swf"
+								styleName="{shoes.selected ? 'selected' : shoes.mouseOver ? 'mouseOver' : 'default'}"/>
+						</mx:GridItem>
+					</mx:GridRow>
+				</mx:Grid>
+			</mx:Canvas>
+			<controls:ItemTileList id="itemList" verticalScrollPolicy="off"	borderThickness="5" borderColor="#172d5f" focusEnabled="false"
+				columnCount="2" rowCount="5" itemWidth="64" itemHeight="64" cornerRadius="6" change="onItemChange()"/>
+		</mx:HBox>
+	</mx:Canvas>
+</mx:Module>

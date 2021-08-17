@@ -1,0 +1,293 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Module
+	xmlns:mx="http://www.adobe.com/2006/mxml"
+	xmlns:renderers="com.sdg.components.renderers.*"
+	xmlns:controls="com.sdg.components.controls.*"
+	width="925" height="665" layout="absolute">
+
+	<mx:Script>
+		<![CDATA[
+			import mx.core.Application;
+			import com.sdg.events.ResendActivationEvent;
+			import mx.binding.utils.ChangeWatcher;
+
+			private var _pageNum:int = 1;
+			private var _showArrow:Boolean = false;
+			private var _displayError:Boolean = false;
+
+			private function goToPage(page:int):void
+			{
+				showPage(page);
+				pageStack.selectedChild = this["stack_" + _pageNum];
+				setupPage(page);
+			}
+
+			private function setupPage(page:int):void
+			{
+				if (page == 1)
+				{
+					setButtonText("Continue", true);
+					setButtonState(true);
+				}
+				else if (_pageNum == 2)
+				{
+					setButtonText("Submit", false);
+					try
+					{
+						checkPage();
+					}
+					catch (error:Error) {}
+				}
+			}
+
+			private function showPage(_pageNum:int):void
+			{
+				try
+				{
+					var swf:Object = Object(swfBg);
+					swf.content.setBackgroundPage(_pageNum);
+				}
+				catch(e:Error)
+				{
+					trace("set background page error = " + e.message);
+				}
+			}
+
+			private function checkTextLength(input:String, minLength:int):Boolean
+			{
+				var inputText:TextInput = this[input + "Input"];
+
+				return inputText.text.length >= minLength;
+			}
+
+			private function checkTextCharacters(input:String):Boolean
+			{
+				var pattern:RegExp = /^[a-zA-Z0-9]+$/;
+				var inputText:TextInput = this[input + "Input"];
+
+				if (!pattern.test(inputText.text))
+					return false;
+
+				return true;
+			}
+
+			private function checkTextStartsWithLetter(input:String):Boolean
+			{
+				var pattern:RegExp = /^[a-zA-Z]/;
+				var inputText:TextInput = this[input + "Input"];
+
+				if (!pattern.test(inputText.text))
+					return false;
+
+				return true;
+			}
+
+			private function checkValidEmail():Boolean
+			{
+				// verify the email syntax with a regular expression
+				// got this regular expression from http://www.webdeveloper.com/forum/archive/index.php/t-9970.html
+				var pattern:RegExp = /^[^\x00-\x20()<>@,;:\\".[\]\x7f-\xff]+(?:\.[^\x00-\x20()<>@,;:\\".[\]\x7f-\xff]+)*\@[^\x00-\x20()<>@,;:\\".[\]\x7f-\xff]+(?:\.[^\x00-\x20()<>@,;:\\".[\]\x7f-\xff]+)+$/i;
+				if (!pattern.test(emailInput.text))
+					return false;
+
+				return true;
+			}
+
+			private function displayError(errorMessage:String, errorYPos:int):void
+			{
+				if (error.visible == false && _displayError == true)
+				{
+					error.y = errorYPos;
+					status.text = errorMessage;
+					error.visible = true;
+				}
+			}
+
+			private function checkName():Boolean
+			{
+				var errorYPos:int = box.y - 81 + 120 + nameInput.y + (nameInput.height/2);
+
+				// if text area is not blank
+				if (nameInput.text.length > 0)
+				{
+					// check that username starts with a letter
+					if (!checkTextStartsWithLetter("name"))
+						displayError("Username must start with a letter.", errorYPos);
+					// check that username has only letters and numbers
+					else if (!checkTextCharacters("name"))
+						displayError("Username must contain only letters and numbers.", errorYPos);
+					// check that username is not less than 4 characters
+					else if (!checkTextLength("name", 4))
+						displayError("Username must be at least 4 characters.", errorYPos);
+					else
+						return true;
+				}
+				else
+				{
+					if (_showArrow && !orangeArrow.visible)
+					{
+						orangeArrow.y = 285;
+						orangeArrow.visible = true;
+					}
+				}
+				return false;
+			}
+
+			private function checkEmail():Boolean
+			{
+				var errorYPos:int = box.y - 81 + 120 + emailInput.y + (emailInput.height/2);
+
+				if (emailInput.text.length > 0)
+				{
+					// check that email is valid
+					if (!checkValidEmail())
+						displayError("Invalid email address.", errorYPos);
+					else
+						return true;
+				}
+				else
+				{
+					if (_showArrow && !orangeArrow.visible)
+					{
+						orangeArrow.y = 405;
+						orangeArrow.visible = true;
+					}
+				}
+				return false;
+			}
+
+			private function checkPage(event:Event = null):Boolean
+			{
+				var bool:Boolean = true;
+				error.visible = false;
+				orangeArrow.visible = false;
+
+				if (!checkName())
+					bool = false;
+				if (!checkEmail())
+					bool = false;
+
+				if (bool)
+					setButtonState(true);
+				else
+					setButtonState(false);
+
+				if (error.visible == false)
+					_displayError = false;
+
+				return bool;
+			}
+
+			private function setButtonText(label:String, showArrow:Boolean):void
+			{
+				try
+				{
+					var swf:Object = Object(continueButton);
+					swf.content.setButtonText(label, showArrow);
+				}
+				catch(e:Error)
+				{
+					trace("set button error = " + e.message);
+				}
+			}
+
+			private function setButtonState(animate:Boolean):void
+			{
+				try
+				{
+					var swf:Object = Object(continueButton);
+					swf.content.setButtonState(animate);
+				}
+				catch(e:Error)
+				{
+					trace("set button error = " + e.message);
+				}
+			}
+
+			private function goToPreviousPage():void
+			{
+				if (_pageNum != 1)
+					goToPage(--_pageNum);
+				else
+				{
+					//Application.application.loadModule("Login.swf");
+					navigateToURL(new URLRequest('login.jsp'), '_self');
+				}
+			}
+
+			private function goToNextPage():void
+			{
+				if (_pageNum != 2)
+					goToPage(++_pageNum);
+				else
+				{
+					_showArrow = true;
+					_displayError = true;
+
+					if (checkPage())
+					{
+						// submit things
+						trace("submit");
+						dispatchEvent(new ResendActivationEvent(nameInput.text.toLowerCase(), emailInput.text));
+					}
+				}
+			}
+		]]>
+	</mx:Script>
+
+	<mx:Image id="swfBg" source="assets/swfs/activation.swf" complete="goToPage(_pageNum)"/>
+
+	<mx:VBox width="100%" height="100%" horizontalAlign="center" verticalGap="0" paddingTop="120">
+
+		<!-- body -->
+		<mx:ViewStack id="pageStack" width="100%" height="460">
+			<!-- page 1 -->
+			<mx:VBox id="stack_1"/>
+
+			<!-- page 2 -->
+			<mx:VBox id="stack_2" width="100%" height="100%" horizontalAlign="center" verticalAlign="middle" creationComplete="goToPage(2)">
+				<mx:Text text="Please complete the following form:" color="#172d5f" fontSize="28" fontThickness="150" selectable="false"/>
+				<mx:VBox id="box" width="450" height="380" cornerRadius="30"
+					borderStyle="solid" borderThickness="10" borderColor="#172d5f" backgroundColor="#ecf4ff"
+					horizontalAlign="center" verticalAlign="middle" verticalGap="10">
+
+					<mx:Text text="My Athlete's Name is" fontSize="30" color="#4c6fa4" fontThickness="150" selectable="false"/>
+					<mx:TextInput id="nameInput" width="380" height="50" borderStyle="solid" borderThickness="3" borderColor="#06193c"
+						cornerRadius="13" fontSize="25" fontWeight="bold" maxChars="13" textAlign="center"
+						creationComplete="ChangeWatcher.watch(nameInput, 'text', checkPage)"/>
+					<mx:Spacer width="15"/>
+					<mx:Text text="My Email Address is" fontSize="30" color="#4c6fa4" fontThickness="150" selectable="false"/>
+					<mx:TextInput id="emailInput" width="380" height="50" borderStyle="solid" borderThickness="3" borderColor="#06193c"
+						cornerRadius="13" fontSize="21" fontWeight="bold" textAlign="center"
+						creationComplete="ChangeWatcher.watch(emailInput, 'text', checkPage)"/>
+				</mx:VBox>
+			</mx:VBox>
+		</mx:ViewStack>
+
+		<!-- footer -->
+		<mx:HBox width="530" height="69">
+			<mx:VBox id="backBox" width="100%" height="100%" verticalAlign="middle" horizontalAlign="left">
+				<mx:Button id="backButton" click="goToPreviousPage()" buttonMode="true"
+					skin="@Embed('images/registration/back_button.png')"
+					overSkin="@Embed('images/registration/backOver_button.png')" />
+			</mx:VBox>
+			<mx:VBox id="continueBox" width="100%" height="100%" verticalAlign="middle" horizontalAlign="right">
+				<mx:Image id="continueButton" source="assets/swfs/continueButton.swf" click="goToNextPage()"
+					complete="setButtonText('Continue', true)"/>
+			</mx:VBox>
+		</mx:HBox>
+	</mx:VBox>
+
+	<!-- orange arrow -->
+	<mx:Image id="orangeArrow" x="190" visible="false" source="@Embed('images/registration/completeArrow.swf')"/>
+
+	<!-- error box -->
+	<mx:Canvas id="error" x="55" visible="false">
+		<mx:Image source="@Embed('images/registration/errorBubble.png')"/>
+		<mx:VBox width="200" height="161" horizontalAlign="center" verticalAlign="middle"
+			paddingLeft="20" paddingRight="20" verticalGap="0">
+			<mx:Text text="Sorry!" fontWeight="bold" fontSize="25" color="#a92035"/>
+			<mx:Text id="status" width="100%" textAlign="center" color="#4c6fa4" fontSize="15" fontWeight="bold"/>
+		</mx:VBox>
+	</mx:Canvas>
+</mx:Module>

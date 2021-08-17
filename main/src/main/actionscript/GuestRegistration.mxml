@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Module
+	xmlns:mx="http://www.adobe.com/2006/mxml"
+	xmlns:controls="com.sdg.components.controls.*"
+	width="925" height="665" creationComplete="init()" layout="absolute"
+	horizontalScrollPolicy="off">
+	<mx:Image width="100%" height="100%" creationComplete="setBackground(event)"/>
+
+	<mx:Script>
+		<![CDATA[
+			import com.sdg.utils.MainUtil;
+			import com.sdg.events.GuestAccountEvent;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			import com.sdg.model.InventoryItem;
+			import mx.collections.ArrayCollection;
+			import com.sdg.events.InventoryListEvent;
+
+			import com.sdg.net.Environment;
+			import com.sdg.business.Services;
+			import com.sdg.model.Avatar;
+			import com.sdg.model.ModelLocator;
+
+			private var _boyAvatar:Avatar = new Avatar();
+			private var _girlAvatar:Avatar = new Avatar();
+			private var _itemListToGetCount:int = 0;
+
+			[Embed(source="images/guestRegistration/guestModule.swf")]
+			public var guestModule:Class;
+			[Embed(source="images/guestRegistration/checkBox_Default.png")]
+			public var checkBoxDefault:Class;
+			[Embed(source="images/guestRegistration/checkBox_MouseOver.png")]
+			public var checkBoxMouseOver:Class;
+			[Embed(source="images/guestRegistration/checkBox_Disabled.png")]
+			public var checkBoxDisabled:Class;
+			[Embed(source="images/registration/shuffle_button.swf")]
+			public var shuffleButton:Class;
+
+			private function init():void
+			{
+				_boyAvatar.gender = 1;
+				_girlAvatar.gender = 2;
+
+				// get boy inventory
+				getInventoryItems(4);
+				// get girl inventory
+				getInventoryItems(5);
+				this.addEventListener(MouseEvent.MOUSE_OVER, onMouseOver);
+			}
+
+			private function setBackground(event:Event):void
+			{
+				event.currentTarget.source = Environment.getApplicationUrl() + "/test/static/upsell/guestLoginPage?partnerId=0";
+			}
+
+			private function onMouseOver(event:MouseEvent):void
+			{
+				if (event.target == boyScreen || event.target == boyCheck)
+				{
+					boyScreen.visible = false;
+					boyCheck.enabled = true;
+					girlScreen.visible = true;
+					girlCheck.enabled = false;
+				}
+				else if (event.target == girlScreen || event.target == girlCheck)
+				{
+					girlScreen.visible = false;
+					girlCheck.enabled = true;
+					boyScreen.visible = true;
+					boyCheck.enabled = false;
+				}
+			}
+
+			private function getInventoryItems(avatarId:uint):void
+			{
+				_itemListToGetCount += 7;
+				CairngormEventDispatcher.getInstance().addEventListener(InventoryListEvent.LIST_COMPLETED, onInventoryListRetrieved);
+
+				dispatchEvent(new InventoryListEvent(avatarId, 1));
+				dispatchEvent(new InventoryListEvent(avatarId, 8));
+				dispatchEvent(new InventoryListEvent(avatarId, 2));
+				dispatchEvent(new InventoryListEvent(avatarId, 3));
+				dispatchEvent(new InventoryListEvent(avatarId, 5));
+				dispatchEvent(new InventoryListEvent(avatarId, 6));
+				dispatchEvent(new InventoryListEvent(avatarId, 7));
+			}
+
+			private function onInventoryListRetrieved(event:InventoryListEvent):void
+			{
+				var modelAvatar:Avatar = ModelLocator.getInstance().avatar;
+				var currentAvatar:Avatar;
+
+				// if boy avatar
+				if (event.avatarId == 4)
+					currentAvatar = _boyAvatar;
+				// if girl avatar
+				else if (event.avatarId == 5)
+					currentAvatar = _girlAvatar;
+
+				currentAvatar.apparelList[event.itemTypeId] = modelAvatar.getInventoryListById(event.itemTypeId);
+				//modelAvatar.apparelList[event.itemTypeId] = null;
+
+				// remove the listener if this is our last list
+				if (--_itemListToGetCount == 0)
+				{
+					trace("removing inventoryListComleted listener");
+					CairngormEventDispatcher.getInstance().removeEventListener(InventoryListEvent.LIST_COMPLETED, onInventoryListRetrieved);
+					getRandomAvatar(_boyAvatar);
+					getRandomAvatar(_girlAvatar);
+				}
+			}
+
+			private function getRandomAvatar(avatar:Avatar):void
+			{
+				var preview:AvatarPreview;
+
+				if (avatar == _boyAvatar)
+					preview = boyPreview;
+				else if (avatar == _girlAvatar)
+					preview = girlPreview;
+
+				//avatar.removeAllApparel();
+
+				avatar.setApparel(getRandomItem(avatar.getInventoryListById(1)));
+				avatar.setApparel(getRandomItem(avatar.getInventoryListById(8)));
+				avatar.setApparel(getRandomItem(avatar.getInventoryListById(2)));
+				avatar.setApparel(getRandomItem(avatar.getInventoryListById(3)));
+				avatar.setApparel(getRandomItem(avatar.getInventoryListById(5)));
+				avatar.setApparel(getRandomItem(avatar.getInventoryListById(6)));
+				avatar.setApparel(getRandomItem(avatar.getInventoryListById(7)));
+
+				preview.loadAvatar(avatar);
+			}
+
+			private function getRandomItem(list:ArrayCollection):InventoryItem
+			{
+				var index:uint = Math.round(Math.random() * (list.length - 1));
+				return InventoryItem(list[index]);
+			}
+
+			private function onModuleClick(avatar:Avatar):void
+			{
+				//avatar.membershipStatus = 3;
+				//ModelLocator.getInstance().avatar = avatar;
+
+				//specialOffer.visible = true;
+				if (avatar.isFullyClothed)
+					dispatchEvent(new GuestAccountEvent(avatar));
+			}
+
+			//private function createGuestAccount():void
+			//{
+			//	dispatchEvent(new GuestAccountEvent(ModelLocator.getInstance().avatar));
+			//}
+		]]>
+	</mx:Script>
+	<mx:Style>
+		@font-face
+		{
+			font-family: GillSans;
+			fontWeight: bold;
+			src: url("fonts/GILB.TTF");
+		}
+	</mx:Style>
+
+	<mx:Canvas y="133" height="50" width="100%">
+		<mx:Image source="@Embed('images/guestRegistration/mainPage.swf')" buttonMode="true"
+			verticalCenter="0" x="45" click="navigateToURL(new URLRequest('index.jsp'),'_self')"/>
+		<mx:HBox verticalCenter="0" right="40">
+			<mx:HBox horizontalGap="5" verticalAlign="middle">
+				<mx:Text text="Already a Member?" selectable="false"/>
+				<mx:Image source="@Embed('images/guestRegistration/login.swf')" buttonMode="true"
+					click="navigateToURL(new URLRequest('login.jsp'),'_self')"/>
+			</mx:HBox>
+			<mx:HBox horizontalGap="5" verticalAlign="middle"
+				visible="{ModelLocator.getInstance().affiliate != 53 &amp;&amp; ModelLocator.getInstance().affiliate != 64}"
+				includeInLayout="{ModelLocator.getInstance().affiliate != 53 &amp;&amp; ModelLocator.getInstance().affiliate != 64}">
+				<mx:Text text="Create Free Account" selectable="false"/>
+				<mx:Image source="@Embed('images/guestRegistration/join.swf')" buttonMode="true"
+					click="MainUtil.postAvatarIdToURL('register.jsp', 0, 5)"/>
+			</mx:HBox>
+		</mx:HBox>
+	</mx:Canvas>
+
+	<mx:Canvas y="183" horizontalCenter="-185">
+		<mx:Canvas width="336" height="407" backgroundImage="{guestModule}" buttonMode="true"
+			click="onModuleClick(_boyAvatar)" horizontalCenter="0">
+			<mx:Text text="Boy" left="40" top="20" color="#172d5f" selectable="false"
+				fontSize="32" fontWeight="bold" fontThickness="150" fontFamily="GillSans"/>
+			<controls:AvatarPreview id="boyPreview" bottom="18" backgroundImage="null" horizontalCenter="0"/>
+		</mx:Canvas>
+
+		<mx:Image width="50" x="225" y="3" id="boyShuffle" click="getRandomAvatar(_boyAvatar)" source="{shuffleButton}"/>
+		<mx:VBox id="boyScreen" width="336" height="407" backgroundColor="#5a74b6" alpha=".6"
+			cornerRadius="20" borderStyle="solid" borderThickness="0" horizontalCenter="0"/>
+		<mx:Button id="boyCheck" click="onModuleClick(_boyAvatar)"
+			buttonMode="true" enabled="false" horizontalCenter="0" y="370"
+			skin="{checkBoxDefault}" overSkin="{checkBoxMouseOver}" disabledSkin="{checkBoxDisabled}"/>
+	</mx:Canvas>
+
+	<mx:Canvas y="183" horizontalCenter="185">
+		<mx:Canvas width="336" height="407" backgroundImage="{guestModule}" buttonMode="true"
+			click="onModuleClick(_girlAvatar)" horizontalCenter="0">
+			<mx:Text text="Girl" left="40" top="20" color="#172d5f" selectable="false"
+				fontSize="32" fontWeight="bold" fontThickness="150" fontFamily="GillSans"/>
+			<controls:AvatarPreview id="girlPreview" bottom="18" backgroundImage="null" horizontalCenter="0"/>
+		</mx:Canvas>
+
+		<mx:Image width="50" x="225" y="3" id="girlShuffle" click="getRandomAvatar(_girlAvatar)" source="{shuffleButton}"/>
+		<mx:VBox id="girlScreen" width="336" height="407" backgroundColor="#5a74b6" alpha=".6"
+			cornerRadius="20" borderStyle="solid" borderThickness="0" horizontalCenter="0"/>
+		<mx:Button id="girlCheck" click="onModuleClick(_girlAvatar)"
+			buttonMode="true" enabled="false" horizontalCenter="0" y="370"
+			skin="{checkBoxDefault}" overSkin="{checkBoxMouseOver}" disabledSkin="{checkBoxDisabled}"/>
+	</mx:Canvas>
+
+	<!--<controls:SpecialOfferUpsell id="specialOffer" width="100%" height="100%" visible="false" ccCode="9" closeCallBack="createGuestAccount"/>-->
+
+	<!--<mx:Canvas id="specialOffer" width="100%" height="100%" visible="false" backgroundImage="@Embed('images/monthFree/bg_inWorld.swf')">
+		<mx:Image source="@Embed('images/monthFree/getMonthFree.swf')" horizontalCenter="-210" y="360"
+			click="MainUtil.postAvatarIdToURL('register.jsp', 0, 9)"/>
+
+		<mx:Image source="@Embed('images/monthFree/justPlayButton.swf')" horizontalCenter="-210" y="480"
+			click="dispatchEvent(new GuestAccountEvent(_selectedAvatar))"/>
+	</mx:Canvas>-->
+</mx:Module>

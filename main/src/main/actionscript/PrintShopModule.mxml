@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Module xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="925" height="665">
+
+	<mx:Script>
+		<![CDATA[
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			import com.sdg.events.AvatarEvent;
+			import com.sdg.model.Avatar;
+			import com.sdg.model.ModelLocator;
+			import com.sdg.model.AvatarReciever;
+			import com.sdg.logging.LoggingUtil;
+			import com.sdg.printshop.PrintShopMyTradingCardView;
+			import com.sdg.printshop.PrintShopEvent;
+
+			private static const PRINT_SHOP_ID:uint = 2355;
+
+			private var _view:PrintShopMyTradingCardView;
+
+			public function init():void
+			{
+				LoggingUtil.sendClickLogging(LoggingUtil.PRINT_SHOP_ENTERED);
+
+				updateAvatar();
+
+				_view = new PrintShopMyTradingCardView();
+
+				this.rawChildren.addChild(_view);
+
+				// Listen for store close.
+				_view.addEventListener(PrintShopEvent.CLOSE_SHOP, onShopClose);
+
+			}
+
+			private function onShopClose(e:PrintShopEvent):void
+			{
+				_view.removeEventListener(PrintShopEvent.CLOSE_SHOP, onShopClose);
+				dispatchEvent(new Event('closeModule', true));
+			}
+
+			public function updateAvatar():void
+			{
+				var av:Avatar = ModelLocator.getInstance().avatar;
+
+				var avatarReciever:AvatarReciever = new AvatarReciever();
+				avatarReciever.addEventListener(AvatarReciever.AVATAR_SET, onAvatarSet);
+				CairngormEventDispatcher.getInstance().dispatchEvent(new AvatarEvent(av.avatarId, avatarReciever, av));
+
+				function onAvatarSet(e:Event):void
+				{
+					// Remove listener.
+					avatarReciever.removeEventListener(AvatarReciever.AVATAR_SET, onAvatarSet);
+
+					//av = avatarReciever.avatar;
+
+					// This avatar does not need to be updated,
+					// unless some of it's pertinent properties change.
+					//_avatar.setDoesNotNeedUpdate(_tokenObj);
+
+					//dispatchEvent(new Event(AVATAR_UPDATE));
+				}
+			}
+
+		]]>
+	</mx:Script>
+
+	<mx:Style source="styles/store.css"/>
+
+</mx:Module>

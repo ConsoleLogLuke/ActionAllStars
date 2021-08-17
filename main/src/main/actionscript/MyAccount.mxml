@@ -1,0 +1,914 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Application
+	xmlns:mx="http://www.adobe.com/2006/mxml"
+	xmlns:controls="com.sdg.components.controls.*"
+	xmlns:business="com.sdg.business.*"
+	implements="com.sdg.model.ISetAvatar"
+	width="785" height="655" layout="absolute"
+	backgroundAlpha="0"
+	applicationComplete="init()">
+	<business:Services/>
+
+	<mx:Script>
+		<![CDATA[
+			import com.sdg.logging.LoggingUtil;
+			import com.sdg.view.LayeredImage;
+			import com.sdg.commands.GetBillDateCommand;
+			import com.sdg.events.GetBillDateEvent;
+			import com.sdg.components.controls.SdgAlertChrome;
+			import com.sdg.graphics.GradientStyle;
+			import com.sdg.display.LineStyle;
+			import com.sdg.graphics.customShapes.RoundRectComplex;
+			import com.sdg.components.controls.store.StoreNavBar;
+			import com.sdg.components.controls.SdgAlert;
+			import com.sdg.components.dialog.ISdgDialog;
+			import mx.collections.ArrayCollection;
+			import mx.controls.Button;
+			import mx.controls.TextInput;
+			import mx.containers.FormItem;
+			import mx.effects.easing.*;
+			import com.sdg.events.AvatarEvent;
+			import com.sdg.events.AvatarApparelEvent;
+			import com.sdg.events.ChangePasswordEvent;
+			import com.sdg.events.ChangeChatModeEvent;
+			import com.sdg.events.ChangeNewsletterOptionEvent;
+			import com.sdg.commands.AvatarCommand;
+			import com.sdg.commands.AvatarApparelCommand;
+			import com.sdg.commands.ChangePasswordCommand;
+			import com.sdg.commands.ChangeChatModeCommand;
+			import com.sdg.commands.ChangeNewsletterOptionCommand;
+			import com.sdg.model.ModelLocator;
+			import com.sdg.model.Avatar;
+			import com.sdg.control.SdgFrontController;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+			import flash.display.StageAlign;
+			import flash.display.StageScaleMode;
+			import com.sdg.net.Environment;
+			import com.sdg.utils.MainUtil;
+			import com.sdg.components.dialog.WhatIsThisDialog;
+
+			private var _avatar:Avatar = ModelLocator.getInstance().avatar;
+			private var _debug:Boolean = false;
+			//private var _debug:Boolean = true;
+
+			private var secureURL:String = "";
+
+			//private var editCCUrl:String = "";
+			private var cancelUrl:String = "";
+
+			private var retrieveInfoUrl:String = "retrieveInformation.jsp";
+			private var deleteAcctUrl:String = "deleteAccount.jsp";
+			private var membershipUrl:String = "membership.jsp";
+
+			private var button:StoreNavBar = new StoreNavBar(185,25,"SAVE PASSWORD");
+			private var membershipButton:StoreNavBar = new StoreNavBar(185,25,"TEMP");
+
+			private var membershipTabHeight:uint = 69;
+
+			private var _layeredAvatarImage:LayeredImage;
+
+			private var partnerId:int;
+
+			[Embed(source="images/registration/checkBox_default.png")]
+			public var checkBoxDefault:Class;
+			[Embed(source="images/registration/checkBox_selected.png")]
+			public var checkBoxSelected:Class;
+			[Embed(source="images/myAccount/successCheckMark.png")]
+			public var success:Class;
+
+			// Formatting Constants
+			private static var standardCornerRad:uint = 8;
+			private static var standardBackgroundAlpha:Number = .25;
+			private static var standardLeftColumnTextOffset:uint = 10;
+
+			// Logic Constants
+			private static var nbaPartnerId:uint = 90;
+			private static var SIKidsPartnerId:uint = 89;
+			private static var primeGamesPartnerId:uint = 88;
+
+			public function set avatar(value:Avatar):void
+			{
+				ModelLocator.getInstance().avatar = value;
+				_avatar = value;
+
+				CairngormEventDispatcher.getInstance().addEventListener(AvatarApparelEvent.AVATAR_APPAREL_COMPLETED, onApparelListCompleted);
+				CairngormEventDispatcher.getInstance().dispatchEvent(new AvatarApparelEvent(_avatar));
+
+				// set name
+				var userName:String = _avatar.name.toUpperCase();
+				avatarName.text = userName;
+				avatarNameDup.text = userName;
+
+				// Set to Default Value
+				membership.text = "Not Available";
+
+				/*
+				if (_avatar.membershipStatus == 2)
+				{
+					membership.text = "Subscription";
+					//membership.label = "Subscription";
+				}
+				else
+				{
+					//membership.text = "Free";
+					// Remove Membership Tab
+					membershipTabLabel.visible = false;
+					//membershipTabLabel.includeInLayout = false;
+					membershipTabCanvas.visible = false;
+					//membershipTabCanvas.includeInLayout = false;
+					membership.visible = false;
+					//membership.includeInLayout = false;
+					membershipTab.includeInLayout = false;
+					membershipTab.visible = false;
+					membershipLink1.visible = false;
+					membershipLink2.visible = false;
+
+					// Move Save Password Button
+					if (button)
+						button.y = button.y - 80;
+				}
+				*/
+
+				//Generate Dynamic URLs w/ user Id
+				//editCCUrl = "/premium/co/ccupdate?userId="+_avatar.userId;
+				cancelUrl = secureURL+"/premium/co/ccancel?userId="+_avatar.userId;
+
+				//avatarPreview.loadAvatar(_avatar);
+
+				// Set Initial Values For Optins
+				chatMode.selectedValue = _avatar.chatModeStatus;
+				if (_avatar.newsletterOptionStatus == 1)
+					eNewsletter.selected = true;
+				else
+					eNewsletter.selected = false;
+
+				//temp();
+
+				// Send GetBillDate Event
+				CairngormEventDispatcher.getInstance().addEventListener(GetBillDateEvent.DATE_BY_USER_RECEIVED,onGetBillDateReturn);
+				CairngormEventDispatcher.getInstance().dispatchEvent(new GetBillDateEvent(_avatar.userId, GetBillDateEvent.GET_DATE_BY_USER));
+				//CairngormEventDispatcher.getInstance().dispatchEvent(new GetBillDateEvent(2285, GetBillDateEvent.GET_DATE_BY_USER));
+			}
+
+			private function onApparelListCompleted(event:AvatarApparelEvent):void
+			{
+				CairngormEventDispatcher.getInstance().removeEventListener(AvatarApparelEvent.AVATAR_APPAREL_COMPLETED, onApparelListCompleted);
+				updateAvatarInventory();
+			}
+
+			private function init():void
+			{
+ 	    	   	//var fontArray:Array = Font.enumerateFonts(false);
+    	    	//for(var i:int = 0; i < fontArray.length; i++)
+    	    	//{
+       	    	//	var thisFont:Font = fontArray[i];
+       	    	//	var ta1:String = "";
+        	   	//	if (thisFont.fontType == "embedded")
+        	   	//	{
+            	// 		ta1 += "FONT " + i + ":: name: " + thisFont.fontName + "; typeface: " +
+                //		thisFont.fontStyle + "; type: " + thisFont.fontType + "\n";
+              	//	}
+                //	trace(ta1);
+                //	ta1 == "";
+           		//}
+
+				var sdg:SdgFrontController = SdgFrontController.getInstance();
+				sdg.addCommand(AvatarEvent.AVATAR, AvatarCommand);
+				sdg.addCommand(AvatarApparelEvent.AVATAR_APPAREL, AvatarApparelCommand);
+				sdg.addCommand(ChangePasswordEvent.CHANGE_PASSWORD, ChangePasswordCommand);
+				sdg.addCommand(ChangeChatModeEvent.CHANGE_CHATMODE, ChangeChatModeCommand);
+				sdg.addCommand(ChangeNewsletterOptionEvent.CHANGE_OPTION, ChangeNewsletterOptionCommand);
+				sdg.addCommand(GetBillDateEvent.GET_DATE_BY_USER, GetBillDateCommand);
+
+				this.stage.align = StageAlign.TOP_LEFT;
+				this.stage.scaleMode = StageScaleMode.NO_BORDER;
+
+				// Add the Password Submit Button
+				button.x = 235;
+				button.y = 270;
+				button.labelFormat = new TextFormat('EuroStyle',17,0x9D330B,true,false,null,null,null,null,6,null,5);
+				button.complexRectStyle = new RoundRectComplex(button.width,button.height,6,6,6,6);
+				button.borderStyle = new LineStyle(0x9D330B,1,1);
+				var rads:Number = Math.PI/2;
+				var matrixTemp:Matrix = new Matrix();
+				matrixTemp.createGradientBox(button.width,button.height,rads,0,0);
+				button.gradient = new GradientStyle(GradientType.LINEAR,[0xF7D85B,0xD88616],[1,1],[0,255],matrixTemp,SpreadMethod.PAD);
+				button.addEventListener(MouseEvent.CLICK,savePasswordClick);
+				button.addEventListener(MouseEvent.MOUSE_OVER, onButtonMouseOver);
+				button.buttonMode = true;
+				this.rawChildren.addChild(button);
+
+				var flashvars:Object = {};
+
+				for (var str:String in loaderInfo.parameters)
+				{
+					flashvars[str] = loaderInfo.parameters[str];
+				}
+				registerFlashVars(flashvars);
+
+				// for debug
+				if (_debug)
+				{
+					flashvars.avatarid = 4668; //qa2
+					//flashvars.avatarid = 1663; //1321; //dev
+				}
+
+				var avatarId:uint = flashvars.avatarid;
+				partnerId = flashvars.partnerId;
+				secureURL = flashvars.secureUrl;
+
+				if (partnerId == nbaPartnerId)
+				{
+					retrieveInfoUrl = "retrieveInformationNBA.jsp?partnerId="+nbaPartnerId;
+					deleteAcctUrl = "deleteAccountNoNav.jsp?partnerId="+nbaPartnerId;
+				}
+				else if (partnerId == SIKidsPartnerId)
+				{
+					retrieveInfoUrl = "retrieveInformationNBA.jsp?partnerId="+SIKidsPartnerId;
+					deleteAcctUrl = "deleteAccountNoNav.jsp?partnerId="+SIKidsPartnerId;
+				}
+				else if (partnerId == primeGamesPartnerId)
+				{
+					retrieveInfoUrl = "retrieveInformationNBA.jsp?partnerId="+primeGamesPartnerId;
+					deleteAcctUrl = "deleteAccountNoNav.jsp?partnerId="+primeGamesPartnerId;
+				}
+
+				// grab the avatar
+				if (avatarId != 0)
+					dispatchEvent(new AvatarEvent(avatarId, this));
+
+				_layeredAvatarImage = new LayeredImage();
+			}
+
+			private function registerFlashVars(vars:Object):void
+			{
+				applyEnvVars(vars);
+
+				if (vars.version) Environment.serverVersion = vars.version;
+				if (vars.secureUrl) Environment.returnUrl = vars.secureUrl;
+			}
+
+			private static function applyEnvVars(vars:Object):void
+			{
+				if (vars.applicationDomain)
+				{
+					Environment.setApplicationDomain(vars.applicationDomain);
+					Services.setBaseUrl(Environment.getApplicationUrl());
+				}
+
+				if (vars.assetDomain)
+				{
+					Environment.setAssetDomain(vars.assetDomain);
+				}
+
+				//trace("app domain " + Environment.getApplicationDomain());
+				//trace("asset domain " + Environment.getAssetDomain());
+				//trace("app url " + Environment.getApplicationUrl());
+				//trace("standalone " + Environment.isStandalone());
+				//trace("secure url " + Environment.getSecureUrl());
+			}
+
+			private function updateAvatarInventory():void
+			{
+				_layeredAvatarImage.addEventListener(Event.COMPLETE, onAvatarImageComplete);
+				if (avatarPreviewContainer.contains(_layeredAvatarImage)) avatarPreviewContainer.removeChild(_layeredAvatarImage);
+				_layeredAvatarImage.loadItemImage(_avatar);
+
+				function onAvatarImageComplete(e:Event):void
+				{
+					// Remove event listener.
+					_layeredAvatarImage.removeEventListener(Event.COMPLETE, onAvatarImageComplete);
+
+					// Add to display.
+					avatarPreviewContainer.addChild(_layeredAvatarImage);
+				}
+			}
+
+			private function onGetBillDateReturn(event:GetBillDateEvent):void
+			{
+				// Remove Listener
+				CairngormEventDispatcher.getInstance().removeEventListener(GetBillDateEvent.DATE_BY_USER_RECEIVED,onGetBillDateReturn);
+
+				// Check Expiration Date
+				var expDate:String = "";
+				if (event.date)
+					expDate = event.date;
+
+				// set membership string
+				if (event.plan)
+				{
+					switch (event.plan)
+					{
+						case 2:
+							membership.text="6 Month";
+
+							break;
+						case 3:
+							membership.text="12 Month";
+
+							break;
+						case 1:
+						case 6:
+						case 8:
+							membership.text="Monthly";
+
+							break;
+					}
+				}
+				else
+				{
+					membership.text="Free";
+				}
+
+				// Determine Button Type
+				// 0=Cancel,1=Renew,2=Get Membership
+				var buttonType:int = 0;
+
+				if (event.plan)
+				{
+					if (event.renew)
+					{
+						buttonType=1;
+					}
+					else
+					{
+						buttonType=0;
+					}
+				}
+				else
+				{
+					buttonType=2;
+				}
+
+				// add button
+				if (buttonType == 0)
+				{
+					membershipButton = new StoreNavBar(99,25,"CANCEL");
+					membershipButton.addEventListener(MouseEvent.CLICK,cancelClick);
+					membershipButton.x = 333;
+					membershipButton.y = 533;
+				}
+				else if (buttonType == 1)
+				{
+					membershipButton = new StoreNavBar(95,25,"RENEW");
+					membershipButton.addEventListener(MouseEvent.CLICK,renewClick);
+					membershipButton.x = 337;
+					membershipButton.y = 533;
+				}
+				else
+				{
+					membershipButton = new StoreNavBar(241,25,"GET MVP MEMBERSHIP");
+					membershipButton.addEventListener(MouseEvent.CLICK,getMVPClick);
+					membershipButton.x = 191;
+					membershipButton.y = 533;
+				}
+
+				membershipButton.labelFormat = new TextFormat('EuroStyle',17,0x9D330B,true,false,null,null,null,null,6,null,5);
+				membershipButton.complexRectStyle = new RoundRectComplex(membershipButton.width,membershipButton.height,6,6,6,6);
+				membershipButton.borderStyle = new LineStyle(0x9D330B,1,1);
+				var rads:Number = Math.PI/2;
+				var matrixTemp:Matrix = new Matrix();
+				matrixTemp.createGradientBox(membershipButton.width,membershipButton.height,rads,0,0);
+				membershipButton.gradient = new GradientStyle(GradientType.LINEAR,[0xF7D85B,0xD88616],[1,1],[0,255],matrixTemp,SpreadMethod.PAD)
+				membershipButton.addEventListener(MouseEvent.MOUSE_OVER, onButtonMouseOver);
+				membershipButton.buttonMode = true;
+				this.rawChildren.addChild(membershipButton);
+			}
+
+			private function buttonTest():void
+			{
+				membership.text="Monthly";
+
+				//membershipButton = new StoreNavBar(99,25,"CANCEL");
+				//membershipButton.addEventListener(MouseEvent.CLICK,cancelClick);
+				//membershipButton.x = 333;
+				//membershipButton.y = 533;
+
+				//membershipButton = new StoreNavBar(95,25,"RENEW");
+				//membershipButton.addEventListener(MouseEvent.CLICK,renewClick);
+				//membershipButton.x = 337;
+				//membershipButton.y = 533;
+
+				membershipButton = new StoreNavBar(241,25,"GET MVP MEMBERSHIP");
+				membershipButton.addEventListener(MouseEvent.CLICK,getMVPClick);
+				membershipButton.x = 191;
+				membershipButton.y = 533;
+
+				membershipButton.labelFormat = new TextFormat('EuroStyle',17,0x9D330B,true,false,null,null,null,null,6,null,5);
+				membershipButton.complexRectStyle = new RoundRectComplex(membershipButton.width,membershipButton.height,6,6,6,6);
+				membershipButton.borderStyle = new LineStyle(0x9D330B,1,1);
+				var rads:Number = Math.PI/2;
+				var matrixTemp:Matrix = new Matrix();
+				matrixTemp.createGradientBox(membershipButton.width,membershipButton.height,rads,0,0);
+				membershipButton.gradient = new GradientStyle(GradientType.LINEAR,[0xF7D85B,0xD88616],[1,1],[0,255],matrixTemp,SpreadMethod.PAD)
+				membershipButton.addEventListener(MouseEvent.MOUSE_OVER, onButtonMouseOver);
+				membershipButton.buttonMode = true;
+				this.rawChildren.addChild(membershipButton);
+			}
+
+			private function cancelClick(e:MouseEvent):void
+			{
+				navigateToURL(new URLRequest(cancelUrl), '_self');
+			}
+
+			private function getMVPClick(e:MouseEvent):void
+			{
+				if (partnerId)
+					MainUtil.goToMVP(LoggingUtil.MY_ACCOUNT_GET_MVP, partnerId);
+				else
+					MainUtil.goToMVP(LoggingUtil.MY_ACCOUNT_GET_MVP);
+
+				//navigateToURL(new URLRequest(membershipUrl), '_self');
+			}
+
+			private function renewClick(e:MouseEvent):void
+			{
+				if (partnerId)
+					MainUtil.goToMVP(LoggingUtil.MY_ACCOUNT_RENEW, partnerId);
+				else
+					MainUtil.goToMVP(LoggingUtil.MY_ACCOUNT_RENEW);
+
+				//navigateToURL(new URLRequest(membershipUrl), '_self');
+			}
+
+			public function onButtonMouseOver(e:MouseEvent):void
+			{
+				var button:StoreNavBar = e.currentTarget as StoreNavBar;
+				button.labelFormat = new TextFormat('EuroStyle', 17, 0xffcc33, true,false,null,null,null,null,6,null,5);
+				button.borderStyle = new LineStyle(0xff9900, 1, 1);
+
+				var tempMatrix:Matrix = new Matrix();
+				tempMatrix.createGradientBox(button.width, button.height, Math.PI/2, 0, 0);
+				button.gradient = new GradientStyle(GradientType.LINEAR, [0xd18500, 0xa54c0a], [1, 1], [0, 255], tempMatrix);
+
+				button.addEventListener(MouseEvent.MOUSE_OUT,onButtonMouseOut);
+			}
+
+			public function onButtonMouseOut(e:MouseEvent):void
+			{
+				var button:StoreNavBar = e.currentTarget as StoreNavBar;
+
+				button.removeEventListener(MouseEvent.MOUSE_OUT,onButtonMouseOut);
+
+				button.labelFormat = new TextFormat('EuroStyle',17,0x9D330B,true,false,null,null,null,null,6,null,5);
+				button.borderStyle = new LineStyle(0x9D330B,1,1);
+
+				var tempMatrix:Matrix = new Matrix();
+				tempMatrix.createGradientBox(button.width, button.height, Math.PI/2, 0, 0);
+				button.gradient = new GradientStyle(GradientType.LINEAR,[0xF7D85B,0xD88616],[1,1],[0,255],tempMatrix,SpreadMethod.PAD);
+			}
+
+			private function clearForm(form:Form):void
+			{
+
+				var formItem1:FormItem = form.getChildAt(0) as FormItem;
+				var formItem2:FormItem = form.getChildAt(1) as FormItem;
+				var formItem3:FormItem = form.getChildAt(2) as FormItem;
+
+				var textInput1:TextInput = formItem1.getChildAt(0) as TextInput;
+				var textInput2:TextInput = formItem2.getChildAt(0) as TextInput;
+				var textInput3:TextInput = formItem3.getChildAt(0) as TextInput;
+
+				textInput1.text = null;
+				textInput2.text = null;
+				textInput3.text = null;
+
+				textInput1.setFocus();
+			}
+
+			private function saveChatMode():void
+			{
+				// send selectedValue
+				CairngormEventDispatcher.getInstance().addEventListener(ChangeChatModeEvent.CHATMODE_CHANGED, onChatModeChanged);
+				dispatchEvent(new ChangeChatModeEvent(_avatar.avatarId, uint(chatMode.selectedValue)));
+			}
+
+			private function saveNewsletterOptIn():void
+			{
+				// if selected value, submit it
+				if (uint(eNewsletter.selected))
+				{
+					CairngormEventDispatcher.getInstance().addEventListener(ChangeNewsletterOptionEvent.OPTION_CHANGED, onNewsletterChanged);
+					dispatchEvent(new ChangeNewsletterOptionEvent(_avatar.avatarId, Avatar.NEWSLETTER_OPT_IN));
+					//SdgAlertChrome.show("Newsletter Debug!"+Avatar.NEWSLETTER_OPT_IN, "Time Out!");
+				}
+				// else submit value of not selecting it
+				else {
+					CairngormEventDispatcher.getInstance().addEventListener(ChangeNewsletterOptionEvent.OPTION_CHANGED, onNewsletterChanged);
+					dispatchEvent(new ChangeNewsletterOptionEvent(_avatar.avatarId, Avatar.NEWSLETTER_OPT_OUT));
+					//SdgAlertChrome.show("Newsletter Debug!"+Avatar.NEWSLETTER_OPT_OUT, "Time Out!");
+				}
+			}
+
+			private function checkPassword(input0:String, input1:String, input2:String):String
+			{
+				if (input0 == "")
+					return "Please enter your current password.";
+				else if (input1 == "")
+					return "Please enter a new password.";
+				else if (input1 != input2)
+					return "New passwords do not match.";
+				// check that password is not less than 5 characters
+				else if (input1.length < 5)
+					return "Password should be at least 5 characters.";
+				// check that password has only letters and numbers
+				else if (!checkTextCharacters(input1))
+					return "Password must contain only letters and numbers.";
+				// check that the password inputs match
+				else
+					return null;
+			}
+
+			private function checkTextCharacters(input:String):Boolean
+			{
+				var pattern:RegExp = /^[a-zA-Z0-9]+$/;
+
+				if (!pattern.test(input))
+					return false;
+				else
+					return true;
+			}
+
+			private function savePasswordClick(e:MouseEvent):void
+			{
+				submitPassword(password);
+			}
+
+			private function submitPassword(form:Form):void
+			{
+				var formItem1:FormItem = form.getChildAt(0) as FormItem;
+				var formItem2:FormItem = form.getChildAt(1) as FormItem;
+				var formItem3:FormItem = form.getChildAt(2) as FormItem;
+
+				var textInput1:TextInput = formItem1.getChildAt(0) as TextInput;
+				var textInput2:TextInput = formItem2.getChildAt(0) as TextInput;
+				var textInput3:TextInput = formItem3.getChildAt(0) as TextInput;
+
+				var errorText:Text = this.passwordError as Text;
+				errorText.text = checkPassword(textInput1.text, textInput2.text, textInput3.text);
+
+				if (errorText.text != "")
+				{
+					// Reset Password Status
+					var statusText:Text = this.passwordStatus as Text;
+					statusText.text = "";
+				}
+
+				if (errorText.text == "")
+				{
+					CairngormEventDispatcher.getInstance().addEventListener(ChangePasswordEvent.PASSWORD_CHANGED, onPasswordChanged);
+					dispatchEvent(new ChangePasswordEvent(_avatar.userId, textInput1.text, textInput2.text, ChangePasswordEvent.CHANGE_PASSWORD));
+				}
+			}
+
+			private function onChatModeChanged(event:ChangeChatModeEvent):void
+			{
+				trace(event.status);
+				if (event.status == 1)
+				{
+				}
+				else
+				{
+					// return the radio button back to the original state
+					chatMode.selectedValue = uint(chatMode.selectedValue) % 1;
+
+					// Show An Error
+					SdgAlertChrome.show("Chat Mode Save Failed!", "Time Out!");
+				}
+				CairngormEventDispatcher.getInstance().removeEventListener(ChangeChatModeEvent.CHATMODE_CHANGED, onChatModeChanged);
+			}
+
+			private function onNewsletterChanged(event:ChangeNewsletterOptionEvent):void
+			{
+				// Change status back if save fails
+				if (event.status == 1)
+				{
+				}
+				else
+				{
+					// Flip Back Value
+					if (eNewsletter.selected)
+						eNewsletter.selected = false;
+					else
+						eNewsletter.selected = true;
+
+					// Show An Error
+					SdgAlertChrome.show("Newsletter Save Failed!", "Time Out!");
+				}
+
+				//Remove Listener
+				CairngormEventDispatcher.getInstance().removeEventListener(ChangeNewsletterOptionEvent.OPTION_CHANGED, onNewsletterChanged);
+			}
+
+			private function onPasswordChanged(event:ChangePasswordEvent):void
+			{
+				trace(event.status);
+				var form:Form;
+
+				if (event.eventType == ChangePasswordEvent.PASSWORD_CHANGED)
+					form = password;
+
+				var statusText:Text;
+				if (event.status == 1)
+				{
+					// display settings saved
+					//this[form.id + "Status"].visible = true;
+					statusText = this.passwordStatus as Text;
+					statusText.text = "Password Saved.";
+				}
+				else
+				{
+					if (event.status == 414)
+					{
+						statusText = this.passwordStatus as Text;
+						statusText.text = "";
+
+						var errorText:Text = this.passwordError as Text;
+						errorText.text = "Incorrect password.";
+					}
+					clearForm(form);
+				}
+				CairngormEventDispatcher.getInstance().removeEventListener(event.eventType, onPasswordChanged);
+			}
+
+			private function doCreditCard(ccURL:String):void
+			{
+				if (ExternalInterface.available)
+					ExternalInterface.call("showCreditForm", ccURL);
+			}
+		]]>
+	</mx:Script>
+
+
+
+	<mx:Style>
+		@font-face
+		{
+  			font-family: EuroStyle;
+  			fontWeight: normal;
+  			src: url('fonts/EurostileLTStd-Demi.otf');
+		}
+
+		@font-face
+		{
+  			font-family: EuroStyle;
+  			fontWeight: bold;
+  			src: url('fonts/EurostileLTStd-Bold.otf');
+		}
+
+		@font-face
+		{
+			font-family: EuroStyle;
+			fontWeight: bold;
+			fontStyle: oblique;
+			src: url('fonts/EurostileLTStd-BoldOblique.otf');
+		}
+
+		global
+		{
+			themeColor: #98bff4;
+			disabledColor: #a3a3a3;
+			focusColor: #98bff4;
+			selectionColor: #98bff4;
+			rollOverColor: #98bff4;
+			textRollOverColor: #CCCCCC;
+			textSelectedColor: #CCCCCC;
+			shadowDistance: 1;
+			shadowDirection: right;
+			fontFamily: EuroStyle;
+			fontSize: 13;
+ 			modalTransparencyBlur: 0;
+		}
+
+/* Color Schemes */
+
+/* Controls */
+
+/* Layout */
+
+ControlBar
+{
+	horizontalAlign: center;
+	paddingLeft:20; paddingRight:20; paddingTop:0; paddingBottom:20;
+}
+
+Panel
+{
+	borderStyle: solid;
+	cornerRadius: 12;
+	roundedBottomCorners: true;
+	dropShadowEnabled: true;
+	titleStyleName: largeTitle;
+	borderThicknessLeft: 0; borderThicknessTop: 0; borderThicknessRight: 0; borderThicknessBottom: 0;
+}
+
+SdgAlert
+{
+	buttonStyleName: blue;
+	defaultButtonStyleName: orange;
+	messageStyleName: blue;
+	buttonMinWidth: 180;
+	fontSize: 15;
+	textAlign: center;
+	verticalGap: 20;
+}
+
+/* Text */
+
+.smallTitle
+{
+	color: #ffffff;
+	textAlign: center;
+	fontSize: 18;
+	fontStyle: italic;
+	fontWeight: bold;
+	fontThickness: 100;
+	letterSpacing: 2;
+}
+
+TextInput
+{
+	cornerRadius: 6;
+	borderStyle: solid;
+	borderThickness: 1;
+	paddingLeft: 0; paddingTop: 4; paddingRight: 0; paddingBottom: 0;
+}
+
+Label
+{
+	fontFamily: EuroStyle;
+}
+
+		FormItem.Label
+		{
+			color: #6CB7D2;
+			fontThickness: 100;
+		}
+		Text.BigUserName
+		{
+			color: #ffffff;
+			fontSize: 26;
+			fontThickness: 100;
+			fontFamily: "EuroStyle";
+			fontWeight: "bold";
+		}
+		Label.light
+		{
+			color: #CCCCCC;
+			fontSize: 12;
+			fontWeight: "bold";
+		}
+		Text.light
+		{
+			color: #CCCCCC;
+		}
+		RadioButton.light
+		{
+			color: #CCCCCC;
+			textSelected: #CCCCCC;
+			fontSize: 12;
+			fontWeight: "bold";
+		}
+		Text.Subscription
+		{
+			color: #ffffff;
+			fontSize: 15;
+			fontFamily: "EuroStyle";
+			fontWeight: "bold";
+		}
+		Text.User
+		{
+			color: #ffffff;
+			fontSize: 15;
+			fontFamily: "EuroStyle";
+			fontWeight: "bold";
+		}
+		Text.Error
+		{
+			color: #ff0000;
+			fontSize: 12;
+		}
+	</mx:Style>
+
+	<mx:Image source="@Embed('images/myAccount/bg.png')" visible="true" alpha="1"/>
+
+	<mx:HBox width="100%" height="583" borderStyle="none"  borderColor="#000000" horizontalGap="0"
+		paddingTop="45" paddingLeft="45" paddingRight="0" paddingBottom="0">
+		<mx:VBox width="404" height="100%" borderStyle="none" borderColor="#172d5f"
+			cornerRadius="0" backgroundColor="#000000" backgroundAlpha="0"
+			paddingTop="0" paddingBottom="0" paddingLeft="0" paddingRight="0">
+
+			<mx:Canvas borderStyle="solid"  borderColor="#000000" borderThickness="0" cornerRadius="{standardCornerRad}"
+				backgroundColor="#000000" backgroundAlpha="{standardBackgroundAlpha}" width="100%"
+				paddingLeft="0" paddingRight="0" paddingBottom="0" paddingTop="0" height="57">
+				<mx:FormItem label="Athlete Name" fontSize="29" fontFamily="EuroStyle" fontStyle="italic" fontWeight="bold"
+					paddingLeft="{standardLeftColumnTextOffset}" paddingRight="0" paddingBottom="0" paddingTop="0">
+				</mx:FormItem>
+				<mx:Text id="avatarName" styleName="User" top="32" paddingLeft="10"/>
+			</mx:Canvas>
+
+			<mx:Canvas borderStyle="solid" borderColor="#000000" borderThickness="0" cornerRadius="{standardCornerRad}"
+				backgroundColor="#000000" backgroundAlpha=".25" width="100%" height="200">
+				<mx:FormItem label="Change Password" fontSize="16" fontStyle="italic" fontFamily="EuroStyle"
+					fontWeight="bold" paddingLeft="{standardLeftColumnTextOffset}">
+				</mx:FormItem>
+				<mx:Form id="password" width="100%" height="160" backgroundColor="#000000" backgroundAlpha="0"
+					borderStyle="none"
+					verticalScrollPolicy="off" top="30" paddingTop="0" paddingLeft="0" paddingRight="0" verticalGap="0">
+					<mx:FormItem width="100%" label="Old Password:" labelStyleName="light" paddingLeft="{standardLeftColumnTextOffset}">
+						<mx:TextInput width="200" displayAsPassword="true"
+							borderColor="#172d5f" borderThickness="2" borderStyle="solid"
+							fontSize="13" maxChars="10" textAlign="center"/>
+					</mx:FormItem>
+					<mx:FormItem width="100%" label="New Password:" labelStyleName="light" paddingLeft="{standardLeftColumnTextOffset}">
+						<mx:TextInput width="200" displayAsPassword="true"
+							borderColor="#172d5f" borderThickness="2" borderStyle="solid"
+							fontSize="13" maxChars="10" textAlign="center"/>
+					</mx:FormItem>
+					<mx:FormItem width="100%" label="Confirm New Password:" labelStyleName="light" paddingLeft="{standardLeftColumnTextOffset}">
+						<mx:TextInput width="200" displayAsPassword="true"
+							borderColor="#172d5f" borderThickness="2" borderStyle="solid"
+							fontSize="13" maxChars="10" textAlign="center"/>
+					</mx:FormItem>
+				</mx:Form>
+				<mx:Text x="223" y="130" text="Forgot password?" styleName="light"
+					textDecoration="underline" mouseChildren="false" buttonMode="true" selectable="false"
+					click="navigateToURL(new URLRequest(retrieveInfoUrl),'_self')"/>
+				<mx:Text width="170" x="10" y="135" id="passwordError" fontSize="12" color="#ff0000" selectable="false" textAlign="center"/>
+				<mx:Text width="170" x="10" y="142" id="passwordStatus" fontSize="12" color="#00ff00" selectable="false" textAlign="center"/>
+			</mx:Canvas>
+
+			<mx:Canvas borderStyle="solid" borderColor="#000000" borderThickness="0" cornerRadius="{standardCornerRad}"
+				backgroundColor="#000000" backgroundAlpha=".25" width="100%" height="59">
+				<mx:FormItem label="Chat Mode" fontSize="16" paddingLeft="{standardLeftColumnTextOffset}"
+					fontStyle="italic" fontFamily="EuroStyle" fontWeight="bold">
+				</mx:FormItem>
+				<mx:FormItem label="" direction="horizontal" indicatorGap="5" horizontalGap="10" verticalCenter="8" left="0">
+					<mx:RadioButtonGroup id="chatMode" itemClick="saveChatMode()"/>
+					<mx:RadioButton label="Open Chat" value="{Avatar.SAFE_CHAT}"
+						groupName="chatMode" styleName="light"
+						horizontalGap="0"
+						paddingLeft="{standardLeftColumnTextOffset}" paddingRight="0" paddingBottom="0" paddingTop="0"
+						icon="{checkBoxDefault}" selectedUpIcon="{checkBoxSelected}"
+						selectedOverIcon="{checkBoxSelected}" selectedDownIcon="{checkBoxSelected}"/>
+					<mx:RadioButton label="Safe Chat Plus" value="{Avatar.ULTRA_SAFE_CHAT}"
+						groupName="chatMode" styleName="light"
+						horizontalGap="0"
+						paddingLeft="0" paddingRight="0" paddingBottom="0" paddingTop="0"
+						icon="{checkBoxDefault}" selectedUpIcon="{checkBoxSelected}"
+						selectedOverIcon="{checkBoxSelected}" selectedDownIcon="{checkBoxSelected}"/>
+				</mx:FormItem>
+			</mx:Canvas>
+
+			<mx:Canvas borderStyle="solid" borderColor="#000000" borderThickness="0" cornerRadius="{standardCornerRad}"
+				backgroundColor="#000000" backgroundAlpha=".25" width="100%" height="57">
+				<mx:FormItem label="Updates" fontSize="16" paddingLeft="{standardLeftColumnTextOffset}"
+					fontStyle="italic" fontFamily="EuroStyle" fontWeight="bold">
+				</mx:FormItem>
+				<mx:FormItem label="" direction="horizontal" indicatorGap="5" horizontalGap="10" verticalCenter="8" left="0">
+					<mx:CheckBox id="eNewsletter" label="Yes, please send me the Action AllStars newsletter!"
+						styleName="light" click="saveNewsletterOptIn()"
+						horizontalGap="0" buttonMode="true"
+						paddingLeft="{standardLeftColumnTextOffset}" paddingRight="0" paddingBottom="0" paddingTop="0"
+						icon="{checkBoxDefault}" selectedUpIcon="{checkBoxSelected}"
+						selectedOverIcon="{checkBoxSelected}" selectedDownIcon="{checkBoxSelected}"/>
+				</mx:FormItem>
+			</mx:Canvas>
+
+			<mx:Canvas borderStyle="solid" borderColor="#000000" borderThickness="0" cornerRadius="{standardCornerRad}"
+				backgroundColor="#000000" backgroundAlpha=".25" width="100%">
+				<mx:FormItem label="Delete" fontSize="16" paddingLeft="{standardLeftColumnTextOffset}"
+					fontStyle="italic" fontFamily="EuroStyle" fontWeight="bold">
+				</mx:FormItem>
+
+				<mx:Canvas width="100%" top="10" height="40">
+				<mx:Text text="Delete Account" styleName="light" fontSize="12" paddingLeft="{standardLeftColumnTextOffset}"
+					textDecoration="underline" mouseChildren="false" buttonMode="true" selectable="false" top="15"
+					click="navigateToURL(new URLRequest(deleteAcctUrl),'_self')" />
+				</mx:Canvas>
+			</mx:Canvas>
+
+			<mx:Form borderStyle="solid" borderColor="#000000" borderThickness="0" cornerRadius="{standardCornerRad}" id="membershipTab"
+				backgroundColor="#000000" backgroundAlpha="{standardBackgroundAlpha}" indicatorGap="5" width="100%" verticalGap="0"
+				paddingLeft="0" paddingRight="0" paddingBottom="0" paddingTop="0" height="73">
+				<mx:FormItem paddingLeft="{standardLeftColumnTextOffset}" label="Membership Type" fontSize="16" fontWeight="bold"
+					fontStyle="italic" fontFamily="EuroStyle" id="membershipTabLabel">
+				</mx:FormItem>
+				<mx:Text id="membership" paddingLeft="{standardLeftColumnTextOffset}" selectable="false" styleName="Subscription"/>
+			</mx:Form>
+
+		</mx:VBox>
+
+		<mx:Canvas width="327" height="100%" borderStyle="none">
+			<mx:UIComponent id="avatarPreviewContainer" x="37" y="39"/>
+			<!--<controls:AvatarPreview id="avatarPreview" avatarHorizontalAlign="5" backgroundImage="" top="39" x="37" width="249" height="360"/>-->
+			<mx:VBox top="405" right="15" width="288" height="53" horizontalAlign="center" verticalAlign="middle"
+				borderStyle="solid" borderColor="#000000" borderThickness="0" cornerRadius="{standardCornerRad}"
+				backgroundColor="#000000" backgroundAlpha=".25">
+				<mx:Text id="avatarNameDup" selectable="false" styleName="BigUserName"/>
+			</mx:VBox>
+		</mx:Canvas>
+
+	</mx:HBox>
+
+</mx:Application>

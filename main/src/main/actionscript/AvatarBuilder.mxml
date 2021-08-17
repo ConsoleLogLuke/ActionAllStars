@@ -1,0 +1,337 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Module
+	xmlns:mx="http://www.adobe.com/2006/mxml"
+	xmlns:renderers="com.sdg.components.renderers.*"
+    xmlns:business="com.sdg.business.*"
+    xmlns:controls="com.sdg.components.controls.*"
+	horizontalAlign="center" verticalAlign="middle"
+	backgroundColor="#6384b5"
+	creationComplete="init();">
+	<mx:Script>
+		<![CDATA[
+			import mx.events.CloseEvent;
+			import mx.collections.ArrayList;
+			import mx.controls.Image;
+			import com.sdg.components.renderers.TileItemRenderer;
+			import com.sdg.model.Avatar;
+			import com.sdg.model.InventoryItem;
+			import com.sdg.model.ModelLocator;
+			import com.sdg.net.Environment;
+			import mx.events.PropertyChangeEvent;
+			import mx.binding.utils.*;
+			import mx.collections.ArrayCollection;
+			import com.sdg.commands.AvatarApparelSaveCommand;
+			import com.sdg.commands.InventoryListCommand;
+			import com.sdg.commands.AvatarApparelCommand;
+			import com.sdg.control.SdgFrontController;
+			import com.sdg.events.InventoryListEvent;
+			import com.sdg.events.AvatarApparelEvent;
+			import com.sdg.events.AvatarApparelSaveEvent;
+			import mx.events.CollectionEvent;
+			import mx.events.IndexChangedEvent;
+			import mx.events.DragEvent;
+			import mx.managers.DragManager;
+			import com.sdg.components.controls.SdgAlert;
+			import com.adobe.cairngorm.control.CairngormEventDispatcher;
+
+			private var _currentStep:uint = 1;
+			private var _steps:Array;
+			private var _itemTypesSelected:ArrayCollection = new ArrayCollection();
+			private var _avatar:Avatar = ModelLocator.getInstance().avatar;
+			private var _itemListToGetCount:uint;
+
+			[Bindable]
+            [Embed(source="images/previewClothedGirl.png")]
+             private var femalePreview:Class;
+            [Embed(source="images/previewClothedBoy.png")]
+             private var malePreview:Class;
+
+			private function init():void
+			{
+				 // array of item ids
+				_steps = new Array(
+				     [1],
+				     [8],
+				     [2,3],
+				     [5,6,7]
+				    );
+
+				ModelLocator.getInstance().user.hasCreatedAvatar = false;
+				_avatar.userId = ModelLocator.getInstance().user.userId;
+
+				steps.addEventListener(IndexChangedEvent.CHANGE, onStepChange);
+
+				loadStep(1);
+			}
+
+			private function onInventoryListRetrieved(event:InventoryListEvent):void
+			{
+				// get a default item to put on our avatar
+				var list:ArrayCollection = _avatar.getInventoryListById(event.itemTypeId);
+				if (list.length > 0)
+					selectApparel(getRandomItem(list));
+
+				// remove the listener if this is our last list
+				if (--_itemListToGetCount == 0)
+				{
+					trace("removing inventoryListComleted listener");
+					CairngormEventDispatcher.getInstance().removeEventListener(InventoryListEvent.LIST_COMPLETED, onInventoryListRetrieved);
+				}
+			}
+
+			private function getRandomItem(list:ArrayCollection):InventoryItem
+			{
+				var index:uint = Math.round(Math.random() * (list.length - 1));
+				return InventoryItem(list[index]);
+			}
+
+			private function selectGender(gender:String):void
+			{
+
+				_avatar.removeAllApparel();
+				avatarCustomizer.reset();
+
+				_avatar.gender = gender;
+				_avatar.avatarId = gender == 'male' ? 4 : 5;
+
+				// get all of the apparel in advance
+				_itemListToGetCount = 7;
+				CairngormEventDispatcher.getInstance().addEventListener(InventoryListEvent.LIST_COMPLETED, onInventoryListRetrieved);
+				for each (var itemTypes:Array in _steps)
+				{
+					for each (var itemTypeId:uint in itemTypes)
+				    	dispatchEvent(new InventoryListEvent(_avatar.avatarId, itemTypeId));
+				}
+
+		        _itemTypesSelected = new ArrayCollection();
+		        loadStep(1);
+			}
+
+		    private function selectApparel(apparel:InventoryItem):void
+	        {
+	        	avatarCustomizer.selectApparel(apparel);
+	        	_avatar.setApparel(apparel);
+
+			   if(_itemTypesSelected.contains(apparel.itemTypeId))
+			   {
+			   	    var index:uint = _itemTypesSelected.getItemIndex(apparel.itemTypeId);
+			   	    _itemTypesSelected.setItemAt(apparel.itemTypeId,index);
+			   }
+			   else
+			   {
+			   	    _itemTypesSelected.addItem(apparel.itemTypeId);
+			   }
+
+
+			   nextButton.enabled = isStepComplete(_currentStep);
+	        }
+
+	        private function isStepComplete(stepId:Number):Boolean
+	        {
+	        	var ids:Array = _steps[stepId - 1];
+
+				for (var i:int = 0; i < ids.length; i++)
+				{
+				    if(!_itemTypesSelected.contains(ids[i]))
+				    {
+				    	return false;
+				    }
+				}
+				return true;
+	        }
+
+			private function onStepChange(e:IndexChangedEvent):void
+			{
+				loadStep(e.newIndex + 1);
+			}
+
+            private function loadStep(stepId:Number):void
+            {
+				stepCounter.text = "STEP " + stepId + " / " + _steps.length;
+				nextButton.enabled = isStepComplete(stepId);
+
+				if(stepId == 4)
+				{
+					nextButton.styleName = "orange";
+					nextButton.label = "I'M DONE";
+
+				}
+				else
+				{
+					nextButton.styleName = "blue";
+					nextButton.label = "NEXT STEP";
+				}
+
+				// get data for step
+
+				var info:Array = _steps[stepId - 1];
+				//var names:Array = _stepsA[stepId - 1];
+				for (var i:int = 0; i < info.length; i++)
+				{
+					var id:int = info[i];
+					/*
+					trace(id);
+					var n:String = names[i];
+					*/
+					this["list_" + id].dataProvider = _avatar.getInventoryListById(id);
+				   // dispatchEvent(new InventoryListEvent(_avatar.avatarId, id));
+				}
+
+            }
+
+			private function goToStep(stepId:Number):void
+			{
+
+				if(stepId == 5)
+				{
+					showConfirmation();
+				}
+				else
+				{
+					steps.selectedChild = this["step_" + stepId];
+				}
+				backButton.enabled = stepId > 1 ? true : false;
+			}
+
+			private function onSelection(num:Number):void
+			{
+				selectApparel(this["list_" + num].selectedItem);
+			}
+
+
+			private function goNext():void
+			{
+				if(_currentStep < 5)
+				{
+					_currentStep++;
+					goToStep(_currentStep);
+				}
+			}
+
+			private function goBack():void
+			{
+
+				if(_currentStep > 1)
+				{
+					_currentStep--;
+					goToStep(_currentStep);
+				}
+			}
+
+            private function onClose(e:CloseEvent):void
+            {
+            	if(e.detail == SdgAlert.OK)
+            	{
+            		dispatchEvent(new AvatarApparelSaveEvent(_avatar));
+            	}
+            	else
+            	{
+            		goBack();
+            	}
+            }
+            private function showConfirmation():void
+            {
+//            	SdgAlert.show("Click OK to save or CANCEL to go back",
+//            	"SAVE",
+//            	SdgAlert.OK | SdgAlert.CANCEL,
+//            	SdgAlert.OK,
+//            	onClose
+//            	);
+
+
+				// just saving for now with no confirmation
+				// note that main will detect the save and close this module (see watcher in main.mxml)
+           		dispatchEvent(new AvatarApparelSaveEvent(_avatar));
+            }
+		]]>
+	</mx:Script>
+
+	<!--
+	<business:Services/>
+	<mx:Style source="styles/style.css"/>
+    -->
+
+	<controls:TitlePanel title="CREATE YOUR ATHLETE" horizontalAlign="center" height="508" verticalGap="20">
+
+		<mx:HBox height="400" horizontalGap="35">
+			<!-- avatar preview -->
+			<mx:Canvas horizontalScrollPolicy="off" verticalScrollPolicy="off" width="260" height="100%">
+				<controls:AvatarPreview id="avatarCustomizer" horizontalCenter="0"/>
+				<controls:TitlePlate title="ATHLETE" fontSize="24" width="100%" bottom="20"/>
+			</mx:Canvas>
+
+			<!-- steps -->
+			<mx:ViewStack id="steps" width="430">
+				<!-- step 1 -->
+			    <mx:VBox id="step_1" width="100%" verticalScrollPolicy="off" horizontalScrollPolicy="off"
+			    	horizontalAlign="center" verticalAlign="middle">
+					<controls:TitlePlate width="100%" title="CREATE YOUR ATHLETE"/>
+					<mx:HBox>
+						<mx:VBox styleName="lightBlue" width="210" height="250" buttonMode="true" horizontalAlign="center" verticalAlign="middle"
+							click="selectGender('male');">
+							<mx:Label styleName="subTitle" text="BOY"/>
+							<mx:Image source="@Embed('images/previewClothedBoy.png')" width="135" height="150" />
+						</mx:VBox>
+						<mx:VBox styleName="lightBlue" width="210" height="250" buttonMode="true" horizontalAlign="center" verticalAlign="middle"
+							click="selectGender('female');">
+							<mx:Label styleName="subTitle" text="GIRL"/>
+					        <mx:Image source="@Embed('images/previewClothedGirl.png')" width="135" height="150"/>
+					    </mx:VBox>
+					</mx:HBox>
+					<controls:TitlePlate width="100%" title="SELECT SKIN COLOR"/>
+					<controls:ItemTileList id="list_1" styleName="transparent"
+						columnCount="5" rowCount="1" width="100%" bottom="100%"
+				  		change="onSelection(1)"/>
+				</mx:VBox>
+
+				<!-- step 2 -->
+			    <mx:VBox id="step_2" verticalScrollPolicy="off" horizontalScrollPolicy="off" width="100%" verticalGap="5">
+			      <controls:TitlePlate width="100%" title="SELECT HAIR"/>
+			      <controls:ItemTileList id="list_8" styleName="lightBlue" columnCount="5" rowCount="4" width="100%" height="100%"
+				      	change="onSelection(8)"/>
+			    </mx:VBox>
+
+			    <!-- step 3 -->
+				<mx:VBox id="step_3" verticalScrollPolicy="off" horizontalScrollPolicy="off" width="100%" verticalGap="5">
+					<controls:TitlePlate width="100%" title="SELECT EYES"/>
+					<controls:ItemTileList id="list_2" styleName="lightBlue" columnCount="5" rowCount="2" width="100%"
+						change="onSelection(2)"/>
+					<controls:TitlePlate width="100%" title="SELECT MOUTH"/>
+					<controls:ItemTileList id="list_3" styleName="lightBlue" columnCount="5" rowCount="2" width="100%" height="100%"
+						change="onSelection(3)"/>
+				</mx:VBox>
+
+			    <!-- step 4 -->
+				<mx:VBox id="step_4" verticalScrollPolicy="off" horizontalScrollPolicy="off" width="100%" verticalGap="5">
+					<controls:TitlePlate width="100%" title="SELECT SHIRT"/>
+					<controls:ItemTileList id="list_7" styleName="lightBlue" columnCount="5" rowCount="1" width="100%"
+							change="onSelection(7)"/>
+				    <mx:Spacer height="8" />
+		            <controls:TitlePlate width="100%" title="SELECT PANTS"/>
+					<controls:ItemTileList id="list_6" styleName="lightBlue" columnCount="5" rowCount="1" width="100%"
+							change="onSelection(6)"/>
+				    <mx:Spacer height="8" />
+					<controls:TitlePlate width="100%" title="SELECT SHOES"/>
+					<controls:ItemTileList id="list_5" styleName="lightBlue" columnCount="5" rowCount="1" width="100%" height="100%"
+							change="onSelection(5)"/>
+			    </mx:VBox>
+			</mx:ViewStack>
+
+		</mx:HBox>
+
+		<!-- footer -->
+	    <mx:Grid width="440">
+	        <mx:GridRow width="100%" height="100%">
+	            <mx:GridItem width="100%" height="100%" horizontalAlign="left">
+	                <mx:Button id="backButton" enabled="false" label="LAST STEP" styleName="blue" buttonMode="true" click="goBack()"/>
+	            </mx:GridItem>
+	            <mx:GridItem width="100%" height="100%" horizontalAlign="center">
+	                <mx:Label styleName="subTitle" id="stepCounter" width="100%"/>
+	            </mx:GridItem>
+	            <mx:GridItem width="100%" height="100%" horizontalAlign="right">
+	                <mx:Button id="nextButton" enabled="false" label="NEXT STEP" styleName="blue" buttonMode="true" click="goNext()"/>
+	            </mx:GridItem>
+	        </mx:GridRow>
+	    </mx:Grid>
+	</controls:TitlePanel>
+</mx:Module>

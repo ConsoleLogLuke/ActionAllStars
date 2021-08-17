@@ -1,0 +1,274 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Module
+	xmlns:mx="http://www.adobe.com/2006/mxml"
+	xmlns:forms="com.sdg.components.forms.*"
+	xmlns:business="com.sdg.business.*" layout="absolute"
+    preloader="com.sdg.components.controls.DownloadProgressBar"
+	width="925"
+	height="665" xmlns:controls="com.sdg.components.controls.*">
+	<!--<business:Services/>-->
+
+	<mx:Script>
+		<![CDATA[
+			import com.sdg.components.controls.ModeratorAlertChrome;
+			import com.sdg.model.User;
+			import com.sdg.components.controls.ProgressAlertChrome;
+			import com.sdg.components.controls.SdgAlertChrome;
+			import com.sdg.utils.MainUtil;
+			import com.sdg.utils.Constants;
+			import com.sdg.net.Environment;
+			import com.sdg.model.Server;
+			import com.sdg.commands.*;
+			import com.sdg.events.*;
+			import com.sdg.components.controls.ProgressAlert;
+			import com.sdg.components.dialog.ServerSelection;
+			import com.sdg.control.SdgFrontController;
+
+			import com.sdg.model.ModelLocator;
+
+			import mx.binding.utils.ChangeWatcher;
+			import mx.events.CloseEvent;
+
+			private var _currentModule:String;
+
+			public function init(startingModule:String = null):void
+			{
+//				this.stage.align = StageAlign.TOP_LEFT;
+//				this.stage.scaleMode = StageScaleMode.NO_BORDER;
+//
+//				var flashvars:Object = {};
+//				for (var str:String in loaderInfo.parameters)
+//				{
+//					flashvars[str] = loaderInfo.parameters[str];
+//				}
+//
+//				registerFlashVars(flashvars);
+//
+//				// register Cairingorn events
+//				var sdg:SdgFrontController = SdgFrontController.getInstance();
+//				sdg.addCommand(LoginEvent.LOGIN, LoginCommand);
+//				sdg.addCommand(AvatarListEvent.LIST, AvatarListCommand);
+//				sdg.addCommand(ServerListEvent.LIST, ServerListCommand);
+//				sdg.addCommand(InventoryListEvent.LIST, InventoryListCommand);
+//				sdg.addCommand(GuestAccountEvent.SAVE_GUEST, GuestAccountCommand);
+//
+//				sdg.addCommand(ResendActivationEvent.RESEND_ACTIVATION, ResendActivationCommand);
+				ChangeWatcher.watch(ModelLocator.getInstance().user, "loggedInStatus", loginWatcher);
+				//ChangeWatcher.watch(ModelLocator.getInstance().user, "avatarId", avatarSelectionWatcher);
+
+
+				//flashvars.startingModule = "OneStepReg";
+				//ModelLocator.getInstance().affiliate = 53;
+//				if (flashvars.startingModule)
+//					loadModule(flashvars.startingModule + ".swf");
+//				else
+//					loginComponent.visible = true;
+
+				if (startingModule)
+					loadModule(startingModule + ".swf");
+				else
+					showLoginForm();
+			}
+
+			private function showGuestReg():void
+			{
+				loadModule("OneStepReg.swf");
+			}
+
+			private function showLoginForm():void
+			{
+				loadModule("LoginFormChrome.swf");
+			}
+
+//			private function registerFlashVars(vars:Object):void
+//			{
+//				applyEnvVars(vars);
+//
+//				ModelLocator.getInstance().affiliate = vars.partnerId;
+//
+//				if (vars.version) Environment.serverVersion = vars.version;
+//				if (vars.returnUrl) Environment.returnUrl = vars.returnUrl;
+//				if (vars.userName)
+//				{
+//					loginComponent.username.text = vars.userName;
+//					loginComponent.password.text = "";
+//					loginComponent.rememberMe.selected = false;
+//				}
+//			}
+//
+//			private function applyEnvVars(vars:Object):void
+//			{
+//				if (vars.applicationDomain)
+//				{
+//					Environment.setApplicationDomain(vars.applicationDomain);
+//					Services.setBaseUrl(Environment.getApplicationUrl());
+//				}
+//
+//				if (vars.assetDomain)
+//				{
+//					Environment.setAssetDomain(vars.assetDomain);
+//				}
+//
+//				_forceFailOver = vars.forceFailOver && vars.forceFailOver == "true";
+//				trace("vars.forceFailOver: " +  vars.forceFailOver);
+//				trace("app domain " + Environment.getApplicationDomain());
+//				trace("asset domain " + Environment.getAssetDomain());
+//				trace("app url " + Environment.getApplicationUrl());
+//				trace("standalone " + Environment.isStandalone());
+//			}
+
+			private function loginWatcher(event:Event):void
+			{
+				switch (ModelLocator.getInstance().user.loggedInStatus)
+				{
+					case 1:
+						trace('Logged in as ' + ModelLocator.getInstance().user.username);
+						dispatchEvent(new AvatarListEvent(ModelLocator.getInstance().user.username));
+						break;
+					case 100:
+						//SdgAlertChrome.show("Your avatar has been banned.", "Time Out!", reEnableLogin);
+						ModeratorAlertChrome.show("Your avatar has been suspended.", "SUSPENSION NOTICE!", reEnableLogin);
+						//SdgAlert.show("Your avatar has been banned.", "Time Out!");
+						//loginComponent.reEnableLogin();
+						break;
+					case 106:
+						ModeratorAlertChrome.show("Your avatar has been banned.", "BANNING NOTICE!", reEnableLogin);
+						break;
+					case 101:
+						SdgAlertChrome.show("We did not recognize your user name or password. Please try again.", "Time Out!", reEnableLogin);
+						//SdgAlert.show("We did not recognize your user name or password. Please try again.", "Time Out!");
+						//loginComponent.reEnableLogin();
+						break;
+					case 102:
+						SdgAlertChrome.show("Your registration process was incomplete. Please register again.", "Time Out!", reEnableLogin);
+						//SdgAlert.show("Your registration process was incomplete. Please register again.", "Time Out!");
+						//loginComponent.reEnableLogin();
+						break;
+					case 103:
+						trace('changeUserName.jsp?userId=' + ModelLocator.getInstance().user.userId);
+						var request:URLRequest = new URLRequest('changeUserName.jsp');
+						request.method = URLRequestMethod.POST;
+
+						var variables:URLVariables = new URLVariables();
+						variables.userId = ModelLocator.getInstance().user.userId;
+						request.data = variables;
+
+						navigateToURL(request,'_self');
+						break;
+//					case 104:
+//						var alert:SdgAlertChrome = SdgAlertChrome.show("Please ask your parents to check their email for a message from noreply@sixdegreesgames.com or click below to re-send the activation email.",
+//							"Account Not Activated", onActivateAccount, null, true, false);
+//						alert.addButton("Continue", 1);
+//						break;
+					case 105:
+						SdgAlertChrome.show('This account has been deactivated due to inactivity. Click "Create an Athlete" for a new account.', "Time Out!", reEnableLogin);
+						//SdgAlert.show("Your login was unsuccessful. Please try again.", "Time Out!");
+						//loginComponent.reEnableLogin();
+						break;
+					case 0:
+						SdgAlertChrome.show("Your login was unsuccessful. Please try again.", "Time Out!", reEnableLogin);
+						//SdgAlert.show("Your login was unsuccessful. Please try again.", "Time Out!");
+						//loginComponent.reEnableLogin();
+						break;
+					case -1:
+						break;
+					default:
+						SdgAlertChrome.show("Your login was unsuccessful. Please try again.", "Time Out!", reEnableLogin);
+						//SdgAlert.show("Your login was unsuccessful. Please try again.", "Time Out!");
+						//loginComponent.reEnableLogin();
+						break;
+				}
+
+				function reEnableLogin(event:Event):void
+				{
+					Object(mainLoader.child).reEnableLogin();
+					//loginComponent.reEnableLogin();
+				}
+			}
+
+//			private function avatarSelectionWatcher(event:Event):void
+//			{
+//				// guest account
+//				if (ModelLocator.getInstance().avatar.membershipStatus == 3)
+//					MainUtil.navigateToMain(Server.getCurrent(), null, _forceFailOver);
+//				else
+//				{
+//					//mainLoader.unloadModule();
+//
+//					//trace (ModelLocator.getInstance().user.freeMonthEligible);
+//					//if (ModelLocator.getInstance().user.freeMonthEligible)
+//					//	specialOffer.visible = true;
+//					//else
+//					MainUtil.showDialog(ServerSelection, {forceFailOver:this._forceFailOver})
+//				}
+//				//MainUtil.showDialog(ServerSelection, {forceFailOver:this._forceFailOver});
+//
+//				//loginComponent.cleanup();
+//			}
+
+			public function loadModule(src:String):void
+			{
+				if (!Environment.isStandalone())
+				{
+					src += "?version=" + Environment.serverVersion;
+				}
+
+				_currentModule = src;
+
+				if (mainLoader == null) return;
+
+				mainLoader.applicationDomain = new ApplicationDomain(ApplicationDomain.currentDomain);
+				mainLoader.url = src;
+				mainLoader.loadModule();
+			}
+
+        	// event handlers
+
+//			private function onActivateAccount(e:CloseEvent):void
+//			{
+//				if (e.detail == 1)
+//					loadModule("ActivationChrome.swf");
+//			}
+
+//			private function navigateToCreditCard():void
+//			{
+//				navigateToURL(new URLRequest('http://' + Environment.returnUrl +
+//					'/premium/co/ccard?userId=' + ModelLocator.getInstance().user.userId +
+//					'&pm=' + Constants.CREDIT_CARD + '&plan=' + 7 + '&mf=1&affiliateId=' + ModelLocator.getInstance().affiliate), '_self');
+//			}
+
+//			private function closeSpecialOffer():void
+//			{
+//				specialOffer.visible = false;
+//				MainUtil.showDialog(ServerSelection, {forceFailOver:_forceFailOver});
+//			}
+		]]>
+	</mx:Script>
+	<!--<mx:Style>
+		@font-face
+		{
+		  font-family: EuroStyle;
+		  fontWeight: bold;
+		  src: url('fonts/EurostileLTStd-Bold.otf');
+		}
+	</mx:Style>-->
+
+	<mx:Style source="styles/style.css"/>
+
+	<!--<forms:LoginFormChrome id="loginComponent" visible="false" partner="{ModelLocator.getInstance().affiliate}"/>-->
+
+	<!--<controls:SpecialOfferUpsell id="specialOffer" width="100%" height="100%" visible="false" closeCallBack="closeSpecialOffer" ccCode="9"/>-->
+
+
+	<!--<mx:Canvas id="specialOffer" width="100%" height="100%" visible="false" backgroundImage="@Embed('images/monthFree/bg_inWorld.swf')">
+		<mx:Image source="@Embed('images/monthFree/getMonthFree.swf')" horizontalCenter="-210" y="360"
+			click="navigateToCreditCard()"/>
+
+		<mx:Image source="@Embed('images/monthFree/notNowButton.swf')" horizontalCenter="-210" y="480"
+			click="specialOffer.visible = false; MainUtil.showDialog(ServerSelection, {forceFailOver:_forceFailOver})"/>
+	</mx:Canvas>-->
+	<mx:ModuleLoader id="mainLoader" horizontalCenter="0" verticalCenter="0" creationComplete="loadModule(_currentModule)"
+		ready="mainLoader.dispatchEvent(new Event(Event.COMPLETE))"
+		error="mainLoader.dispatchEvent(new Event(Event.COMPLETE))"
+		loading="{ProgressAlertChrome.show('Loading section... please wait.', 'Just A Moment', null, mainLoader)}"/>
+</mx:Module>
