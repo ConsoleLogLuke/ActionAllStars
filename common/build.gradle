@@ -1,3 +1,9 @@
+import org.apache.tools.ant.filters.ReplaceTokens
+
+plugins {
+    id 'com.palantir.git-version' version '0.12.3'
+}
+
 type = 'swc'
 
 dependencies {
@@ -6,3 +12,34 @@ dependencies {
 
     merged project(':assets')
 }
+
+tasks.register('generateSources', Sync) {
+    outputs.upToDateWhen { false }
+
+    from srcDirs[0]
+    include '**/*.as', '**/*.mxml'
+    exclude '**/*.broken.as', '**/*.broken.mxml'
+    into "$buildDir/generated-src"
+
+    includeEmptyDirs = false
+    filteringCharset = 'UTF-8'
+
+    def gitDetails = versionDetails()
+    def buildDate = new Date().format('yyyy/MM/dd HH:mm')
+    def (versionMajor, versionMinor, versionInline) = version.tokenize('\\.')
+
+    filter(ReplaceTokens, tokens: [
+        versionMajor: versionMajor,
+        versionMinor: versionMinor,
+        versionInline: versionInline,
+        buildNum: gitDetails.gitHash,
+        buildDate: buildDate,
+        releaseType: gitDetails.branchName
+    ])
+
+    doLast {
+        srcDirs = ["$buildDir/generated-src"]
+    }
+}
+
+compileFlex.dependsOn generateSources

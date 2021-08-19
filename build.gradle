@@ -16,26 +16,20 @@ subprojects {
     apply plugin: 'de.undercouch.download'
 
     group 'com.sdg'
-    version '1.0-SNAPSHOT'
+    version '1.0.0'
 
     ext {
         flexSdkName = 'flex3'
         flexSdkVersion = '3.6.0.16995A'
-        flexSdkFileName = flexSdkFileNamePattern
-                .replace('[name]', flexSdkName)
-                .replace('[version]', flexSdkVersion)
-        flexSdkUrl = flexSdkUrlPattern
-                .replace('[name]', flexSdkName)
-                .replace('[version]', flexSdkVersion)
-                .replace('[fileName]', flexSdkFileName)
     }
 
     dependencies {
-        flexSDK rootProject.files("sdks/${flexSdkFileName}")
+        flexSDK rootProject.files("sdks/flex_sdk_${flexSdkVersion}.zip")
     }
 
     afterEvaluate {
         def sdkDir = rootProject.file('sdks')
+        def sdkZipName = "flex_sdk_${flexSdkVersion}.zip"
         def sdkZip = new File(sdkDir, flexSdkFileName)
         if (sdkZip.exists()) {
             return
@@ -45,7 +39,7 @@ subprojects {
         }
 
         download {
-            src flexSdkUrl
+            src "http://download.macromedia.com/pub/flex/sdk/builds/$flexSdkName/$sdkZipName"
             dest sdkDir
             overwrite false
         }
@@ -53,6 +47,5 @@ subprojects {
 }
 
 tasks.register('cleanLocalSdks', Delete) {
-    def sdkDir = rootProject.file('sdks')
-    delete sdkDir
+    delete rootProject.file('sdks')
 }
