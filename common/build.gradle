@@ -1,8 +1,8 @@
 type = 'swc'
 
 dependencies {
-    merged fileTree(dir: '../libs/game', include: ['*.swc'])
-    merged fileTree(dir: '../libs/general', include: ['*.swc'])
+    merged rootProject.fileTree(dir: 'libs/game', include: ['*.swc'])
+    merged rootProject.fileTree(dir: 'libs/general', include: ['*.swc'])
 
     merged project(':assets')
 }
