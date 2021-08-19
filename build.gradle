@@ -30,7 +30,7 @@ subprojects {
     afterEvaluate {
         def sdkDir = rootProject.file('sdks')
         def sdkZipName = "flex_sdk_${flexSdkVersion}.zip"
-        def sdkZip = new File(sdkDir, flexSdkFileName)
+        def sdkZip = new File(sdkDir, sdkZipName)
         if (sdkZip.exists()) {
             return
         }
