@@ -40,7 +40,7 @@ package com.sdg.display
 	{
 			private static const TICK_TIME:uint = 50;					// rollup rate
 
-			[Embed(source="fonts/GIL.TTF", fontFamily="GillSans")]
+			[Embed(source="fonts/GIL.TTF", fontFamily="GillSans", embedAsCFF=false)] // Non-SDG - set embedAsCFF to false
 			private var gillsans:Class;
 
 			private var rankTextField:Text;

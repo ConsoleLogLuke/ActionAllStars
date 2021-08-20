@@ -31,7 +31,7 @@
 		// 7/7/08 jma I did not have the GillSans font on my system
 		// so the font defaulted to Times Roman  alpha
 
-		[Embed(source="fonts/GIL.TTF", fontFamily="GillSans")]
+		[Embed(source="fonts/GIL.TTF", fontFamily="GillSans", embedAsCFF=false)] // Non-SDG - set embedAsCFF to false
 		private var gillsans:Class;
 		private var textField:TextField;
 		private var icon:DisplayObject;

@@ -7,6 +7,7 @@
   font-family: GillSans;
   fontWeight: normal;
   src: url("fonts/GIL.TTF");
+  embedAsCFF: false;
 }
 
 @font-face
@@ -14,6 +15,7 @@
   font-family: GillSans;
   fontWeight: bold;
   src: url("fonts/GILB.TTF");
+  embedAsCFF: false;
 }
 
 @font-face
@@ -22,6 +24,7 @@
   fontWeight: bold;
   fontStyle: italic;
   src: url("fonts/GILBI.TTF");
+  embedAsCFF: false;
 }
 
 @font-face
@@ -29,6 +32,7 @@
   font-family: EuroStyle;
   fontWeight: normal;
   src: url('fonts/EurostileLTStd-Demi.otf');
+  embedAsCFF: false;
 }
 
 @font-face
@@ -36,6 +40,7 @@
   font-family: EuroStyle;
   fontWeight: bold;
   src: url('fonts/EurostileLTStd-Bold.otf');
+  embedAsCFF: false;
 }
 
 @font-face
@@ -44,4 +49,5 @@
   fontWeight: bold;
   fontStyle: oblique;
   src: url('fonts/EurostileLTStd-BoldOblique.otf');
+  embedAsCFF: false;
 }

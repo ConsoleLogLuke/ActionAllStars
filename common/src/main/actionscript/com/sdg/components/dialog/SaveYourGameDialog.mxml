@@ -7,7 +7,7 @@
 			import com.sdg.model.Buddy;
 			import com.sdg.control.BuddyManager;
 			import mx.events.FlexEvent;
-			import mx.core.Application;
+			import mx.core.FlexGlobals; // Non-SDG - Application to FlexGlobals
 			import com.sdg.net.socket.SocketClient;
 			import com.sdg.ui.RoundCornerCloseButton;
 			import mx.controls.Image;
@@ -37,7 +37,7 @@
 
 			public function init(params:Object):void
 			{
-				Application.application.stage.displayState = StageDisplayState.NORMAL;
+				FlexGlobals.topLevelApplication.stage.displayState = StageDisplayState.NORMAL;
 
 				var i:int;
 

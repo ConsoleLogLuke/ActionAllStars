@@ -4,52 +4,52 @@
 
 	<mx:Script>
 		<![CDATA[
-		
+
 			import flash.display.Bitmap;
-			import mx.core.Application;
+			import mx.core.FlexGlobals; // Non-SDG - Application to FlexGlobals
 			import mx.core.IFlexDisplayObject;
 			import mx.core.UIComponent;
 			import mx.managers.PopUpManager;
-			
+
 			import com.sdg.components.dialog.ISdgDialog;
-			
+
 			private var _childDialog:IFlexDisplayObject;
-			
+
 			public function init(params:Object):IFlexDisplayObject
 			{
-				// create the child dialog				
+				// create the child dialog
 				_childDialog = params.createdDialog;
-				
+
 				if (_childDialog == null)
-	            	_childDialog = PopUpManager.createPopUp(DisplayObject(Application.application), params.dialogClass, false);
+	            	_childDialog = PopUpManager.createPopUp(DisplayObject(FlexGlobals.topLevelApplication), params.dialogClass, false);
 	            else
-      	        	PopUpManager.addPopUp(_childDialog, DisplayObject(Application.application), false);
-	            	
+      	        	PopUpManager.addPopUp(_childDialog, DisplayObject(FlexGlobals.topLevelApplication), false);
+
             	PopUpManager.centerPopUp(_childDialog);
-            	
+
             	// listen for the child dialog's close event
             	_childDialog.addEventListener(Event.REMOVED, onChildRemoved);
-            	
+
             	// listen for click events on the outside modal area (this dialog)
             	this.addEventListener(MouseEvent.MOUSE_DOWN, onMouseDown);
-	                
+
 	            // initilize the child dialog
 	            var sdgDialog:ISdgDialog = _childDialog as ISdgDialog;
 	            if (sdgDialog != null)
 	            	sdgDialog.init(params.childParams);
-	            	
+
 	            return _childDialog;
 			}
-			
+
 			public function close():void
 			{
 				// close this (the parent) dialog
 				PopUpManager.removePopUp(this);
 			}
-			
+
 			private function onChildRemoved(e:Event):void
 			{
-				if (e.target == _childDialog)	
+				if (e.target == _childDialog)
 					this.close();
 			}
 

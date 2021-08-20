@@ -27,7 +27,7 @@ subprojects {
         flexSDK rootProject.files("sdks/flex_sdk_${flexSdkVersion}.zip")
     }
 
-    additionalCompilerOptions = ['-warnings=false']
+    additionalCompilerOptions += ['-debug']
 
     afterEvaluate {
         def sdkDir = rootProject.file('sdks')

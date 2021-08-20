@@ -99,7 +99,7 @@
 			import flash.ui.Keyboard;
 
 			import mx.binding.utils.*;
-			import mx.core.Application;
+			import mx.core.FlexGlobals; // Non-SDG - Application to FlexGlobals
 			import mx.core.IChildList;
 			import mx.core.IUIComponent;
 			import mx.events.FlexEvent;
@@ -344,7 +344,7 @@
 				GamePlayCounter.incrementGamePlay(gameId);
 
 				// Reset the frameRate.
-				Application.application.frameRate = 16;
+				FlexGlobals.topLevelApplication.frameRate = 16;
 				// Enter the previous room. Special case for event games. -Molly
 				if(gameId == Constants.ROCK_JENGA_GAME_ID && result.winCondition == "win")
 				{
@@ -1094,7 +1094,7 @@
 				}
 
 				// Remove pre loader animation.
-				Application.application.closeStarsWaiting();
+				FlexGlobals.topLevelApplication.closeStarsWaiting();
 			}
 
 			protected function adjustItemEffect(event:Event):void

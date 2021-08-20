@@ -37,6 +37,7 @@
 			import mx.logging.targets.*;
         	import mx.logging.*;
         	import mx.managers.PopUpManager;
+			import mx.core.FlexGlobals; // Non-SDG
 
 			import flash.external.*;
 			import flash.events.Event;
@@ -307,7 +308,7 @@
 
 				if (ModelLocator.getInstance().user.isSocketLoggedIn)
 				{
-					Application.application.loadModule("RoomModule.swf");
+					FlexGlobals.topLevelApplication.loadModule("RoomModule.swf");
 				}
 				else
 				{

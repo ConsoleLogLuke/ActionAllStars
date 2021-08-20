@@ -193,6 +193,7 @@
 			font-family: EuroStyle;
 			fontWeight: bold;
 			src: url('fonts/EurostileLTStd-Bold.otf');
+			embedAsCFF: false;
 		}
 		Button.login
 		{

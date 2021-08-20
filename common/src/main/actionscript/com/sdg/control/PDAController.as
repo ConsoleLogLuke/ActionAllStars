@@ -71,7 +71,7 @@ package com.sdg.control
 	import flash.net.URLRequest;
 
 	import mx.collections.ArrayCollection;
-	import mx.core.Application;
+	import mx.core.FlexGlobals; // Non-SDG - Application to FlexGlobals
 	import mx.events.EffectEvent;
 
 	[Bindable]
@@ -306,12 +306,12 @@ package com.sdg.control
 				event.currentTarget.removeEventListener(EffectEvent.EFFECT_END, onPDARotate);
 
 				AASModuleLoader.openLeaderBoard();
-				Application.application.addEventListener("closeModule", onModuleClose);
+				FlexGlobals.topLevelApplication.addEventListener("closeModule", onModuleClose);
 			}
 
 			function onModuleClose(e:Event):void
 			{
-				Application.application.removeEventListener('closeModule', onModuleClose);
+				FlexGlobals.topLevelApplication.removeEventListener('closeModule', onModuleClose);
 
 				// Rotate the PDA back to it's original position.
 				_pdaView.rotatePDA(null, 90, 0, 100);
@@ -441,12 +441,12 @@ package com.sdg.control
 				event.currentTarget.removeEventListener(EffectEvent.EFFECT_END, onPDARotate);
 
 				AASModuleLoader.openStoreModule(null, "StoreCatalogModule", 'Store', true);
-				Application.application.addEventListener('closeModule', onStoreClose);
+				FlexGlobals.topLevelApplication.addEventListener('closeModule', onStoreClose);
 			}
 
 			function onStoreClose(e:Event):void
 			{
-				Application.application.removeEventListener('closeModule', onStoreClose);
+				FlexGlobals.topLevelApplication.removeEventListener('closeModule', onStoreClose);
 				_pdaView.rotatePDA(null, 90, 0, 100);
 				_pdaView.mainScreen.mouseChildren = true;
 			}
@@ -923,7 +923,7 @@ package com.sdg.control
 
 		private function onBoardClose(e:Event):void
 		{
-			Application.application.removeEventListener(Event.CLOSE,onBoardClose);
+			FlexGlobals.topLevelApplication.removeEventListener(Event.CLOSE,onBoardClose);
 			this.showPDA();
 		}
 

@@ -32,7 +32,7 @@ package com.sdg.control.room.itemClasses
 
 	import mx.binding.utils.BindingUtils;
 	import mx.binding.utils.ChangeWatcher;
-	import mx.core.Application;
+	import mx.core.FlexGlobals; // Non-SDG - Application to FlexGlobals
 	import mx.events.PropertyChangeEvent;
 
 	public class AvatarController extends Character
@@ -183,7 +183,7 @@ package com.sdg.control.room.itemClasses
 		    if (invitePanelOn)
 		    	return;
 
-		    var invitePanel:InvitePanel = InvitePanel(Application.application.mainLoader.child.invitePanel);
+		    var invitePanel:InvitePanel = InvitePanel(FlexGlobals.topLevelApplication.mainLoader.child.invitePanel);
 		    invitePanel.init(game, avatarIds, gameId, level, gameSessionId);
 		    invitePanelOn = true;
 		    inviteModeOn = invitePanel.isMasterPanel;
@@ -191,7 +191,7 @@ package com.sdg.control.room.itemClasses
 
 		public function addAvatarToInvitePanel(avatar:Avatar, avatarId:int = 0):void
 		{
-		    var invitePanel:InvitePanel = InvitePanel(Application.application.mainLoader.child.invitePanel);
+		    var invitePanel:InvitePanel = InvitePanel(FlexGlobals.topLevelApplication.mainLoader.child.invitePanel);
 
 		    // if we have no avatar, add the avatar by the avatar id
 			if (avatar == null)
@@ -202,14 +202,14 @@ package com.sdg.control.room.itemClasses
 
 		public function isAvatarInInvitePanel(avatarId:int):Boolean
 		{
-		    var invitePanel:InvitePanel = InvitePanel(Application.application.mainLoader.child.invitePanel);
+		    var invitePanel:InvitePanel = InvitePanel(FlexGlobals.topLevelApplication.mainLoader.child.invitePanel);
 			return invitePanel.hasPlayer(avatarId);
 		}
 
 		public function sendInvite(avatar:Avatar):void
 		{
 			// get the invite panel
-		    var invitePanel:InvitePanel = InvitePanel(Application.application.mainLoader.child.invitePanel);
+		    var invitePanel:InvitePanel = InvitePanel(FlexGlobals.topLevelApplication.mainLoader.child.invitePanel);
 
 		    // what game are we playing?
 		    var gameName:String = invitePanel.game.name;
@@ -263,7 +263,7 @@ package com.sdg.control.room.itemClasses
 				// if this is a use item, make sure the 'use button' has been push and is in effect
 				if (item.charges != -1)
 				{
-					var speedShoesButton:Object = Object(Application.application.mainLoader.child.speedShoesBtn.content);
+					var speedShoesButton:Object = Object(FlexGlobals.topLevelApplication.mainLoader.child.speedShoesBtn.content);
 					if (speedShoesButton.effectOn == false)
 						return;
 				}
@@ -412,7 +412,7 @@ package com.sdg.control.room.itemClasses
 				return;
 
 			// get the invite panel
-		    var invitePanel:InvitePanel = InvitePanel(Application.application.mainLoader.child.invitePanel);
+		    var invitePanel:InvitePanel = InvitePanel(FlexGlobals.topLevelApplication.mainLoader.child.invitePanel);
 		    if (invitePanel.gameSessionId != params.gameSessionId)
 		    	return;
 
@@ -430,7 +430,7 @@ package com.sdg.control.room.itemClasses
 
 		protected function startBoardGameLocal(params:Object):void
 		{
-		    var invitePanel:InvitePanel = InvitePanel(Application.application.mainLoader.child.invitePanel);
+		    var invitePanel:InvitePanel = InvitePanel(FlexGlobals.topLevelApplication.mainLoader.child.invitePanel);
 
 			var gameId:int = params.gameId;
 			switch (gameId)
@@ -459,7 +459,7 @@ package com.sdg.control.room.itemClasses
 
 		protected function onStartGameReady(event:Event):void
 		{
-		    var invitePanel:InvitePanel = InvitePanel(Application.application.mainLoader.child.invitePanel);
+		    var invitePanel:InvitePanel = InvitePanel(FlexGlobals.topLevelApplication.mainLoader.child.invitePanel);
 	    	invitePanel.removeEventListener(Event.COMPLETE, onStartGameReady);
 			startBoardGameLocal(_startGameParams);
 		}
@@ -479,7 +479,7 @@ package com.sdg.control.room.itemClasses
 				return;
 
 			// get the invite panel
-		    var invitePanel:InvitePanel = Application.application.mainLoader.child.invitePanel as InvitePanel;
+		    var invitePanel:InvitePanel = FlexGlobals.topLevelApplication.mainLoader.child.invitePanel as InvitePanel;
 		    if (!invitePanel)
 		    	return;
 
@@ -504,7 +504,7 @@ package com.sdg.control.room.itemClasses
 
 		protected function updateInvitePanelsActionHandler(params:Object):void
 		{
-		    var invitePanel:InvitePanel = Application.application.mainLoader.child.invitePanel as InvitePanel;
+		    var invitePanel:InvitePanel = FlexGlobals.topLevelApplication.mainLoader.child.invitePanel as InvitePanel;
 		    if (!invitePanel)
 		    	return;
 

@@ -44,7 +44,7 @@ package com.sdg.control.room
 	import flash.events.EventDispatcher;
 	import flash.external.ExternalInterface;
 
-	import mx.core.Application;
+	import mx.core.FlexGlobals; // Non-SDG - Application to FlexGlobals
 	import mx.events.CloseEvent;
 
 	[Bindable]
@@ -362,9 +362,9 @@ package com.sdg.control.room
 			}
 
 			// Send the stage to normal display state.
-			Application.application.stage.displayState = StageDisplayState.NORMAL;
+			FlexGlobals.topLevelApplication.stage.displayState = StageDisplayState.NORMAL;
 
-			Application.application.frameRate = .01;
+			FlexGlobals.topLevelApplication.frameRate = .01;
 			avatarId = (avatarId == 0) ? userAvatar.avatarId : avatarId;
 			_lastGamePlayedId = gameId;
 
@@ -378,7 +378,7 @@ package com.sdg.control.room
 			CairngormEventDispatcher.getInstance().dispatchEvent(new RoomNavigateEvent(RoomNavigateEvent.EXIT_ROOM));
 
 			// leave any invite panels we are in
-			var invitePanel:InvitePanel = InvitePanel(Application.application.mainLoader.child.invitePanel);
+			var invitePanel:InvitePanel = InvitePanel(FlexGlobals.topLevelApplication.mainLoader.child.invitePanel);
 			if (invitePanel.visible)
 				invitePanel.closeAndUpdatePanels();
 		}
@@ -635,7 +635,7 @@ package com.sdg.control.room
 			// if the invite panel is up - close it
 			if (userController.invitePanelOn)
 			{
-			    var invitePanel:InvitePanel = InvitePanel(Application.application.mainLoader.child.invitePanel);
+			    var invitePanel:InvitePanel = InvitePanel(FlexGlobals.topLevelApplication.mainLoader.child.invitePanel);
                 invitePanel.closeAndUpdatePanels();
 			}
 

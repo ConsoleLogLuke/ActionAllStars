@@ -13,7 +13,7 @@ package com.sdg.components.dialog
 
 	import mx.containers.Canvas;
 	import mx.controls.Image;
-	import mx.core.Application;
+	import mx.core.FlexGlobals; // Non-SDG - Application to FlexGlobals
 	import mx.managers.PopUpManager;
 
 	public class TransactionDialog extends Canvas implements ISdgDialog
@@ -93,7 +93,7 @@ package com.sdg.components.dialog
 				ExternalInterface.call("showCreditForm", jURL);
 
 				 // Send the stage to normal display state.
-                Application.application.stage.displayState = StageDisplayState.NORMAL;
+                FlexGlobals.topLevelApplication.stage.displayState = StageDisplayState.NORMAL;
 			}
 		}
 	}

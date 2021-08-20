@@ -7,7 +7,7 @@
 		<![CDATA[
 			import com.sdg.model.NotificationIcon;
 			import com.sdg.control.HudController;
-			import mx.core.Application;
+			import mx.core.FlexGlobals; // Non-SDG - Application to FlexGlobals
 			import mx.modules.ModuleLoader;
 			import mx.events.ModuleEvent;
 			import com.sdg.utils.Constants;
@@ -47,7 +47,7 @@
 					chat.visible = false;
 
 				// Listen for full screen events.
-				Application.application.stage.addEventListener(FullScreenEvent.FULL_SCREEN, onFullScreen);
+				FlexGlobals.topLevelApplication.stage.addEventListener(FullScreenEvent.FULL_SCREEN, onFullScreen);
 			}
 
 			private function sendChatMessage():void
@@ -111,7 +111,7 @@
 
 			private function onFullScreenClick():void
 			{
-				var stage:Stage = Application.application.stage;
+				var stage:Stage = FlexGlobals.topLevelApplication.stage;
 				stage.displayState = (stage.displayState == StageDisplayState.NORMAL) ? StageDisplayState.FULL_SCREEN : StageDisplayState.NORMAL;
 				stage.scaleMode = (stage.displayState == StageDisplayState.NORMAL) ? StageScaleMode.NO_BORDER : StageScaleMode.SHOW_ALL;
 				stage.align = (stage.displayState == StageDisplayState.NORMAL) ? StageAlign.TOP_LEFT : StageAlign.TOP;

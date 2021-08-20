@@ -7,7 +7,7 @@ package com.sdg.core
 
 	import modules.RoomModule; // Non-SDG
 
-	import mx.core.Application;
+	import mx.core.FlexGlobals; // Non-SDG - Application to FlexGlobals
 	import mx.managers.ISystemManager;
 
 	public class ApplicationManager
@@ -34,7 +34,7 @@ package com.sdg.core
 
 		public function get numVisiblePopUps():uint
 		{
-			var systemManager:ISystemManager = Application.application.systemManager;
+			var systemManager:ISystemManager = FlexGlobals.topLevelApplication.systemManager;
 			var systemChildren:int = systemManager.numChildren;
 
 			var numPopUps:int;

@@ -14,7 +14,7 @@ package com.sdg.components.controls
 	import flash.text.TextFormat;
 	import flash.text.TextFormatAlign;
 
-	import mx.core.Application;
+	import mx.core.FlexGlobals; // Non-SDG - Application to FlexGlobals
 	import mx.core.UIComponent;
 	import mx.events.CloseEvent;
 	import mx.managers.PopUpManager;
@@ -222,7 +222,7 @@ package com.sdg.components.controls
 			}
 			else
 			{
-				PopUpManager.addPopUp(this, parent ? parent : Sprite(Application.application), modal);
+				PopUpManager.addPopUp(this, parent ? parent : Sprite(FlexGlobals.topLevelApplication), modal);
 				if (center)
 					PopUpManager.centerPopUp(this);
 			}

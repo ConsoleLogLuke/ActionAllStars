@@ -159,6 +159,7 @@
 			font-family: GillSans;
 			fontWeight: bold;
 			src: url("fonts/GILB.TTF");
+			embedAsCFF: false;
 		}
 	</mx:Style>
 

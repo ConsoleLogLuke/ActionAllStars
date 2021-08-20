@@ -21,7 +21,7 @@ package com.sdg.utils
 	import flash.net.navigateToURL;
 	import flash.utils.Timer;
 
-	import mx.core.Application;
+	import mx.core.FlexGlobals; // Non-SDG - Application to FlexGlobals
 	import mx.core.IFlexDisplayObject;
 	import mx.core.UIComponent;
 	import mx.managers.PopUpManager;
@@ -49,9 +49,9 @@ package com.sdg.utils
             }
             else
             {
-	            dialog = PopUpManager.createPopUp(DisplayObject(Application.application), dialogClass, modal);
+	            dialog = PopUpManager.createPopUp(DisplayObject(FlexGlobals.topLevelApplication), dialogClass, modal);
 	            //swf fit seems to be resizing the root and not the application
-	            //dialog = PopUpManager.createPopUp(DisplayObject(Application.application.root), dialogClass, modal);
+	            //dialog = PopUpManager.createPopUp(DisplayObject(FlexGlobals.topLevelApplication.root), dialogClass, modal);
 	            if (center)
 	            {
 	            	MainUtil.centerPopUp(dialog);
@@ -104,7 +104,7 @@ package com.sdg.utils
         		return;
         	}
 
-        	PopUpManager.addPopUp(dialog, DisplayObject(Application.application), modal);
+        	PopUpManager.addPopUp(dialog, DisplayObject(FlexGlobals.topLevelApplication), modal);
 
             if (center)
             	PopUpManager.centerPopUp(dialog);
@@ -117,7 +117,7 @@ package com.sdg.utils
         	CairngormEventDispatcher.getInstance().dispatchEvent(new ShowOverlayEvent());
 
         	// create the modal base
-            var modalDialog:ModalDialog = ModalDialog(PopUpManager.createPopUp(DisplayObject(Application.application), ModalDialog));
+            var modalDialog:ModalDialog = ModalDialog(PopUpManager.createPopUp(DisplayObject(FlexGlobals.topLevelApplication), ModalDialog));
 
             // have the modal dialog show the child dialog
             var childDialog:IFlexDisplayObject = modalDialog.init({dialogClass:dialogClass, childParams:childParams, createdDialog:createdDialog});
@@ -137,7 +137,7 @@ package com.sdg.utils
 	         {
 
 
-	           	var dialog:IFlexDisplayObject = PopUpManager.createPopUp(DisplayObject(Application.application), dialogClass);
+	           	var dialog:IFlexDisplayObject = PopUpManager.createPopUp(DisplayObject(FlexGlobals.topLevelApplication), dialogClass);
 	            //swf fit seems to be resizing the root and not the application
 	            PopUpManager.centerPopUp(dialog);
 

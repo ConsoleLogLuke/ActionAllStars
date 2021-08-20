@@ -29,7 +29,7 @@ package com.sdg.control
 	import modules.StoreModule;
 	// Non-SDG end
 
-	import mx.core.Application;
+	import mx.core.FlexGlobals; // Non-SDG - Application to FlexGlobals
 	import mx.events.ModuleEvent;
 	import mx.modules.IModuleInfo;
 	import mx.modules.ModuleLoader;
@@ -38,7 +38,7 @@ package com.sdg.control
 	public class AASModuleLoader
 	{
 		private static var _isStoreModuleOpenArray:Array = [];
-		private static var _main:Object = Application.application;
+		private static var _main:Object = FlexGlobals.topLevelApplication;
 
 		public function AASModuleLoader()
 		{

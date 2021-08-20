@@ -7,7 +7,7 @@
 	<mx:Script>
 		<![CDATA[
 			import com.sdg.model.Avatar;
-			import mx.core.Application;
+			import mx.core.FlexGlobals; // Non-SDG - Application to FlexGlobals
 			import com.sdg.model.ModelLocator;
 			import com.sdg.utils.PreviewUtil;
 			import com.sdg.model.InventoryItem;
@@ -82,7 +82,7 @@
 
 				// fill the shoes
 				shoes.charges = 20;
-				Object(Application.application.mainLoader.child.speedShoesBtn.content).charges = shoes.charges;
+				Object(FlexGlobals.topLevelApplication.mainLoader.child.speedShoesBtn.content).charges = shoes.charges;
             	RoomManager.getInstance().userController.setItemCharges(shoes, cost);
 				avatar.currency -= cost;
 

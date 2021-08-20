@@ -21,7 +21,7 @@ package com.sdg.components.controls
 	import mx.containers.HBox;
 	import mx.containers.VBox;
 	import mx.controls.Label;
-	import mx.core.Application;
+	import mx.core.FlexGlobals; // Non-SDG - Application to FlexGlobals
 	import mx.core.UIComponent;
 	import mx.events.ListEvent;
 	import mx.managers.PopUpManager;
@@ -242,7 +242,7 @@ package com.sdg.components.controls
 			setStyle("horizontalCenter", 0);
 			setStyle("verticalCenter", 0);
 
-			PopUpManager.addPopUp(container, DisplayObject(Application.application));
+			PopUpManager.addPopUp(container, DisplayObject(FlexGlobals.topLevelApplication));
 
 			function onIconComplete():void
 			{

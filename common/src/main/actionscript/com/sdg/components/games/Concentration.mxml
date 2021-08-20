@@ -20,7 +20,7 @@
 				import com.adobe.cairngorm.control.CairngormEventDispatcher;
 				import com.sdg.utils.DisplayUtil;
 				import com.sdg.display.ChatBubble;
-				import mx.core.Application;
+				import mx.core.FlexGlobals; // Non-SDG - Application to FlexGlobals
 				import com.sdg.components.controls.AvatarPortrait;
 				import com.sdg.model.Avatar;
 				import mx.events.ResizeEvent;
@@ -68,7 +68,7 @@
 
 				public function init(params:Object):void
 				{
-					var main:Object = Application.application;
+					var main:Object = FlexGlobals.topLevelApplication;
 
 					_gameSessionId = params.gameSessionId;
 
@@ -77,7 +77,7 @@
 					_matchFoundSound = new Sound(new URLRequest("audio/matchFound.mp3"));
 
 					// turn off the main chatInup control
-					//ChatInput(Application.application.mainLoader.child.console.chatInput).listenForValidation = false;
+					//ChatInput(FlexGlobals.topLevelApplication.mainLoader.child.console.chatInput).listenForValidation = false;
 
 					// parse our params string
 					var imageUrls:String = "";
@@ -269,7 +269,7 @@
 				{
 					CairngormEventDispatcher.getInstance().removeEventListener(BoardGameActionEvent.BOARD_GAME_ACTION, onBoardGameAction);
 					chatInput.listenForValidation = false;
-					//ChatInput(Application.application.mainLoader.child.console.chatInput).listenForValidation = true;
+					//ChatInput(FlexGlobals.topLevelApplication.mainLoader.child.console.chatInput).listenForValidation = true;
 					PopUpManager.removePopUp(this);
 				}
 

@@ -1,19 +1,20 @@
 package com.sdg.components.controls
 {
 	import com.sdg.events.SelectedEvent;
-	
+
 	import flash.events.Event;
 	import flash.events.MouseEvent;
 	import flash.filters.GlowFilter;
-	
+
+	import mx.core.FlexGlobals; // Non-SDG
 	import mx.containers.Canvas;
 	import mx.controls.Image;
 	import mx.controls.Label;
 	import mx.styles.CSSStyleDeclaration;
-	import mx.styles.StyleManager;
-	
+	// import mx.styles.StyleManager; // Non-SDG
+
 	[Event(name="select", type="com.sdg.events.SelectedEvent")]
-	
+
 	[Bindable]
 	public class RegRadioButton extends Canvas
 	{
@@ -22,18 +23,18 @@ package com.sdg.components.controls
 		private var _value:Object;
 		private var _label:Label;
 		private var _icon:Image;
-		
+
 		// Set the default CSS styles for GradientCanvas
 		private static var classConstructed:Boolean = classConstruct();
-		
+
 		private static function classConstruct():Boolean
 		{
-			var style:CSSStyleDeclaration = StyleManager.getStyleDeclaration("RegRadioButton");
+			var style:CSSStyleDeclaration = FlexGlobals.topLevelApplication.styleManager.getStyleDeclaration("RegRadioButton"); // Non-SDG - stop using StyleManager
 			if (!style)
 			{
 				style = new CSSStyleDeclaration();
 			}
-			
+
 			// set the default values
 			style.defaultFactory = function():void
 				{
@@ -42,11 +43,11 @@ package com.sdg.components.controls
 					this.cornerRadius = 10;
 					this.borderColor = 0xfff000;
 				};
-			
-			StyleManager.setStyleDeclaration("RegRadioButton", style, true);
+
+			FlexGlobals.topLevelApplication.styleManager.setStyleDeclaration("RegRadioButton", style, true); // Non-SDG - stop using StyleManager
 			return true;
 		}
-		
+
 		public function RegRadioButton()
 		{
 			super();
@@ -55,23 +56,23 @@ package com.sdg.components.controls
 			this.addEventListener(MouseEvent.CLICK, onClick);
 			this.addEventListener(MouseEvent.MOUSE_OVER, onMouseOver);
 			this.addEventListener(MouseEvent.MOUSE_OUT, onMouseOut);
-			
+
 			function onClick(event:MouseEvent):void
 			{
 				selected = true;
 			}
-			
+
 			function onMouseOver(event:MouseEvent):void
 			{
 				mouseOver = true;
 			}
-			
+
 			function onMouseOut(event:MouseEvent):void
 			{
 				mouseOver = false;
 			}
 		}
-		
+
 		public function set iconSource(value:String):void
 		{
 			if (_icon == null)
@@ -83,19 +84,19 @@ package com.sdg.components.controls
 				_icon.percentWidth = 100;
 				_icon.percentHeight = 100;
 			}
-			
+
 			_icon.source = value;
 			_icon.addEventListener(Event.INIT, onInit);
-			
+
 			function onInit(event:Event):void
 			{
 				_icon.removeEventListener(Event.INIT, onInit);
 				trace("init");
-				
+
 				setIconSelection();
 			}
 		}
-		
+
 		private function setIconSelection():void
 		{
 			try
@@ -105,11 +106,11 @@ package com.sdg.components.controls
 			}
 			catch(e:Error) {}
 		}
-		
+
 		override public function set label(value:String):void
 		{
 			super.label = value;
-			
+
 			if (_label == null)
 			{
 				_label = new Label();
@@ -120,48 +121,48 @@ package com.sdg.components.controls
 				_label.setStyle("verticalCenter", 0);
 				addChild(_label);
 			}
-			
+
 			_label.text = value;
 		}
-		
+
 		public function set selected(value:Boolean):void
 		{
 			_selected = value;
-			
+
 			var filters:Array = [];
-			
+
 			if (_label)
 				_label.filters = filters;
-			
+
 			setIconSelection();
-			
+
 			if (value == true)
 			{
 				filters.push(new GlowFilter(0xffffff, .5, 10, 10, 2, 10));
 				dispatchEvent(new SelectedEvent(SelectedEvent.SELECTED));
 			}
 		}
-		
+
 		public function get selected():Boolean
 		{
 			return _selected;
 		}
-		
+
 		public function set mouseOver(value:Boolean):void
 		{
 			_mouseOver = value;
 		}
-		
+
 		public function get mouseOver():Boolean
 		{
 			return _mouseOver;
 		}
-		
+
 		public function set value(value:Object):void
 		{
 			_value = value;
 		}
-		
+
 		public function get value():Object
 		{
 			return _value;

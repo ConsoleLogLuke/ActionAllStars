@@ -17,7 +17,7 @@ package com.sdg.control.room.itemClasses
 	import flash.events.MouseEvent;
 	import flash.geom.Point;
 
-	import mx.core.Application;
+	import mx.core.FlexGlobals; // Non-SDG - Application to FlexGlobals
 
 	public class RoomEntityEditor implements IRoomItemEditor
 	{
@@ -98,8 +98,8 @@ package com.sdg.control.room.itemClasses
 			mapStartPoint.x = (relative) ? entity.x : mouseStartPoint.x;
 			mapStartPoint.y = (relative) ? entity.y : mouseStartPoint.y;
 
-			Application.application.systemManager.addEventListener(MouseEvent.MOUSE_MOVE, dragHandler);
-			Application.application.systemManager.addEventListener(MouseEvent.MOUSE_UP, dropHandler);
+			FlexGlobals.topLevelApplication.systemManager.addEventListener(MouseEvent.MOUSE_MOVE, dragHandler);
+			FlexGlobals.topLevelApplication.systemManager.addEventListener(MouseEvent.MOUSE_UP, dropHandler);
 		}
 
 		public function stopDrag():void
@@ -119,8 +119,8 @@ package com.sdg.control.room.itemClasses
 				mapStartPoint.y = entity.y;
 			}
 
-			Application.application.systemManager.removeEventListener(MouseEvent.MOUSE_MOVE, dragHandler);
-			Application.application.systemManager.removeEventListener(MouseEvent.MOUSE_UP, dropHandler);
+			FlexGlobals.topLevelApplication.systemManager.removeEventListener(MouseEvent.MOUSE_MOVE, dragHandler);
+			FlexGlobals.topLevelApplication.systemManager.removeEventListener(MouseEvent.MOUSE_UP, dropHandler);
 		}
 
 		protected function dragHandler(event:MouseEvent):void

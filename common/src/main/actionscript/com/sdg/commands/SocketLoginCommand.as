@@ -10,8 +10,8 @@ package com.sdg.commands
 	import com.sdg.model.ModelLocator;
 	import com.sdg.model.User;
 	import com.sdg.utils.ErrorCodeUtil;
-	
-	import mx.core.Application;
+
+	import mx.core.FlexGlobals; // Non-SDG - Application to FlexGlobals
 	import mx.rpc.IResponder;
 
 	public class SocketLoginCommand implements ICommand, IResponder
@@ -20,7 +20,7 @@ package com.sdg.commands
 		private var _serverId:uint;
 		private var _failOverAttempted:Boolean = false;
 		//private var _progressDialog:ProgressAlertChrome;
-		
+
 		public function execute(event:CairngormEvent):void
 		{
 			//_progressDialog = ProgressAlert.show("In Progress.  Please wait", "Entering Server", null, null, true);
@@ -30,15 +30,15 @@ package com.sdg.commands
 			//SdgAlertChrome.show("Connecting...", "Entering Server");
 			_delegate.connect();
 		}
-		
+
 		public function result(event:Object):void
 		{
 			var user:User = ModelLocator.getInstance().user;
-			
+
 			if (event.type == SocketEvent.CONNECTION)
 			{
 				var loginUserName:String = user.avatarId + "_" + new Date().getTime();
-				//var loginUserName:String = user.username; 
+				//var loginUserName:String = user.username;
 				if (user.hash != null)
 				{
 					trace("Login to socket server with hash");
@@ -57,13 +57,13 @@ package com.sdg.commands
 				//_progressDialog.close();
 			}
 		}
-		
+
 		public function fault(info:Object):void
 		{
 			var myClass:Class = Object(this).constructor;
 			var status:int = (info.hasOwnProperty("success")) ? 1 : 0;
-			
-			Application.application.closeStarsWaiting();
+
+			FlexGlobals.topLevelApplication.closeStarsWaiting();
 			if (_failOverAttempted == false)
 			{
 				//SdgAlertChrome.show("Unable to connect to server.  Not Failover", "Time Out!");
@@ -72,7 +72,7 @@ package com.sdg.commands
 			}
 			else
 			{
-				SdgAlertChrome.show("Unable to connect to server.  Please check your firewall and anti-virus settings to allow for ActionAllStars.com.", "Time Out!", null, null, 
+				SdgAlertChrome.show("Unable to connect to server.  Please check your firewall and anti-virus settings to allow for ActionAllStars.com.", "Time Out!", null, null,
 										true, true, 430, 200, ErrorCodeUtil.constructCode(myClass,status.toString()));
 				//SdgAlertChrome.show("Unable to connect to server.  Please check your firewall and anti-virus settings to allow for ActionAllStars.com.", "Time Out!");
 			}

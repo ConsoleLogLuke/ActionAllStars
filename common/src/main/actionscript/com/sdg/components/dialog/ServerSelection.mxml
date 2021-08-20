@@ -22,7 +22,7 @@
 			import mx.events.CollectionEventKind;
 			import mx.events.PropertyChangeEvent;
 			import mx.binding.utils.ChangeWatcher;
-			import mx.core.Application;
+			import mx.core.FlexGlobals; // Non-SDG - Application to FlexGlobals
 			import com.sdg.components.renderers.ServerRenderer;
 			import com.adobe.cairngorm.control.CairngormEventDispatcher;
 
@@ -86,7 +86,7 @@
 					{
 						_disableSelect = true;
 						Server.setCurrentServer(_selectedServer);
-						Application.application.socketLogin();
+						FlexGlobals.topLevelApplication.socketLogin();
 						close();
 						//MainUtil.navigateToMain(_selectedServer, null, _forceFailOver);
 					}

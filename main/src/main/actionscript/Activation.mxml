@@ -210,7 +210,7 @@
 					goToPage(--_pageNum);
 				else
 				{
-					//Application.application.loadModule("Login.swf");
+					//FlexGlobals.topLevelApplication.loadModule("Login.swf");
 					navigateToURL(new URLRequest('login.jsp'), '_self');
 				}
 			}
