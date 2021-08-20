@@ -2,5 +2,4 @@ type = 'swf'
 
 dependencies {
     merged project(':common')
-    merged project(':assets')
 }
