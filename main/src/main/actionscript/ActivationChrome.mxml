@@ -4,7 +4,7 @@
 	xmlns:renderers="com.sdg.components.renderers.*"
 	xmlns:controls="com.sdg.components.controls.*"
 	width="925" height="665" layout="absolute" initialize="init()">
-	
+
 	<mx:Script>
 		<![CDATA[
 			import com.sdg.events.ResendActivationEvent;
@@ -13,11 +13,11 @@
 			import com.sdg.display.LineStyle;
 			import com.sdg.graphics.GradientStyle;
 			import com.sdg.components.controls.store.StoreNavBar;
-		
+
 			private var _continueButton:StoreNavBar;
 			private var _backButton:StoreNavBar;
 			private var _pageNum:int = 1;
-			
+
 			private function init():void
 			{
 				// Continue button.
@@ -29,12 +29,12 @@
 				_continueButton.addEventListener(MouseEvent.CLICK, onContinueClick);
 				_continueButton.addEventListener(MouseEvent.MOUSE_OVER, onButtonMouseOver);
 				_continueButton.addEventListener(MouseEvent.MOUSE_OUT, onButtonMouseOut);
-				
+
 				buttonBar.rawChildren.addChild(_continueButton);
 				_continueButton.x = buttonBar.width - _continueButton.width;
 				_continueButton.y = buttonBar.height/2 - _continueButton.height/2;
-				
-				
+
+
 				// Back button.
 				_backButton = new StoreNavBar(150, 30);
 				_backButton.roundRectStyle = new RoundRectStyle(10, 10);
@@ -44,20 +44,20 @@
 				_backButton.addEventListener(MouseEvent.CLICK, onBackClick);
 				_backButton.addEventListener(MouseEvent.MOUSE_OVER, onButtonMouseOver);
 				_backButton.addEventListener(MouseEvent.MOUSE_OUT, onButtonMouseOut);
-				
+
 				buttonBar.rawChildren.addChild(_backButton);
 				_backButton.y = buttonBar.height/2 - _backButton.height/2;
-				
+
 				function onButtonMouseOver(event:MouseEvent):void
 				{
 					setMouseOverButton(StoreNavBar(event.currentTarget));
 				}
-				
+
 				function onButtonMouseOut(event:MouseEvent):void
 				{
 					setDefaultButton(StoreNavBar(event.currentTarget));
 				}
-				
+
 				function onContinueClick(event:MouseEvent):void
 				{
 					if (_pageNum == 2)
@@ -67,7 +67,7 @@
 					else
 						goToPage(++_pageNum);
 				}
-				
+
 				function onBackClick(event:MouseEvent):void
 				{
 					if (_pageNum == 1)
@@ -77,7 +77,7 @@
 						goToPage(--_pageNum);
 				}
 			}
-			
+
 			private function resendActivation():void
 			{
 				errorArea.removeAllChildren();
@@ -87,11 +87,11 @@
 					dispatchEvent(new ResendActivationEvent(nameInput.text.toLowerCase(), emailInput.text));
 				}
 			}
-			
+
 			private function checkName():Boolean
 			{
 				var success:Boolean = true;
-				
+
 				// check that username starts with a letter
 				if (!checkTextStartsWithLetter(nameInput.text))
 				{
@@ -110,24 +110,24 @@
 					addError("Athlete name must be at least 4 characters.");
 					success = false;
 				}
-				
+
 				return success;
 			}
-			
+
 			private function checkEmail():Boolean
 			{
 				var success:Boolean = true;
-				
+
 				// check that email is valid
 				if (!checkValidEmail(emailInput.text))
 				{
 					addError("Invalid email address.");
 					success = false;
 				}
-				
+
 				return success
 			}
-			
+
 			private function checkValidEmail(input:String):Boolean
 			{
 				// verify the email syntax with a regular expression
@@ -135,10 +135,10 @@
 				var pattern:RegExp = /^[^\x00-\x20()<>@,;:\\".[\]\x7f-\xff]+(?:\.[^\x00-\x20()<>@,;:\\".[\]\x7f-\xff]+)*\@[^\x00-\x20()<>@,;:\\".[\]\x7f-\xff]+(?:\.[^\x00-\x20()<>@,;:\\".[\]\x7f-\xff]+)+$/i;
 				if (!pattern.test(input))
 					return false;
-				
+
 				return true;
 			}
-			
+
 			private function addError(message:String):void
 			{
 				var errorText:Text = new Text();
@@ -147,69 +147,69 @@
 				errorText.setStyle("color", 0xffffff);
 				errorText.setStyle("fontWeight", "bold");
 				errorText.width = 160;
-				
+
 				errorArea.addChild(errorText);
 				errorArea.visible = true;
 			}
-			
+
 			private function setButtonLabel(button:StoreNavBar, lbl:String):void
 			{
 				button.label = lbl;
 				button.labelX = button.width/2 - button.labelWidth/2;
 			}
-			
+
 			private function checkTextLength(input:String, minLength:int):Boolean
 			{
 				return input.length >= minLength;
 			}
-			
+
 			private function checkTextCharacters(input:String):Boolean
 			{
 				var pattern:RegExp = /^[a-zA-Z0-9]+$/;
-				
+
 				if (!pattern.test(input))
 					return false;
-				
+
 				return true;
 			}
-			
+
 			private function checkTextStartsWithLetter(input:String):Boolean
 			{
 				var pattern:RegExp = /^[a-zA-Z]/;
-				
+
 				if (!pattern.test(input))
 					return false;
-				
+
 				return true;
 			}
-			
+
 			private function setDefaultButton(button:StoreNavBar):void
 			{
 				button.labelFormat = new TextFormat('EuroStyle', 22, 0x913300, true);
 				button.borderStyle = new LineStyle(0x913300, 1, 1);
-				
+
 				var gradientBoxMatrix:Matrix = new Matrix();
 				gradientBoxMatrix.createGradientBox(button.width, button.height, Math.PI/2, 0, 0);
 				button.gradient = new GradientStyle(GradientType.LINEAR, [0xf8db5c, 0xd28602], [1, 1], [0, 255], gradientBoxMatrix);
 			}
-			
+
 			private function setMouseOverButton(button:StoreNavBar):void
 			{
 				button.labelFormat = new TextFormat('EuroStyle', 22, 0xffcc33, true);
 				button.borderStyle = new LineStyle(0xff9900, 1, 1);
-				
+
 				var gradientBoxMatrix:Matrix = new Matrix();
 				gradientBoxMatrix.createGradientBox(button.width, button.height, Math.PI/2, 0, 0);
 				button.gradient = new GradientStyle(GradientType.LINEAR, [0xd18500, 0xa54c0a], [1, 1], [0, 255], gradientBoxMatrix);
 			}
-			
+
 			private function goToPage(page:int):void
 			{
 				showPage(page);
-				
+
 				inputs.visible = page == 2;
 			}
-			
+
 			private function showPage(page:int):void
 			{
 				try
@@ -236,14 +236,14 @@
 			cornerRadius: 0;
 		}
 	</mx:Style>
-	
-	<mx:Image id="swfBg" source="assets/swfs/activation.swf"/>
-	
+
+	<mx:Image id="swfBg" source="swfs/activation.swf"/>
+
 	<mx:VBox id="inputs" height="405" horizontalAlign="center" verticalGap="65" horizontalCenter="0" y="165" paddingTop="130" visible="false">
 		<mx:TextInput id="nameInput" width="408" height="50" styleName="activation" maxChars="13" fontSize="25" paddingTop="3"/>
 		<mx:TextInput id="emailInput" width="408" height="50" styleName="activation" fontSize="20" paddingTop="5"/>
 	</mx:VBox>
-	
+
 	<mx:VBox id="errorArea" backgroundColor="#A92036" backgroundAlpha=".9" visible="false" x="680" verticalCenter="45"
 		paddingLeft="5" paddingRight="5" paddingTop="5" paddingBottom="5"
 		borderColor="#820B1E" borderStyle="solid" borderThickness="2" cornerRadius="5"/>

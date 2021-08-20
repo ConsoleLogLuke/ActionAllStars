@@ -3,7 +3,7 @@ package com.sdg.game.views
 	import com.sdg.game.events.UnityNBAEvent;
 	import com.sdg.game.models.UnityNBATeam;
 	import com.sdg.net.QuickLoader;
-	
+
 	import flash.display.DisplayObject;
 	import flash.display.Sprite;
 	import flash.events.MouseEvent;
@@ -17,40 +17,40 @@ package com.sdg.game.views
 		private var _team:UnityNBATeam;
 		private var _width:Number;
 		private var _height:Number;
-		
+
 		private var _teamLogoDisplay:TeamLogoDisplay;
 		private var _teamNameText:TextField;
 		private var _textFormat:TextFormat;
-		
+
 		private var _selected:Boolean;
 		private var _isLocked:Boolean;
-		
+
 		private var _isDefeatedLogo:DisplayObject;
 		private var _lockedIcon:DisplayObject;
-		
+
 		public function OpponentTeamDisplay(team:UnityNBATeam)
 		{
 			super();
-			
+
 			_team = team;
 			mouseChildren = false;
 		}
-		
+
 		private function setSelectedHighlight():void
 		{
 			drawBox(1, .5);
 		}
-		
+
 		private function setMouseOverHighlight():void
 		{
 			drawBox(.4, .2);
 		}
-		
+
 		private function turnOffHighlight():void
 		{
 			drawBox(0, 0);
 		}
-		
+
 		private function drawBox(lineAlpha:Number, boxAlpha:Number):void
 		{
 			graphics.clear();
@@ -59,16 +59,16 @@ package com.sdg.game.views
 			graphics.drawRect(0, 0, 170, 180);
 			graphics.endFill();
 		}
-		
+
 		public function get isDefeated():Boolean
 		{
 			return _team.isDefeated;
 		}
-		
+
 		public function set isLocked(value:Boolean):void
 		{
 			_isLocked = value;
-			
+
 			if (_isLocked == true)
 			{
 				removeEventListeners();
@@ -78,51 +78,51 @@ package com.sdg.game.views
 				addEventListeners();
 			}
 		}
-		
+
 		private function addEventListeners():void
 		{
 			addEventListener(MouseEvent.CLICK, onTeamClick, false, 0, true);
 			addEventListener(MouseEvent.MOUSE_OVER, onTeamMouseOver, false, 0, true);
 			addEventListener(MouseEvent.MOUSE_OUT, onTeamMouseOut, false, 0, true);
 		}
-		
+
 		private function removeEventListeners():void
 		{
 			removeEventListener(MouseEvent.CLICK, onTeamClick);
 			removeEventListener(MouseEvent.MOUSE_OVER, onTeamMouseOver);
 			removeEventListener(MouseEvent.MOUSE_OUT, onTeamMouseOut);
 		}
-		
+
 		private function onTeamClick(event:MouseEvent):void
 		{
 			selected = true;
 		}
-		
+
 		private function onTeamMouseOver(event:MouseEvent):void
 		{
 			mouseOver = true;
 		}
-		
+
 		private function onTeamMouseOut(event:MouseEvent):void
 		{
 			mouseOver = false;
 		}
-		
+
 		public function get team():UnityNBATeam
 		{
 			return _team;
 		}
-		
+
 		private function set teamNameTextColor(value:uint):void
 		{
 			_textFormat.color = value
 			_teamNameText.setTextFormat(_textFormat);
 		}
-		
+
 		private function set mouseOver(value:Boolean):void
 		{
 			if (_selected) return;
-			
+
 			if (value == true)
 			{
 				setMouseOverHighlight();
@@ -132,13 +132,13 @@ package com.sdg.game.views
 				turnOffHighlight();
 			}
 		}
-		
+
 		public function set selected(value:Boolean):void
 		{
 			if (value == _selected) return;
-			
+
 			_selected = value;
-			
+
 			if (_selected)
 			{
 				setSelectedHighlight();
@@ -151,7 +151,7 @@ package com.sdg.game.views
 				teamNameTextColor = 0x000000;
 			}
 		}
-		
+
 		public function refresh():void
 		{
 			if (_teamLogoDisplay == null)
@@ -163,11 +163,11 @@ package com.sdg.game.views
 			{
 				_teamLogoDisplay.refresh();
 			}
-			
+
 			if (_teamNameText == null)
 			{
 				_textFormat = new TextFormat('EuroStyle', 14, 0x000000, true, null, null, null, null, TextFormatAlign.CENTER);
-				
+
 				_teamNameText = new TextField();
 				_teamNameText.defaultTextFormat = _textFormat;
 				_teamNameText.embedFonts = true;
@@ -181,27 +181,27 @@ package com.sdg.game.views
 				_teamNameText.x = 170/2 - _teamNameText.width/2;
 				_teamNameText.y = 140;
 			}
-			
+
 			var defeatedLogo:QuickLoader;
 			var lockedIcon:QuickLoader;
-			
+
 			trace(_team.isDefeated);
 			if (_team.isDefeated)
 			{
 				if (_isDefeatedLogo == null)
 				{
-					defeatedLogo = new QuickLoader("assets/swfs/nbaAllStars/Defeated.swf", onDefeatedLoaded);
+					defeatedLogo = new QuickLoader("swfs/nbaAllStars/Defeated.swf", onDefeatedLoaded);
 				}
 			}
-			
+
 			if (_isLocked == true)
 			{
 				_teamLogoDisplay.alpha = .3;
 				_teamNameText.alpha = .3;
-				
+
 				if (_lockedIcon == null)
 				{
-					lockedIcon = new QuickLoader("assets/swfs/nbaAllStars/Icon_TeamLocked.swf", onLockedLoaded);
+					lockedIcon = new QuickLoader("swfs/nbaAllStars/Icon_TeamLocked.swf", onLockedLoaded);
 				}
 			}
 			else
@@ -209,7 +209,7 @@ package com.sdg.game.views
 				_teamLogoDisplay.alpha = 1;
 				_teamNameText.alpha = 1;
 			}
-			
+
 			function onDefeatedLoaded():void
 			{
 				_isDefeatedLogo = defeatedLogo.content;
@@ -217,7 +217,7 @@ package com.sdg.game.views
 				_isDefeatedLogo.x = 5;
 				_isDefeatedLogo.y = 5;
 			}
-			
+
 			function onLockedLoaded():void
 			{
 				_lockedIcon = lockedIcon.content;
@@ -226,7 +226,7 @@ package com.sdg.game.views
 				_lockedIcon.y = 180/2 - _lockedIcon.height/2;
 			}
 		}
-		
+
 		public function destroy():void
 		{
 			removeEventListeners();

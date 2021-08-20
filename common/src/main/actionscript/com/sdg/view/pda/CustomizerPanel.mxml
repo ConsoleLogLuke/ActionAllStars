@@ -4,7 +4,7 @@
 	xmlns:pda="com.sdg.view.pda.*"
 	implements="com.sdg.view.pda.interfaces.IPDAMainPanel"
 	width="316" height="400">
-	
+
 	<mx:Script>
 		<![CDATA[
 			import com.sdg.events.InventoryListEvent;
@@ -22,49 +22,49 @@
 			import com.sdg.model.InventoryItem;
 			import com.sdg.control.PDAController;
 			import flash.net.navigateToURL;
-			
+
 			public static const AVATAR_SET:String = 'avatar set';
-			
+
 			[Bindable]
 			private var _controller:PDAController;
-			
+
 			private var _avatarCardPanel:AvatarCardPanel;
 			private var _currentInventoryTypeId:int;
 			private var _attributesTooltip:ItemAttributesTootip;
-			
+
 			private var _isInitialized:Boolean = false;
-			
+
 			public function init(controller:PDAController = null):void
 			{
 				this.controller = controller;
-				
+
 				_avatarCardPanel = _controller.avatarCardPanel;
 				var mainScreen:IPDAMainScreen = _controller.pdaView.mainScreen;
 				_avatarCardPanel.y = mainScreen.y + mainScreen.height/2 - _avatarCardPanel.height/2 - 5;
-				
+
 				itemGrid.addEventListener(ListEvent.ITEM_ROLL_OVER, onItemRollOver);
-				
+
 				refresh();
 				_isInitialized = true;
 			}
-			
+
 			public function refresh():void
 			{
 				_controller.pdaView.sidePanel = _avatarCardPanel;
 				inventoryButtons.selected = shirtButton;
 			}
-			
+
 			public function close():void
 			{
 				_avatarCardPanel.close();
 				if (this._attributesTooltip && _attributesTooltip.initialized)
 					_attributesTooltip.close();
 			}
-			
+
 			private function updatePanel(removeSuit:Boolean):void
 			{
 				removeButton.visible = false;
-				
+
 				if (_currentInventoryTypeId == PreviewUtil.SUITS)
 				{
 					if (_controller.avatar.isWearingSuits)
@@ -78,7 +78,7 @@
 					// changing items should remove the suit
 					if (removeSuit && _currentInventoryTypeId != PreviewUtil.BACKGROUNDS)
 						_controller.avatar.removeApparel(PreviewUtil.getLayerId(PreviewUtil.SUITS));
-					
+
 					if (PreviewUtil.isHeadwear(_currentInventoryTypeId) && _controller.avatar.isWearingHeadwear)
 					{
 						removeButton.visible = true;
@@ -91,60 +91,60 @@
 					}
 				}
 			}
-			
+
 			private function onRemoveButtonClick():void
 			{
 				// remove the item from the avatar object
 				_controller.avatar.removeApparel(PreviewUtil.getLayerId(_currentInventoryTypeId));
-				
+
 				// Update avatar card.
 				//_avatarCardPanel.avatarCard.updateApparel();
-				
+
 				updatePanel(true);
-				
+
 				// de-select any thumbnail item
 				itemGrid.selectedItem = null;
 			}
-			
+
 			private function onSelection():void
 			{
 				var apparel:InventoryItem = itemGrid.selectedItem as InventoryItem;
-				
+
 				if (!apparel.isGreyedOut)
 				{
 					_controller.avatar.setApparel(apparel);
-					
+
 					updatePanel(true);
 				}
 				else
 				{
 					LoggingUtil.sendClickLogging(LoggingUtil.MVP_UPSELL_VIEW_CUSTOMIZER);
-					
+
 					var alert:MVPAlert = MVPAlert.show("Sorry, Athlete. You will need to renew your MVP membership to use this item.", "Rejoin the Team!", onClose);
 					alert.addButton("Renew Membership", LoggingUtil.MVP_UPSELL_VIEW_CUSTOMIZER, 230);
 					itemGrid.selectedItem = null;
 				}
-				
+
 				function onClose(event:CloseEvent):void
 				{
 					var identifier:int = event.detail;
-					
+
 					if (identifier == LoggingUtil.MVP_UPSELL_VIEW_CUSTOMIZER)
 						MainUtil.goToMVP(identifier);
 				}
 			}
-			
+
 			private function getInventoryItems(itemTypeId:int):void
 			{
 				_controller.getInventoryType(itemTypeId);
-				
+
 				_currentInventoryTypeId = itemTypeId;
-				
+
 				updatePanel(false);
-				
+
 				emptyInventory.text = "You do not have any " + inventoryButtons.selected.labelText.toLowerCase() + ".";
 			}
-			
+
 			private function onItemRollOver(event:ListEvent):void
 			{
 				itemGrid.removeEventListener(ListEvent.ITEM_ROLL_OVER, onItemRollOver);
@@ -157,7 +157,7 @@
 					else if (_attributesTooltip.parent == null)
 					{
 						MainUtil.reShowDialog(_attributesTooltip, false);
-						
+
 						_attributesTooltip.item = inventoryItem;
 						_attributesTooltip.itemRenderer = event.itemRenderer;
 					}
@@ -173,10 +173,10 @@
 					if (this._attributesTooltip && _attributesTooltip.initialized)
 						_attributesTooltip.close();
 				}
-				
+
 				itemGrid.addEventListener(ListEvent.ITEM_ROLL_OUT, onItemRollOut);
 			}
-			
+
 			private function onItemRollOut(event:ListEvent):void
 			{
 				itemGrid.removeEventListener(ListEvent.ITEM_ROLL_OUT, onItemRollOut);
@@ -186,39 +186,39 @@
 					if (IStateClient(event.itemRenderer).currentState != "highlighted" && IStateClient(event.itemRenderer).currentState != "selected")
 						_attributesTooltip.close();
 				}
-				
+
 				itemGrid.addEventListener(ListEvent.ITEM_ROLL_OVER, onItemRollOver);
 			}
-			
+
 			private function onRollOut(event:Event):void
 			{
 				trace("rollRout");
 				if (this._attributesTooltip && _attributesTooltip.initialized)
 					_attributesTooltip.close();
 			}
-			
+
 			public function set controller(value:PDAController):void
 			{
 				_controller = value;
 			}
-			
+
 			public function get isInitialized():Boolean
 			{
 				return _isInitialized;
 			}
-			
+
 			public function get sidePanel():IPDASidePanel
 			{
 				return _avatarCardPanel;
 			}
-			
+
 			public function get panelName():String
 			{
 				return "Customizer";
 			}
 		]]>
 	</mx:Script>
-	
+
 	<mx:Canvas id="inventoryList" width="316" height="330" top="5">
 		<sdgcontrols:ItemTileList id="itemGrid" borderStyle="none"
 			disabledColor="#042a50" backgroundAlpha="0" horizontalCenter="0" dataProvider="{_controller.inventoryItems}"
@@ -228,32 +228,32 @@
 		<pda:PDAButton2 id="removeButton" width="140" height="30" cornerRadius="5" horizontalCenter="0" bottom="0"
 			visible="false" fontSize="11" color="#ffffff" fontWeight="bold" click="{onRemoveButtonClick()}"
 			mouseOverSound="{_controller.mouseOverSound}" clickSound="{_controller.clickSound}"/>
-		
+
 		<mx:Text id="emptyInventory" width="220" textAlign="center" fontSize="25" fontThickness="250"
 			horizontalCenter="0" verticalCenter="0" filters="{[new GlowFilter(0x000000, 1, 8, 8, 10)]}"
 			selectable="false" color="#4d9ccc" visible="{_controller.inventoryItems.length == 0}"/>
 	</mx:Canvas>
-	
+
 	<pda:WindowMenuControl id="inventoryButtons" width="100%" horizontalCenter="0" bottom="0" paddingTop="0" paddingBottom="2" paddingLeft="10" paddingRight="10">
-		<pda:MainMenuButton id="suitButton" width="35" height="40" iconSource="assets/swfs/pda/icon_suits.swf"
+		<pda:MainMenuButton id="suitButton" width="35" height="40" iconSource="swfs/pda/icon_suits.swf"
 			callBack="{function():void {getInventoryItems(PreviewUtil.SUITS)}}" labelText="Suits" showButton="false"
 			mouseOverSound="{_controller.mouseOverSound}" clickSound="{_controller.clickSound}"/>
-		<pda:MainMenuButton id="headwearButton" width="35" height="40" iconSource="assets/swfs/pda/icon_hat.swf"
+		<pda:MainMenuButton id="headwearButton" width="35" height="40" iconSource="swfs/pda/icon_hat.swf"
 			callBack="{function():void {getInventoryItems(PreviewUtil.HAT)}}" labelText="Headwear" showButton="false"
 			mouseOverSound="{_controller.mouseOverSound}" clickSound="{_controller.clickSound}"/>
-		<pda:MainMenuButton id="eyewearButton" width="35" height="40" iconSource="assets/swfs/pda/icon_glasses.swf"
+		<pda:MainMenuButton id="eyewearButton" width="35" height="40" iconSource="swfs/pda/icon_glasses.swf"
 			callBack="{function():void {getInventoryItems(PreviewUtil.GLASSES)}}" labelText="Eyewear" showButton="false"
 			mouseOverSound="{_controller.mouseOverSound}" clickSound="{_controller.clickSound}"/>
-		<pda:MainMenuButton id="shirtButton" width="35" height="40" iconSource="assets/swfs/pda/icon_shirt.swf"
+		<pda:MainMenuButton id="shirtButton" width="35" height="40" iconSource="swfs/pda/icon_shirt.swf"
 			callBack="{function():void {getInventoryItems(PreviewUtil.SHIRTS)}}" labelText="Shirts" showButton="false"
 			mouseOverSound="{_controller.mouseOverSound}" clickSound="{_controller.clickSound}"/>
-		<pda:MainMenuButton id="pantsButton" width="35" height="40" iconSource="assets/swfs/pda/icon_pants.swf"
+		<pda:MainMenuButton id="pantsButton" width="35" height="40" iconSource="swfs/pda/icon_pants.swf"
 			callBack="{function():void {getInventoryItems(PreviewUtil.PANTS)}}" labelText="Pants" showButton="false"
 			mouseOverSound="{_controller.mouseOverSound}" clickSound="{_controller.clickSound}"/>
-		<pda:MainMenuButton id="shoesButton" width="35" height="40" iconSource="assets/swfs/pda/icon_shoe.swf"
+		<pda:MainMenuButton id="shoesButton" width="35" height="40" iconSource="swfs/pda/icon_shoe.swf"
 			callBack="{function():void {getInventoryItems(PreviewUtil.SHOES)}}" labelText="Shoes" showButton="false"
 			mouseOverSound="{_controller.mouseOverSound}" clickSound="{_controller.clickSound}"/>
-		<pda:MainMenuButton id="backgroundButton" width="35" height="40" iconSource="assets/swfs/pda/icon_background.swf"
+		<pda:MainMenuButton id="backgroundButton" width="35" height="40" iconSource="swfs/pda/icon_background.swf"
 			callBack="{function():void {getInventoryItems(PreviewUtil.BACKGROUNDS)}}" labelText="Backgrounds" showButton="false"
 			mouseOverSound="{_controller.mouseOverSound}" clickSound="{_controller.clickSound}"/>
 	</pda:WindowMenuControl>

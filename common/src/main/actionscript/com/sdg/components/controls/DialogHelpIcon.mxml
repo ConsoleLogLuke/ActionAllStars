@@ -3,25 +3,25 @@
 	verticalScrollPolicy="off" horizontalScrollPolicy="off" initialize="init()" verticalAlign="bottom">
     <mx:Script>
     	<![CDATA[
-    	
+
     	    import com.sdg.utils.MainUtil;
     	    import com.sdg.components.dialog.helpers.MainDialogHelper;
-    	
-    		// the default dialog id is 2100   	
+
+    		// the default dialog id is 2100
     	    private var _dialogId:int = 2100;
-    	    
+
     	    // properties
-    	    
+
     	    public function get dialogId():int
     	    {
     	    	return _dialogId;
     	    }
-    	    
+
     	    public function set dialogId(value:int):void
     	    {
     	    	_dialogId = value;
     	    }
-    	    
+
     	    public function set size(value:String):void
     	    {
     	    	if (value == "small")
@@ -32,7 +32,7 @@
     	    		this.width = 32;
     	    		this.height = 32;
     	    	}
-    	    	else 
+    	    	else
     	    	{
     	    		// the large icon size (default)
     	    		helpIcon.width = 39;
@@ -41,21 +41,21 @@
     	    		this.height = 43;
     	    	}
     	    }
-    	    
+
     	    // methods
-    	
+
     		private function init():void
     		{
-    			helpIcon.addEventListener(MouseEvent.CLICK, onHelpIconClick);    			
+    			helpIcon.addEventListener(MouseEvent.CLICK, onHelpIconClick);
     			//setButtonState(true);
     		}
-    		
+
     		private function onHelpIconClick(event:MouseEvent):void
     		{
     			trace("helpIcon clicked - dialogId is " + dialogId);
     			MainDialogHelper.showDialog({dialogId:_dialogId});
     		}
-    		
+
     		private function setButtonState(animate:Boolean):void
 			{
 				try
@@ -71,5 +71,5 @@
 
     	]]>
     </mx:Script>
-	<mx:Image id="helpIcon" buttonMode="true" complete="setButtonState(true)" source="assets/swfs/helpModalButton_MC.swf"/>
+	<mx:Image id="helpIcon" buttonMode="true" complete="setButtonState(true)" source="swfs/helpModalButton_MC.swf"/>
 </mx:Box>

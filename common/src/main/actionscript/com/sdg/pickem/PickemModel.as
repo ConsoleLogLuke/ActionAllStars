@@ -21,7 +21,7 @@ package com.sdg.pickem
 	import com.sdg.trivia.TriviaQuestionCollection;
 	import com.sdg.ui.UIPickemInGameScorecard;
 	import com.sdg.view.IRoomView;
-	
+
 	import flash.display.BlendMode;
 	import flash.display.DisplayObject;
 	import flash.display.Loader;
@@ -69,12 +69,12 @@ package com.sdg.pickem
 		private var _queScreen:DisplayObject;
 		private var _fifthPickResolution:FifthPickResolutionPanel;
 		private var _questionsSinceLastStart:int;
-		
+
 		public function PickemModel()
 		{
 			super();
 		}
-		
+
 		public function init(data:Object):Boolean
 		{
 			// Pull values from Object.
@@ -89,37 +89,37 @@ package com.sdg.pickem
 				// Could not get necesary values from data object.
 				return false;
 			}
-			
+
 			// Validate necesary values.
 			if (_backgroundScreen == null) return false;
-			
+
 			// Setup default values.
 			_defaultAnswerColor1 = 0xE9252D;
 			_defaultAnswerColor2 = 0x1D51D7;
 			_emoteSize = 80;
 			_currentQuestionIndex = -1;
 			_floorTilesEnabled = true;
-			_countdownSoundUrl = 'assets/audio/countdown_beep.mp3';
-			_voteRegisteredSoundUrl = 'assets/audio/camera_click.mp3';
-			_pollOverSoundUrl = 'assets/audio/organ_burst.mp3';
-			_resultsInSoundUrl = 'assets/audio/bring.mp3';
-			_backgroundLoopSoundUrl = 'assets/audio/sport_psychic_loop.mp3';
+			_countdownSoundUrl = 'audio/countdown_beep.mp3';
+			_voteRegisteredSoundUrl = 'audio/camera_click.mp3';
+			_pollOverSoundUrl = 'audio/organ_burst.mp3';
+			_resultsInSoundUrl = 'audio/bring.mp3';
+			_backgroundLoopSoundUrl = 'audio/sport_psychic_loop.mp3';
 			_userPicks = new UserPickCollection();
-			_tutorialUrl = 'assets/swfs/sport_psychic_tutorial.swf';
+			_tutorialUrl = 'swfs/sport_psychic_tutorial.swf';
 			_firstTimePlayed = false;
 			_answerHasBeenProcessed = false;
-			_queScreenUrl = 'assets/swfs/sport_psychic_que_screen.swf';
+			_queScreenUrl = 'swfs/sport_psychic_que_screen.swf';
 			_questionsSinceLastStart = 0;
-			
+
 			// Create an animation manager.
 			_animationManager = new AnimationManager();
-			
+
 			// Create screen view.
 			_screenView = new PickemScreenView(this);
 			_screenView.width = _backgroundScreen.width;
 			_screenView.height = _backgroundScreen.height;
 			_backgroundScreen.addChild(DisplayObject(_screenView));
-			
+
 			// Create floor triangles.
 			_floorTriangle1 = new FloorTriangle(422, 219, 0xff0000, AlignType.LEFT);
 			_floorTriangle1.x = 13;
@@ -133,24 +133,24 @@ package com.sdg.pickem
 			_floorTriangle2.mouseEnabled = false;
 			_floorTriangle2.blendMode = BlendMode.OVERLAY;
 			_backgroundDisplaybject.addChild(_floorTriangle2);
-			
+
 			// Create the pickem scorecard.
 			_pickCard = new UIPickemInGameScorecard(this);
 			renderPickCard();
-			
+
 			return true;
 		}
-		
+
 		////////////////////
 		// INSTANCE METHODS
 		////////////////////
-		
+
 		public function destroy():void
 		{
 			_screenView.destroy();
 			_pickCard.destroy();
 		}
-		
+
 		private function toggleTriviaTiles(value:Boolean):void
 		{
 			// enable/disable trivia tile sets according to boolean value
@@ -163,7 +163,7 @@ package com.sdg.pickem
 			// get all tiles of the "redTrivia" set
 			triviaTiles = floorTileMap.getTileSet('redTrivia');
 			toggleEventTiles(triviaTiles);
-			
+
 			function toggleEventTiles(tiles:Array):void
 			{
 				// takes an array of tiles and disables events for all of them
@@ -180,7 +180,7 @@ package com.sdg.pickem
 				}
 			}
 		}
-		
+
 		private function getOpenTileCoordinates():Point
 		{
 			// Return coordinates for a non occupied / non pick tile.
@@ -194,11 +194,11 @@ package com.sdg.pickem
 			for (i; i < len; i++)
 			{
 				tileCoordinate = openTileCoordinates.getAt(i);
-				
+
 				// Get the tile at these coordinates.
 				tile = floorTileMap.getTile(tileCoordinate.x, tileCoordinate.y);
 				if (tile == null) continue;
-				
+
 				// Make sure it is not a pick tile.
 				if (tile.tileSetID != 'blueTrivia' && tile.tileSetID != 'redTrivia')
 				{
@@ -206,15 +206,15 @@ package com.sdg.pickem
 					nonPickOpenCoordinates.push(tileCoordinate);
 				}
 			}
-			
+
 			if (nonPickOpenCoordinates.length > 0)
 			{
 				return nonPickOpenCoordinates.getAt(0);
 			}
-			
+
 			return null;
 		}
-		
+
 		public function sendUserToOpenTile():Boolean
 		{
 			var openTileCoordinates:Point = getOpenTileCoordinates();
@@ -225,26 +225,26 @@ package com.sdg.pickem
 			}
 			var userAvatarController:AvatarController = RoomManager.getInstance().userController;
 			userAvatarController.walk(openTileCoordinates.x, openTileCoordinates.y);
-			
+
 			return true;
 		}
-		
+
 		public function getCurrentPickemInstance():PickemInstance
 		{
 			// Create local var for pickem data.
 			var pData:PickemData = pickemData;
 			if (pData == null) return null;
-			
+
 			// Determine pickem cycle length.
 			var questionResultDuration:Number = PickemEvent.getQuestionDuration();
 			var cycleDuration:Number = questionResultDuration * pData.questions.length;
-			
+
 			// Pickem runs continuously so determine where it should be right now based on the current time.
 			var elapsedSinceStart:int = Math.floor(date.time - pData.startTime.time);
 			var elapsedCurrentCycle:int = Math.floor(elapsedSinceStart % cycleDuration);
 			var elapsedCurrentQuestion:int = Math.floor(elapsedCurrentCycle % questionResultDuration);
 			var questionIndex:int = Math.floor(elapsedCurrentCycle / questionResultDuration);
-			
+
 			// Determine proper view state and countdown value.
 			var state:String;
 			var countdown:int;
@@ -265,11 +265,11 @@ package com.sdg.pickem
 				state = PickemViewState.WORLD_RESULT_STATE;
 				countdown = Math.floor((questionResultDuration - elapsedCurrentQuestion) / 1000);
 			}
-			
+
 			// Return a PickemInstance object.
 			return new PickemInstance(elapsedSinceStart, elapsedCurrentCycle, elapsedCurrentQuestion, questionIndex, state, countdown);
 		}
-		
+
 		public function getUserAnswer():Number
 		{
 			// Returns -1 if the user has not given a valid answer.
@@ -277,7 +277,7 @@ package com.sdg.pickem
 			// 1 for answer 2.
 			var answer:Number;
 			var tileSetID:String = getUserCurrentTileID();
-			
+
 			switch (tileSetID)
 			{
 				case 'redTrivia':
@@ -290,26 +290,26 @@ package com.sdg.pickem
 					answer = -1;
 					break;
 			}
-			
+
 			return answer;
 		}
-		
+
 		private function getUserCurrentTileID():String
 		{
 			// Return the tile set ID for the tile that the user is on.
-			
+
 			// Get the user's current map corrdinates.
 			var row:Number = userEntity.row;
 			var col:Number = userEntity.col;
-			
+
 			// Get the map tile that the user occupies.
 			var mapLayer:TileMap = RoomManager.getInstance().currentRoom.getMapLayer(RoomLayerType.FLOOR);
 			var tile:IOccupancyTile = mapLayer.getTile(col, row);
 			var tileSetID:String = tile.tileSetID;
-			
+
 			return tileSetID;
 		}
-		
+
 		public function addPick(pick:UserPick):void
 		{
 			// Determine if there is another pick with the same event ID and question ID.
@@ -332,21 +332,21 @@ package com.sdg.pickem
 					{
 						// Replace the compare pick with the new pick.
 						_userPicks.setAt(pick, i);
-						
+
 						// Dispatch new pick event.
 						dispatchEvent(pickEvent)
 					}
 					return;
 				}
 			}
-			
+
 			// If we get to this line, simply append the new pick to the collection.
 			_userPicks.push(pick);
-			
+
 			// Dispatch new pick event.
 			dispatchEvent(pickEvent)
 		}
-		
+
 		public function parseUserPicksXML(userPicksXML:XML, pickemEventId:int):void
 		{
 			trace('PickemModel: Parsing user picks XML.');
@@ -363,7 +363,7 @@ package com.sdg.pickem
 			{
 				questionXML = userPicksXML.questions.question[i];
 				if (questionXML == null) continue;
-				
+
 				// Validate data.
 				if (questionXML.@eventId == null) continue;
 				if (questionXML.@id == null) continue;
@@ -371,17 +371,17 @@ package com.sdg.pickem
 				if (questionXML.answer[1].@answerId == null) continue;
 				if (questionXML.answer[0].@selected == null) continue;
 				if (questionXML.answer[1].@selected == null) continue;
-				
+
 				eventId = questionXML.@eventId;
 				if (eventId != pickemEventId) continue;
-				
+
 				questionId = questionXML.@id;
 				pickId = -1; // Default to -1.
 				if (questionXML.answer[0].@selected == 1) pickId = questionXML.answer[0].@answerId;
 				if (questionXML.answer[1].@selected == 1) pickId = questionXML.answer[1].@answerId;
-				
+
 				trace('PickemModel: Creating UserPick for questionId: ' + questionId + ', pickId: ' + pickId + '.');
-				
+
 				// Create a UserPick object.
 				var question:Question = pickemData.getQuestion(questionId);
 				if (question == null)
@@ -395,12 +395,12 @@ package com.sdg.pickem
 					trace('PickemModel: Could not get answer id: ' + pickId + ' from question id: ' + questionId + ' from PickemData.');
 					continue;
 				}
-				
+
 				userPick = new UserPick(eventId, questionId, answer);
 				addPick(userPick);
 			}
 		}
-		
+
 		public function processUserAnswer():void
 		{
 			// Create local for question index.
@@ -417,7 +417,7 @@ package com.sdg.pickem
 			var userAnswerId:int;
 			var questionId:int = currentQuestion.id;
 			var potentialPicksComplete:Boolean = false;
-			
+
 			if (userAnswer != -1)
 			{
 				// The user has given an answer.
@@ -429,7 +429,7 @@ package com.sdg.pickem
 				var emoteName:String = answer.imageUrl;
 				var defaultEmoteName:String = 'http://' + Environment.getApplicationDomain();
 				defaultEmoteName += (userAnswer == 0) ? FallbackImageURL.RED_AAS : FallbackImageURL.BLUE_AAS;
-				
+
 				// Show an emote for the answer.
 				if (answerImageUrl.length > 0)
 				{
@@ -440,25 +440,25 @@ package com.sdg.pickem
 				{
 					userAvCntrl.emote(defaultEmoteName, null, false, _emoteSize, _emoteSize);
 				}
-				
+
 				// Add user pick to collection.
 				if (userPicks.length == 4) potentialPicksComplete = true;
 				var newPick:UserPick = new UserPick(int(pickemData.id), questionId, pickemData.getQuestion(questionId).getAnswer(userAnswerId));
 				addPick(newPick);
 			}
-			
+
 			if (potentialPicksComplete == true && userPicks.length == 5)
 			{
 				// The user has just complteted their 5th pick.
 				dispatchEvent(new PickemPickEvent(PickemPickEvent.FINAL_PICK));
-				
+
 				// If this is the first time that the user has played pickem,
 				// Show a pop up for the turbin gifting.
 				if (firstTimePlayed == true)
 				{
 					dispatchEvent(new PickemPickEvent(PickemPickEvent.FIRST_TIME_GAME_COMPLETE));
 				}
-				
+
 				// Reset questions passed counter.
 				_questionsSinceLastStart = 0;
 			}
@@ -466,19 +466,19 @@ package com.sdg.pickem
 			{
 				// Increment a counter for questions passed.
 				_questionsSinceLastStart++;
-				
+
 				if (_questionsSinceLastStart > 4 && userPicks.length > 4)
 				{
 					// Reset questions passed counter.
 					_questionsSinceLastStart = 0;
-				
+
 					// The user has just complteted their 5th pick.
 					dispatchEvent(new PickemPickEvent(PickemPickEvent.FINAL_PICK));
 				}
 			}
-			
+
 			trace('PICKS SINCE START: ' + _questionsSinceLastStart);
-			
+
 			// Pass the answer to the server.
 			var answerParams:Object = new Object();
 			answerParams.eventId = pickemData.id;
@@ -488,22 +488,22 @@ package com.sdg.pickem
 			answerParams.isLastAnswer = ((_currentQuestionIndex + 1) < questions.length) ? 0 : 1;
 			// Commit the answer.
 			RoomManager.getInstance().sendItemAction(userAvatar, 'RwsUserAnswer', answerParams);
-			
+
 			// Dispatch a vote registred event.
 			dispatchEvent(new PickemPickEvent(PickemPickEvent.VOTE_REGISTERED));
 		}
-		
+
 		public function populateScoreCard():void
 		{
 			// Use user pick data to populate the pickem score card.
 			trace('\n\nPickemModel: Populating pickem score card.');
-			
+
 			if (pickemData == null)
 			{
 				trace('PickemModel: We don\'t have Pickem data.');
 				return;
 			}
-			
+
 			// Load pick images.
 			var i:int = 0;
 			var len:int = userPicks.length;
@@ -516,7 +516,7 @@ package com.sdg.pickem
 				var pick:UserPick = userPicks.getAt(i);
 				// Validate pick.
 				if (pick == null) continue;
-				
+
 				// Create local for picked answer.
 				pickedAnswer = pick.pickedAnswer;
 				// Validate picked answer.
@@ -526,7 +526,7 @@ package com.sdg.pickem
 					trace('PickemModel: Could not determine picked answer.');
 					continue;
 				}
-				
+
 				var pickId:int = pickedAnswer.id;
 				if (pickId < 0)
 				{
@@ -534,9 +534,9 @@ package com.sdg.pickem
 					trace('PickemModel: Invalid pick id: ' + pickId + '.');
 					continue;
 				}
-				
-				
-				
+
+
+
 				// Validate answer image url.
 				if (pickedAnswer.imageUrl == null || pickedAnswer.imageUrl == '')
 				{
@@ -544,7 +544,7 @@ package com.sdg.pickem
 					trace('PickemModel: Answer does not have an image URL.');
 					continue;
 				}
-				
+
 				var url:String = 'http://' + Environment.getApplicationDomain() + pickedAnswer.imageUrl;
 				var request:URLRequest = new URLRequest(url);
 				triedFallback[i] = false;
@@ -554,7 +554,7 @@ package com.sdg.pickem
 				loadOrder.push(loader.contentLoaderInfo);
 				loader.load(request);
 			}
-			
+
 			function onComplete(e:Event):void
 			{
 				// Image load complete.
@@ -574,10 +574,10 @@ package com.sdg.pickem
 				}
 				var pickId:int = pickedAnswer.id;
 				//trace('PickemBackgroundController: Image loaded for pick id: ' + pickId + '.');
-				
+
 				// Remove listeners.
 				removeListeners(loaderInfo);
-				
+
 				// Create pick box.
 				var pickBox:InGamePickBox = new InGamePickBox();
 				//pickBox.pickName = pickedAnswer.text;
@@ -587,14 +587,14 @@ package com.sdg.pickem
 				image.width *= scale;
 				image.height *= scale;
 				pickBox.image = image;
-				
+
 				// Add pick box to the pick card.
 				_pickCard.addPickBoxAt(pickBox, questionIndex);
-				
+
 				// Render pick card.
 				renderPickCard();
 			}
-			
+
 			function onError(e:IOErrorEvent):void
 			{
 				// Error loading image.
@@ -603,10 +603,10 @@ package com.sdg.pickem
 				var index:int = loadOrder.indexOf(loaderInfo);
 				var pick:UserPick = userPicks.getAt(index);
 				trace('PickemModel: Error loading image for answer id: ' + pickId + '.');
-				
+
 				// Remove listeners.
 				removeListeners(loaderInfo);
-				
+
 				if (triedFallback[index] != true)
 				{
 					triedFallback[index] = true;
@@ -636,91 +636,91 @@ package com.sdg.pickem
 					// Use some local default.
 				}
 			}
-			
+
 			function removeListeners(loaderInfo:LoaderInfo):void
 			{
 				loaderInfo.removeEventListener(Event.COMPLETE, onComplete);
 				loaderInfo.removeEventListener(IOErrorEvent.IO_ERROR, onError);
 			}
 		}
-		
+
 		private function renderPickCard():void
 		{
 			_pickCard.x = 925 - _pickCard.width;
 			_pickCard.y = 665 - _pickCard.height - 80;
 		}
-		
+
 		public function goToRoom(room:String):void
 		{
 			var userAvatarController:AvatarController = RoomManager.getInstance().userController;
 			userAvatarController.goToRoom(room);
 		}
-		
+
 		public function playSound(sound:Sound):void
 		{
 			var channel:SoundChannel;
 			if (sound != null) channel = sound.play();
 		}
-		
+
 		////////////////////
 		// GET/SET METHODS
 		////////////////////
-		
+
 		public function get backgroundScreen():Sprite
 		{
 			return _backgroundScreen;
 		}
-		
+
 		public function get screenView():IPickemScreenView
 		{
 			return _screenView;
 		}
-		
+
 		public function get answerImages():Array
 		{
 			return null;
 		}
-		
+
 		public function get animationManager():AnimationManager
 		{
 			return _animationManager;
 		}
-		
+
 		public function get floorTriangle1():FloorTriangle
 		{
 			return _floorTriangle1;
 		}
-		
+
 		public function get floorTriangle2():FloorTriangle
 		{
 			return _floorTriangle2;
 		}
-		
+
 		public function get pickCard():UIPickemInGameScorecard
 		{
 			return _pickCard;
 		}
-		
+
 		public function get userPicks():UserPickCollection
 		{
 			return _userPicks;
 		}
-		
+
 		public function get emoteSize():Number
 		{
 			return _emoteSize;
 		}
-		
+
 		public function get defaultAnswerColor1():uint
 		{
 			return _defaultAnswerColor1;
 		}
-		
+
 		public function get defaultAnswerColor2():uint
 		{
 			return _defaultAnswerColor2;
 		}
-		
+
 		public function get countdownSound():Sound
 		{
 			return _countdownSound;
@@ -730,7 +730,7 @@ package com.sdg.pickem
 			if (value == _countdownSound) return;
 			_countdownSound = value;
 		}
-		
+
 		public function get pollOverSound():Sound
 		{
 			return _pollOverSound;
@@ -740,7 +740,7 @@ package com.sdg.pickem
 			if (value == _pollOverSound) return;
 			_pollOverSound = value;
 		}
-		
+
 		public function get voteRegisteredSound():Sound
 		{
 			return _voteRegisteredSound;
@@ -750,7 +750,7 @@ package com.sdg.pickem
 			if (value == _voteRegisteredSound) return;
 			_voteRegisteredSound = value;
 		}
-		
+
 		public function get resultsInSound():Sound
 		{
 			return _resultsInSound;
@@ -760,7 +760,7 @@ package com.sdg.pickem
 			if (value == _resultsInSound) return;
 			_resultsInSound = value;
 		}
-		
+
 		public function get backgroundLoopSound():Sound
 		{
 			return _backgroundLoopSound;
@@ -770,22 +770,22 @@ package com.sdg.pickem
 			if (value == _backgroundLoopSound) return;
 			_backgroundLoopSound = value;
 		}
-		
+
 		public function get roomContainer():IRoomView
 		{
 			return null;
 		}
-		
+
 		public function get background():Object
 		{
 			return null;
 		}
-		
+
 		public function get backgroundDisplayObject():Sprite
 		{
 			return null;
 		}
-		
+
 		public function get currentQuestionIndex():int
 		{
 			return _currentQuestionIndex;
@@ -797,17 +797,17 @@ package com.sdg.pickem
 			_answerHasBeenProcessed = false;
 			_pickCard.questionIndex = _currentQuestionIndex;
 		}
-		
+
 		public function get userEntity():RoomEntity
 		{
 			return RoomManager.getInstance().userController.entity;
 		}
-		
+
 		public function get userTileSetId():String
 		{
 			return null;
 		}
-		
+
 		public function get floorTilesEnabled():Boolean
 		{
 			return _floorTilesEnabled;
@@ -818,57 +818,57 @@ package com.sdg.pickem
 			_floorTilesEnabled = value;
 			toggleTriviaTiles(_floorTilesEnabled);
 		}
-		
+
 		public function get socketClient():SocketClient
 		{
 			return SocketClient.getInstance();
 		}
-		
+
 		public function get countdownSoundUrl():String
 		{
 			return _countdownSoundUrl;
 		}
-		
+
 		public function get voteRegisteredSoundUrl():String
 		{
 			return _voteRegisteredSoundUrl;
 		}
-		
+
 		public function get pollOverSoundUrl():String
 		{
 			return _pollOverSoundUrl;
 		}
-		
+
 		public function get resultsInSoundUrl():String
 		{
 			return _resultsInSoundUrl;
 		}
-		
+
 		public function get backgroundLoopSoundUrl():String
 		{
 			return _backgroundLoopSoundUrl;
 		}
-		
+
 		public function get pickemData():PickemData
 		{
 			return AASEventManager.getInstance().pickemData;
 		}
-		
+
 		public function get userAvatar():Avatar
 		{
 			return ModelLocator.getInstance().avatar;
 		}
-		
+
 		public function get date():Date
 		{
 			return ModelLocator.getInstance().serverDate;
 		}
-		
+
 		public function get tutorialUrl():String
 		{
 			return _tutorialUrl;
 		}
-		
+
 		public function get firstTimePlayed():Boolean
 		{
 			return _firstTimePlayed;
@@ -877,32 +877,32 @@ package com.sdg.pickem
 		{
 			_firstTimePlayed = value;
 		}
-		
+
 		public function get gameCompleteImageUrl():String
 		{
-			return 'assets/swfs/sport_psychic_hat_giveaway.swf';
+			return 'swfs/sport_psychic_hat_giveaway.swf';
 		}
-		
+
 		/*public function get consoleEventTarget():EventDispatcher
 		{
 			//return ModelLocator.getInstance().consoleEventTarget;
 		}*/
-		
+
 		public function get questionDuration():int
 		{
 			return PickemEvent.getQuestionDuration();
 		}
-		
+
 		public function get answerHasBeenProcessed():Boolean
 		{
 			return _answerHasBeenProcessed;
 		}
-		
+
 		public function get queScreenUrl():String
 		{
 			return _queScreenUrl;
 		}
-		
+
 		public function get queScreen():DisplayObject
 		{
 			return _queScreen;
@@ -911,12 +911,12 @@ package com.sdg.pickem
 		{
 			_queScreen = value;
 		}
-		
+
 		public function get fifthPickResolution():FifthPickResolutionPanel
 		{
 			if (_fifthPickResolution == null) _fifthPickResolution = new FifthPickResolutionPanel(_backgroundScreen.width, _backgroundScreen.height);
 			return _fifthPickResolution;
 		}
-		
+
 	}
 }

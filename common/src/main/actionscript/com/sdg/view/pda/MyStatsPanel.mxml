@@ -8,69 +8,69 @@
 			import com.sdg.utils.GameUtil;
 			import com.sdg.control.PDAController;
 			import com.sdg.model.Avatar;
-			
+
 			private var _controller:PDAController;
 			private var _isInitialized:Boolean = false;
 			private var _isMeterInitialized:Boolean = false;
 			private var _avatarCardPanel:AvatarCardPanel;
-			
+
 			public function init(controller:PDAController = null):void
 			{
 				this.controller = controller;
 				_avatarCardPanel = _controller.avatarCardPanel;
-				
+
 				var mainScreen:IPDAMainScreen = _controller.pdaView.mainScreen;
 				_avatarCardPanel.y = mainScreen.y + mainScreen.height/2 - _avatarCardPanel.height/2;
-				
+
 				if (_isMeterInitialized)
 					refresh();
-				
+
 				_isInitialized = true;
 			}
-			
+
 			public function refresh():void
 			{
 				var avatar:Avatar = _controller.avatar;
 				var starMeterContent:Object = Object(starMeter.content);
 				starMeterContent.setLevel(avatar.level, avatar.currency);
 				starMeterContent.setPercentage(GameUtil.percentageToNextLevel(avatar.level, avatar.points));
-				
+
 				_controller.pdaView.sidePanel = _avatarCardPanel;
 			}
-			
+
 			private function onMeterInit(event:Event):void
 			{
 				_isMeterInitialized = true;
-				
+
 				if (_controller == null) return;
 				refresh();
 			}
-			
+
 			public function close():void
 			{
 				_avatarCardPanel.close();
 			}
-			
+
 			public function set controller(value:PDAController):void
 			{
 				_controller = value;
 			}
-			
+
 			public function get isInitialized():Boolean
 			{
 				return _isInitialized;
 			}
-			
+
 			public function get sidePanel():IPDASidePanel
 			{
 				return null;
 			}
-			
+
 			public function get panelName():String
 			{
 				return "My Stats";
 			}
 		]]>
 	</mx:Script>
-	<mx:Image id="starMeter" source="assets/swfs/pda/starMeter.swf" horizontalCenter="0" init="{onMeterInit(event)}"/>
+	<mx:Image id="starMeter" source="swfs/pda/starMeter.swf" horizontalCenter="0" init="{onMeterInit(event)}"/>
 </mx:Canvas>

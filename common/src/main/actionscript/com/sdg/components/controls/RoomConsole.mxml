@@ -176,11 +176,11 @@
 		]]>
 	</mx:Script>
 	<mx:Spacer width="35" includeInLayout="{!Constants.PDA_ENABLED}"/>
-	<mx:Image id="buttonNews" source="assets/swfs/news.swf" click="MainDialogHelper.showDialog({news:true})" toolTip="Action Sports News"/>
-	<mx:Image id="buttonHome" source="assets/swfs/home.swf" click="goToHome()" toolTip="Go to your home turf"/>
-	<mx:Image id="buttonBuddy" source="assets/swfs/buddy.swf" click="showBuddyList()" toolTip="Show your buddy list"/>
+	<mx:Image id="buttonNews" source="swfs/news.swf" click="MainDialogHelper.showDialog({news:true})" toolTip="Action Sports News"/>
+	<mx:Image id="buttonHome" source="swfs/home.swf" click="goToHome()" toolTip="Go to your home turf"/>
+	<mx:Image id="buttonBuddy" source="swfs/buddy.swf" click="showBuddyList()" toolTip="Show your buddy list"/>
 
-	<mx:Image id="buttonChat" source="assets/swfs/chat.swf" click="showScriptedChat()" toolTip="Send a composed chat message"/>
+	<mx:Image id="buttonChat" source="swfs/chat.swf" click="showScriptedChat()" toolTip="Send a composed chat message"/>
 
 	<mx:Canvas id="chat" borderStyle="none" backgroundAlpha="0">
 		<controls:ChatInput id="chatInput" width="400" paddingRight="40" enter="sendChatMessage()"/>
@@ -188,14 +188,14 @@
 			click="sendChatMessage()" icon="@Embed(source='images/roomConsole/chatBarIcon.png')" toolTip="Send Message"/>
 	</mx:Canvas>
 
-	<mx:Image id="buttonEmote" source="assets/swfs/emotion.swf" click="showEmoteDialog()" toolTip="Send an emote to the room"/>
-	<mx:Image id="buttonAction" source="assets/swfs/action.swf" click="showActionsDialog()" toolTip="Have your avatar do an action"/>
-	<!--<mx:Image id="buttonTradingCard" source="assets/swfs/card.swf" click="showCardAlbum()" toolTip="Trading Card Album"
+	<mx:Image id="buttonEmote" source="swfs/emotion.swf" click="showEmoteDialog()" toolTip="Send an emote to the room"/>
+	<mx:Image id="buttonAction" source="swfs/action.swf" click="showActionsDialog()" toolTip="Have your avatar do an action"/>
+	<!--<mx:Image id="buttonTradingCard" source="swfs/card.swf" click="showCardAlbum()" toolTip="Trading Card Album"
 		visible="{!Constants.PDA_ENABLED}" includeInLayout="{buttonTradingCard.visible}"/>-->
-	<mx:Image id="buttonModerator" source="assets/swfs/report.swf" click="reportToModerator()" toolTip="Report this scene to the moderator"/>
+	<mx:Image id="buttonModerator" source="swfs/report.swf" click="reportToModerator()" toolTip="Report this scene to the moderator"/>
 	<mx:VBox verticalGap="0" paddingTop="0" paddingBottom="0" paddingLeft="0" paddingRight="0">
-		<mx:Image id="buttonMute" source="assets/swfs/mute.swf" click="muteMessage()" toolTip="Turn sounds on and off" width="18" height="18"/>
-		<!--<mx:Image id="buttonHelp" source="assets/swfs/tutorial.swf" click="onHelpClick()" toolTip="Room Tutorial" width="18" height="18"/>-->
-		<mx:Image id="buttonFullScreen" source="assets/swfs/full_screen_button.swf" click="onFullScreenClick()" toolTip="Full Screen" width="18" height="18"/>
+		<mx:Image id="buttonMute" source="swfs/mute.swf" click="muteMessage()" toolTip="Turn sounds on and off" width="18" height="18"/>
+		<!--<mx:Image id="buttonHelp" source="swfs/tutorial.swf" click="onHelpClick()" toolTip="Room Tutorial" width="18" height="18"/>-->
+		<mx:Image id="buttonFullScreen" source="swfs/full_screen_button.swf" click="onFullScreenClick()" toolTip="Full Screen" width="18" height="18"/>
 	</mx:VBox>
 </controls:BoxContainer>

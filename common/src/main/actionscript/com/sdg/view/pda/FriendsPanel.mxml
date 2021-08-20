@@ -266,13 +266,13 @@
 
 	<mx:HBox verticalAlign="middle" horizontalGap="4" x="4" y="374">
 		<mx:HBox horizontalGap="2">
-			<mx:Image id="sortAlpha" source="assets/swfs/pda/friendsList/friends_sortIcons_alphabetical.swf"
+			<mx:Image id="sortAlpha" source="swfs/pda/friendsList/friends_sortIcons_alphabetical.swf"
 				click="{sortByName()}" buttonMode="true" mouseOver="onMouseOver(event)" mouseOut="onMouseOut(event)"/>
-			<mx:Image id="sortLevel" source="assets/swfs/pda/friendsList/friends_sortIcons_star.swf"
+			<mx:Image id="sortLevel" source="swfs/pda/friendsList/friends_sortIcons_star.swf"
 				click="{sortByLevel()}" buttonMode="true" mouseOver="onMouseOver(event)" mouseOut="onMouseOut(event)"/>
-			<mx:Image id="sortGuest" source="assets/swfs/pda/friendsList/friends_sortIcons_guest.swf"
+			<mx:Image id="sortGuest" source="swfs/pda/friendsList/friends_sortIcons_guest.swf"
 				click="{sortByGuest()}" buttonMode="true" mouseOver="onMouseOver(event)" mouseOut="onMouseOut(event)"/>
-			<mx:Image id="sortTheme" source="assets/swfs/pda/friendsList/friends_sortIcons_party.swf"
+			<mx:Image id="sortTheme" source="swfs/pda/friendsList/friends_sortIcons_party.swf"
 				click="{sortByTheme()}" buttonMode="true" mouseOver="onMouseOver(event)" mouseOut="onMouseOut(event)"/>
 		</mx:HBox>
 		<mx:Label id="sortText" fontFamily="EuroStyle" fontSize="11" fontWeight="bold" color="0xffffff" alpha=".5"/>
@@ -283,16 +283,16 @@
 	<pda:WindowMenuControl id="sortBy" width="100%" horizontalCenter="0" bottom="0"
 		paddingTop="0" paddingBottom="2" paddingLeft="10" paddingRight="10">
 		<pda:MainMenuButton width="37" height="40" labelText="Sort by: Online" callBack="sortByPresence"
-			iconSource="assets/swfs/buddy/buddies_online.swf"
+			iconSource="swfs/buddy/buddies_online.swf"
 			mouseOverSound="{_controller.mouseOverSound}" clickSound="{_controller.clickSound}"/>
 		<pda:MainMenuButton width="37" height="40" labelText="Sort by: Alphabetical" callBack="sortByName"
-			iconSource="assets/swfs/buddy/buddies_AtoZ.swf"
+			iconSource="swfs/buddy/buddies_AtoZ.swf"
 			mouseOverSound="{_controller.mouseOverSound}" clickSound="{_controller.clickSound}"/>
 		<pda:MainMenuButton width="37" height="40" labelText="Sort by: Level" callBack="sortByLevel"
-			iconSource="assets/swfs/buddy/buddies_level.swf"
+			iconSource="swfs/buddy/buddies_level.swf"
 			mouseOverSound="{_controller.mouseOverSound}" clickSound="{_controller.clickSound}"/>
 		<pda:MainMenuButton width="37" height="40" labelText="Sort by: Team Affiliation" callBack="sortByTeam"
-			iconSource="assets/swfs/buddy/buddies_team.swf"
+			iconSource="swfs/buddy/buddies_team.swf"
 			mouseOverSound="{_controller.mouseOverSound}" clickSound="{_controller.clickSound}"/>
 	</pda:WindowMenuControl>-->
 </mx:Canvas>

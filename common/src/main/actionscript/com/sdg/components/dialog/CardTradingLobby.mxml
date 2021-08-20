@@ -2,7 +2,7 @@
 <mx:Canvas
 	xmlns:mx="http://www.adobe.com/2006/mxml"
     xmlns:sdgcontrols="com.sdg.components.controls.*"
-    xmlns:business="com.sdg.business.*" 
+    xmlns:business="com.sdg.business.*"
 	implements="com.sdg.components.dialog.ISdgDialog"
 	horizontalScrollPolicy="off"
 	verticalScrollPolicy="off"
@@ -17,7 +17,7 @@
 
 			private var _roomId:String;
 			private var _avatar:Avatar;
-			
+
 			public function init(params:Object):void
 			{
 				_roomId = (params != null && params.roomId != null) ? params.roomId : "public_120";
@@ -28,16 +28,16 @@
             public function close():void
             {
             	PopUpManager.removePopUp(this);
-            } 
-            
+            }
+
             private function closeSwf(e:Event):void
             {
             	close();
             }
-            
-            public function componentSwfLoaded(event:Event):void 
-			{   
-			
+
+            public function componentSwfLoaded(event:Event):void
+			{
+
 				try
 				{
 					event.currentTarget.content.init("TradeLobby", _avatar, _roomId)
@@ -47,12 +47,12 @@
 				{
 					trace("error " + e.message);
 				}
-				
-			}  
+
+			}
 
 		]]>
 	</mx:Script>
 
-	<mx:Image source="assets/swfs/TradingCardGame.swf" complete="componentSwfLoaded(event)"  />
+	<mx:Image source="swfs/TradingCardGame.swf" complete="componentSwfLoaded(event)"  />
 
 </mx:Canvas>

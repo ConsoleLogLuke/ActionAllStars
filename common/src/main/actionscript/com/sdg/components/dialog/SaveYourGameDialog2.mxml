@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" implements="com.sdg.components.dialog.ISdgDialog" width="450" height="640"
-	backgroundImage="assets/swfs/registration/bg_saveReg.swf">
+	backgroundImage="swfs/registration/bg_saveReg.swf">
 	<mx:Script>
 		<![CDATA[
 			import mx.core.Application;

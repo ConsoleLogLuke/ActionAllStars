@@ -51,14 +51,14 @@
 		<mx:HBox id="numUsersBox" verticalCenter="0" verticalAlign="middle"
 			horizontalGap="0" right="15" visible="{data.numUsers &lt; MAX_NUM_USERS}">
 
-			<mx:Image id="personIcon5" source="assets/swfs/registration/usersOnlineIcon.swf" filters="{[new GlowFilter(0x00CCFF, .3, 2, 2, 8, 30)]}"
+			<mx:Image id="personIcon5" source="swfs/registration/usersOnlineIcon.swf" filters="{[new GlowFilter(0x00CCFF, .3, 2, 2, 8, 30)]}"
 				visible="{data.numUsers &gt; 150 &amp;&amp; data.numUsers &lt; MAX_NUM_USERS}"/>
-			<mx:Image id="personIcon4" source="assets/swfs/registration/usersOnlineIcon.swf" filters="{[new GlowFilter(0x00CCFF, .3, 2, 2, 8, 30)]}"
+			<mx:Image id="personIcon4" source="swfs/registration/usersOnlineIcon.swf" filters="{[new GlowFilter(0x00CCFF, .3, 2, 2, 8, 30)]}"
 				visible="{data.numUsers &gt; 100 &amp;&amp; data.numUsers &lt; MAX_NUM_USERS}"/>
-			<mx:Image id="personIcon3" source="assets/swfs/registration/usersOnlineIcon.swf" filters="{[new GlowFilter(0x00CCFF, .3, 2, 2, 8, 30)]}"
+			<mx:Image id="personIcon3" source="swfs/registration/usersOnlineIcon.swf" filters="{[new GlowFilter(0x00CCFF, .3, 2, 2, 8, 30)]}"
 				visible="{data.numUsers &gt; 50 &amp;&amp; data.numUsers &lt; MAX_NUM_USERS}"/>
-			<mx:Image source="assets/swfs/registration/usersOnlineIcon.swf" filters="{[new GlowFilter(0x00CCFF, .3, 2, 2, 8, 30)]}"/>
-			<mx:Image source="assets/swfs/registration/usersOnlineIcon.swf" filters="{[new GlowFilter(0x00CCFF, .3, 2, 2, 8, 30)]}"/>
+			<mx:Image source="swfs/registration/usersOnlineIcon.swf" filters="{[new GlowFilter(0x00CCFF, .3, 2, 2, 8, 30)]}"/>
+			<mx:Image source="swfs/registration/usersOnlineIcon.swf" filters="{[new GlowFilter(0x00CCFF, .3, 2, 2, 8, 30)]}"/>
 		</mx:HBox>
 
 		<mx:Label text="SOLD OUT" horizontalCenter="0" verticalCenter="0" fontSize="30" fontWeight="bold" color="#4A6877"

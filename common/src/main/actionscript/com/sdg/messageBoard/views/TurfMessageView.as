@@ -5,7 +5,7 @@ package com.sdg.messageBoard.views
 	import com.sdg.model.Buddy;
 	import com.sdg.net.QuickLoader;
 	import com.sdg.utils.EmbeddedImages;
-	
+
 	import flash.display.DisplayObject;
 	import flash.display.Sprite;
 	import flash.events.Event;
@@ -17,7 +17,7 @@ package com.sdg.messageBoard.views
 	import flash.text.TextFieldAutoSize;
 	import flash.text.TextFieldType;
 	import flash.text.TextFormat;
-	
+
 	public class TurfMessageView extends Sprite
 	{
 		private var _nameTF:TextField;
@@ -30,15 +30,15 @@ package com.sdg.messageBoard.views
 		private var _invalidTextFormat:TextFormat;
 		private var _validTextFormat:TextFormat;
 		private var _highlighted:Boolean;
-		
+
 		public function TurfMessageView(turfMessage:TurfMessage, showPin:Boolean = true)
 		{
 			super();
-			
+
 			_turfMessage = turfMessage;
 
 			var imageClass:Class;
-			
+
 			// bg
 			_paper = new (EmbeddedImages.postIt)();
 			_paperContainer = new Sprite();
@@ -49,16 +49,16 @@ package com.sdg.messageBoard.views
 			addChild(shadowContainer);
 			shadowContainer.filters = [new DropShadowFilter(20, 60, 0, .25)];
 			setBGColor();
-			
+
 			var sender:Buddy = _turfMessage.sender;
-			
+
 			// gender icon
 			imageClass = sender.gender == 1 ? EmbeddedImages.boyIcon : EmbeddedImages.girlIcon;
 			_genderIcon = new imageClass();
 			addChild(_genderIcon);
 			_genderIcon.filters = [new GlowFilter(0x000000, 1, 4, 4, 10)];
 			_genderIcon.y = 13;
-			
+
 			_nameTF = new TextField();
 			_nameTF.embedFonts = true;
 			_nameTF.defaultTextFormat = new TextFormat('EuroStyle', 14, 0x4c4936, true);
@@ -69,8 +69,8 @@ package com.sdg.messageBoard.views
 			_nameTF.y = 16;
 			addChild(_nameTF);
 			_nameTF.mouseEnabled = false;
-			
-			// level stars 
+
+			// level stars
 			imageClass = EmbeddedImages.starIcon;
 			var colorTransform:ColorTransform = new ColorTransform();
 			colorTransform.color = 0x000000;
@@ -84,10 +84,10 @@ package com.sdg.messageBoard.views
 				star.alpha = .2;
 				star.scaleX = star.scaleY = .8;
 			}
-			
+
 			_invalidTextFormat = new TextFormat('EuroStyle', 12, 0xff0000);
 			_validTextFormat = new TextFormat('EuroStyle', 12, 0x4c4936);
-			
+
 			// message
 			var message:String = _turfMessage.message;
 			_messageTF = new TextField();
@@ -95,12 +95,12 @@ package com.sdg.messageBoard.views
 			_messageTF.defaultTextFormat = _validTextFormat;
 			_messageTF.restrict = "a-zA-Z0-9' !?,";
 			_messageTF.maxChars = 120;
-			
+
 			_messageTF.borderColor = 0x4c4936;
 			_messageTF.text = message;
 			_messageTF.selectable = false;
 			_messageTF.mouseEnabled = false;
-			
+
 			_messageTF.multiline = true;
 			_messageTF.wordWrap = true;
 			_messageTF.width = 140;
@@ -111,7 +111,7 @@ package com.sdg.messageBoard.views
 			_messageTF.x = 25;
 			_messageTF.y = 55;
 			_messageTF.addEventListener(Event.CHANGE, onChange, false, 0, true);
-			
+
 			// green tack
 			if (showPin)
 			{
@@ -120,64 +120,64 @@ package com.sdg.messageBoard.views
 				greenTack.x = 68;
 				greenTack.y = -27;
 			}
-			
+
 			// sticker
 			setSticker();
-			
+
 			_turfMessage.addEventListener(TurfMessageEvent.BG_ID_CHANGE, onBGChange, false, 0, true);
 			_turfMessage.addEventListener(TurfMessageEvent.STICKER_ID_CHANGE, onStickerChange, false, 0, true);
 		}
-		
+
 		private function onChange(event:Event):void
 		{
 			if (_messageTF.numLines > 6)
 			{
 				_messageTF.removeEventListener(Event.CHANGE, onChange);
 				_messageTF.type = TextFieldType.DYNAMIC;
-				
+
 				while (_messageTF.numLines > 6)
 				{
 					_messageTF.text = _messageTF.text.slice(0, -1);
 				}
-				
+
 				_messageTF.type = TextFieldType.INPUT;
 				_messageTF.addEventListener(Event.CHANGE, onChange);
 			}
 		}
-		
+
 		public function setInputMode(value:Boolean):void
 		{
 			if (value)
 			{
 				_messageTF.type = TextFieldType.INPUT;
-				
+
 				//stage.focus = _messageTF;
 			}
 			else
 			{
 				_messageTF.type = TextFieldType.DYNAMIC;
 			}
-			
+
 			_messageTF.border = _messageTF.selectable = _messageTF.mouseEnabled = value;
 		}
-		
+
 		private	function onKeyDown(e:KeyboardEvent):void
 		{
 			// on key input make the text white again
 			_messageTF.defaultTextFormat = _validTextFormat;
 			_messageTF.setTextFormat(_validTextFormat);
 		}
-		
+
 		private function onBGChange(event:TurfMessageEvent):void
 		{
 			setBGColor();
 		}
-		
+
 		private function onStickerChange(event:TurfMessageEvent):void
 		{
 			setSticker();
 		}
-		
+
 		private function setBGColor():void
 		{
 			var colorTransform:ColorTransform = new ColorTransform();
@@ -187,7 +187,7 @@ package com.sdg.messageBoard.views
 			}
 			_paper.transform.colorTransform = colorTransform;
 		}
-		
+
 		public function destroy():void
 		{
 			_messageTF.removeEventListener(KeyboardEvent.KEY_DOWN, onKeyDown);
@@ -195,22 +195,22 @@ package com.sdg.messageBoard.views
 			_turfMessage.removeEventListener(TurfMessageEvent.BG_ID_CHANGE, onBGChange);
 			_turfMessage.removeEventListener(TurfMessageEvent.STICKER_ID_CHANGE, onStickerChange);
 		}
-		
+
 		private function setSticker():void
 		{
 			var stickerId:Object = _turfMessage.stickerId;
-			
+
 			if (_sticker != null)
 			{
 				removeChild(_sticker);
 				_sticker = null;
 			}
-			
+
 			if (stickerId != null && stickerId != 0)
 			{
-				_sticker = new QuickLoader("assets/swfs/turfBuilder/msgBoard/sticker" + stickerId + ".swf", onComplete, onError);
+				_sticker = new QuickLoader("swfs/turfBuilder/msgBoard/sticker" + stickerId + ".swf", onComplete, onError);
 			}
-			
+
 			function onComplete():void
 			{
 				_sticker = QuickLoader(_sticker).content;
@@ -220,27 +220,27 @@ package com.sdg.messageBoard.views
 				_sticker.x = 130 - _sticker.width/2;
 				_sticker.y = 172 - _sticker.height/2;
 			}
-			
+
 			function onError():void
 			{
 				_sticker = null;
 			}
 		}
-		
+
 		public function get turfMessage():TurfMessage
 		{
 			return _turfMessage;
 		}
-		
+
 		public function get message():String
 		{
 			return _messageTF.text;
 		}
-		
+
 		public function showFilterMessage(badWords:Array):void
 		{
 			_messageTF.text = _turfMessage.message;
-			
+
 			var len:int = badWords.length;
 			var badWord:String;
 			var startIndex:int;
@@ -249,19 +249,19 @@ package com.sdg.messageBoard.views
 				// Determine bad word and it's start index.
 				badWord = badWords[i];
 				startIndex = badWords[i + 1];
-				
+
 				_messageTF.setTextFormat(_invalidTextFormat, startIndex, startIndex + badWord.length);
 			}
-			
+
 			_messageTF.appendText(' ');
 			_messageTF.setSelection(_messageTF.text.length, _messageTF.text.length);
 			_messageTF.setTextFormat(_validTextFormat, _messageTF.text.length - 1);
 		}
-		
+
 		public function setHighlight(value:Boolean):void
 		{
 			if (_highlighted == value) return;
-			
+
 			_highlighted = value;
 			var bgFilter:Array = _paperContainer.filters;
 			if (_highlighted)

@@ -11,36 +11,36 @@
 			import com.sdg.control.PDAController;
 			import com.sdg.view.pda.interfaces.IPDASidePanel;
 			import com.sdg.logging.LoggingUtil;
-			
+
 			public static const MISSIONS_BUTTON_ID:String = 'missionButton';
-			
+
 			[Bindable]
 			private var _controller:PDAController;
 			private var _isInitialized:Boolean = false;
-			
+
 			private var _animManager:AnimationManager;
-			
+
 			////////////////////
 			// PUBLIC METHODS
 			////////////////////
-			
+
 			public function init(controller:PDAController = null):void
 			{
 				this.controller = controller;
-				
+
 				_animManager = new AnimationManager();
-				
+
 				_isInitialized = true;
 			}
-			
+
 			public function refresh():void
 			{
 			}
-			
+
 			public function close():void
 			{
 			}
-			
+
 			public function startButtonHighlight(buttonId:String):void
 			{
 				var button:MainMenuButton = this[buttonId] as MainMenuButton;
@@ -51,7 +51,7 @@
 					_animManager.pulse(button, 'scaleY', 1, 1.2, 1000, RenderMethod.ENTER_FRAME);
 				}
 			}
-			
+
 			public function stopButtonHighlight(buttonId:String):void
 			{
 				var button:MainMenuButton = this[buttonId] as MainMenuButton;
@@ -62,16 +62,16 @@
 					button.scaleX = button.scaleY = 1;
 				}
 			}
-			
+
 			public function doButtonHighlight(buttonId:String, duration:uint):void
 			{
 				var timer:Timer = new Timer(duration);
 				timer.addEventListener(TimerEvent.TIMER, onTimer);
-				
+
 				startButtonHighlight(buttonId);
-				
+
 				timer.start();
-				
+
 				function onTimer(e:TimerEvent):void
 				{
 					timer.removeEventListener(TimerEvent.TIMER, onTimer);
@@ -80,28 +80,28 @@
 					stopButtonHighlight(buttonId);
 				}
 			}
-			
+
 			public function getButtonRect(buttonId:String):Rectangle
 			{
 				// Return the bounds of a button within this coordinate space.
-				
+
 				var button:MainMenuButton = this[buttonId] as MainMenuButton;
 				if (button == null) return null;
-				
+
 				return button.getBounds(this);
 			}
-			
+
 			////////////////////
 			// PRIVATE METHODS
 			////////////////////
-			
+
 			private function openCustomizer():void
 			{
 				if (_controller == null) return;
 				LoggingUtil.sendClickLogging(LoggingUtil.PDA_CUSTOMIZER_BUTTON);
 				_controller.openCustomizer();
 			}
-			
+
 			private function openGamesPanel():void
 			{
 				if (_controller == null) return;
@@ -109,7 +109,7 @@
 
 				_controller.openGamesPanel();
 			}
-			
+
 			private function openMissionsPanel():void
 			{
 				if (_controller == null) return;
@@ -117,7 +117,7 @@
 
 				_controller.openQuestsPanel();
 			}
-			
+
 			private function openPickemPanel():void
 			{
 				if (_controller == null) return;
@@ -125,38 +125,38 @@
 
 				_controller.openPickemPanel();
 			}
-			
+
 			private function openMessagesPanel():void
 			{
 				if (_controller == null) return;
 				LoggingUtil.sendClickLogging(LoggingUtil.PDA_MESSAGES_BUTTON);
-				
+
 				_controller.openMessagesPanel();
 			}
-			
+
 			private function openMyStatsPanel():void
 			{
 				if (_controller == null) return;
-				
+
 				_controller.openMyStatsPanel();
 			}
-			
+
 			private function openQuestsPanel():void
 			{
 				if (_controller == null) return;
 				LoggingUtil.sendClickLogging(LoggingUtil.PDA_MISSIONS_BUTTON);
-				
+
 				_controller.openQuestsPanel();
 			}
-			
+
 			private function openFeedbackPanel():void
 			{
 				if (_controller == null) return;
 				LoggingUtil.sendClickLogging(LoggingUtil.PDA_COMMENTS_BUTTON);
-				
+
 				_controller.openFeedbackPanel();
 			}
-			
+
 			private function referFriend():void
 			{
 				// Get Avatar
@@ -166,7 +166,7 @@
 				var referControl:ReferAFriendController = new ReferAFriendController();
 				referControl.refer(av,0);
 			}
-			
+
 			private function openStore():void
 			{
 				if (_controller == null) return;
@@ -174,39 +174,39 @@
 
 				_controller.openStore();
 			}
-			
+
 			private function openLeaderboard():void
 			{
 				if (_controller == null) return;
 				LoggingUtil.sendClickLogging(LoggingUtil.PDA_LEADERBOARDS_BUTTON);
-				
+
 				_controller.openLeaderboard();
 			}
-			
+
 			private function openBuddyList():void
 			{
 				if (_controller == null) return;
 				LoggingUtil.sendClickLogging(LoggingUtil.PDA_FRIENDS_BUTTON);
-				
+
 				_controller.showFriendsList();
 			}
-			
-			
+
+
 			private function showCardAlbum():void
 			{
 				if (_controller == null) return;
-				
+
 				_controller.showCardAlbum();
 			}
-			
+
 			private function showBadgeList():void
 			{
 				if (_controller == null) return;
 				LoggingUtil.sendClickLogging(LoggingUtil.PDA_AWARDS_BUTTON);
-				
+
 				_controller.showBadgeList();
 			}
-			
+
 			private function showNews():void
 			{
 				if (_controller == null) return;
@@ -214,26 +214,26 @@
 
 				_controller.showNews();
 			}
-			
+
 			////////////////////
 			// GET/SET METHODS
 			////////////////////
-			
+
 			public function set controller(value:PDAController):void
 			{
 				_controller = value;
 			}
-			
+
 			public function get isInitialized():Boolean
 			{
 				return _isInitialized;
 			}
-			
+
 			public function get sidePanel():IPDASidePanel
 			{
 				return null;
 			}
-			
+
 			public function get panelName():String
 			{
 				return "Main Menu";
@@ -247,34 +247,34 @@
 		itemRenderer="com.sdg.components.renderers.PDAMainMenuRenderer">
 		<mx:dataProvider>
 			<mx:Array>
-				<pda:MainMenuButton iconSource="assets/swfs/pda/referFriend.swf" click="referFriend()" labelText="Invite A Friend"
+				<pda:MainMenuButton iconSource="swfs/pda/referFriend.swf" click="referFriend()" labelText="Invite A Friend"
 					mouseOverSound="{_controller.mouseOverSound}" clickSound="{_controller.clickSound}" showButton="false"/>
-				<pda:MainMenuButton iconSource="assets/swfs/pda/catalogIcon.swf" click="openStore()" labelText="Catalog"
+				<pda:MainMenuButton iconSource="swfs/pda/catalogIcon.swf" click="openStore()" labelText="Catalog"
 					mouseOverSound="{_controller.mouseOverSound}" clickSound="{_controller.clickSound}" showButton="false"/>
-				<pda:MainMenuButton iconSource="assets/swfs/pda/customizerIcon.swf" click="openCustomizer()" labelText="Customizer"
+				<pda:MainMenuButton iconSource="swfs/pda/customizerIcon.swf" click="openCustomizer()" labelText="Customizer"
 					mouseOverSound="{_controller.mouseOverSound}" clickSound="{_controller.clickSound}" showButton="false"/>
-				<pda:MainMenuButton id="messagesButton" iconSource="assets/swfs/pda/messagesIcon.swf" click="openMessagesPanel()" labelText="Notifications"
+				<pda:MainMenuButton id="messagesButton" iconSource="swfs/pda/messagesIcon.swf" click="openMessagesPanel()" labelText="Notifications"
 					glowTrigger="{_controller.hudcontroller.hasNewMessages}"
 					mouseOverSound="{_controller.mouseOverSound}" clickSound="{_controller.clickSound}" showButton="false"/>
-				<pda:MainMenuButton iconSource="assets/swfs/pda/PDALeaderboard.swf" click="openLeaderboard()" labelText="Leaderboards"
+				<pda:MainMenuButton iconSource="swfs/pda/PDALeaderboard.swf" click="openLeaderboard()" labelText="Leaderboards"
 					mouseOverSound="{_controller.mouseOverSound}" clickSound="{_controller.clickSound}" showButton="false"/>
-				<pda:MainMenuButton iconSource="assets/swfs/pda/missionIcon.swf" click="openMissionsPanel()" labelText="Missions"
+				<pda:MainMenuButton iconSource="swfs/pda/missionIcon.swf" click="openMissionsPanel()" labelText="Missions"
 					mouseOverSound="{_controller.mouseOverSound}" clickSound="{_controller.clickSound}" showButton="false" id="missionButton"/>
-				<pda:MainMenuButton iconSource="assets/swfs/pda/PDABuddyList.swf" click="openBuddyList()" labelText="Friends &amp; Parties"
+				<pda:MainMenuButton iconSource="swfs/pda/PDABuddyList.swf" click="openBuddyList()" labelText="Friends &amp; Parties"
 					mouseOverSound="{_controller.mouseOverSound}" clickSound="{_controller.clickSound}" showButton="false"/>
-				<pda:MainMenuButton iconSource="assets/swfs/pda/asnIcon.swf" click="showNews()" labelText="Action Sports News"
+				<pda:MainMenuButton iconSource="swfs/pda/asnIcon.swf" click="showNews()" labelText="Action Sports News"
 					mouseOverSound="{_controller.mouseOverSound}" clickSound="{_controller.clickSound}" showButton="false"/>
-				<pda:MainMenuButton iconSource="assets/swfs/pda/awardsIcon.swf" click="showBadgeList()" labelText="Badges"
+				<pda:MainMenuButton iconSource="swfs/pda/awardsIcon.swf" click="showBadgeList()" labelText="Badges"
 					mouseOverSound="{_controller.mouseOverSound}" clickSound="{_controller.clickSound}" showButton="false"/>
-				<pda:MainMenuButton iconSource="assets/swfs/pda/pickemIcon.swf" click="openPickemPanel()" labelText="Sports Psychic"
+				<pda:MainMenuButton iconSource="swfs/pda/pickemIcon.swf" click="openPickemPanel()" labelText="Sports Psychic"
 					mouseOverSound="{_controller.mouseOverSound}" clickSound="{_controller.clickSound}" showButton="false"/>
-				<pda:MainMenuButton iconSource="assets/swfs/pda/gamesIcon.swf" click="openGamesPanel()" labelText="Games"
+				<pda:MainMenuButton iconSource="swfs/pda/gamesIcon.swf" click="openGamesPanel()" labelText="Games"
 					mouseOverSound="{_controller.mouseOverSound}" clickSound="{_controller.clickSound}" showButton="false"/>
-				<pda:MainMenuButton iconSource="assets/swfs/pda/feedbackIcon.swf" click="openFeedbackPanel()" labelText="Comments"
+				<pda:MainMenuButton iconSource="swfs/pda/feedbackIcon.swf" click="openFeedbackPanel()" labelText="Comments"
 					mouseOverSound="{_controller.mouseOverSound}" clickSound="{_controller.clickSound}" showButton="false"/>
-				<!--<pda:MainMenuButton iconSource="assets/swfs/pda/myStatsIcon.swf" click="openMyStatsPanel()" labelText="My Stats"
+				<!--<pda:MainMenuButton iconSource="swfs/pda/myStatsIcon.swf" click="openMyStatsPanel()" labelText="My Stats"
 					mouseOverSound="{_controller.mouseOverSound}" clickSound="{_controller.clickSound}"/>-->
-				<!--<pda:MainMenuButton iconSource="assets/swfs/pda/cardAlbumIcon.swf" click="showCardAlbum()" labelText="Card Album"
+				<!--<pda:MainMenuButton iconSource="swfs/pda/cardAlbumIcon.swf" click="showCardAlbum()" labelText="Card Album"
 					mouseOverSound="{_controller.mouseOverSound}" clickSound="{_controller.clickSound}"/>-->
 			</mx:Array>
 		</mx:dataProvider>

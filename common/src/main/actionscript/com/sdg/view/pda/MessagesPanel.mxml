@@ -2,57 +2,57 @@
 <mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" xmlns:pda="com.sdg.view.pda.*"
 	implements="com.sdg.view.pda.interfaces.IPDAMainPanel"
 	width="316" height="400">
-	
+
 	<mx:Script>
 		<![CDATA[
 			import com.sdg.components.controls.MessagesArrayList;
 			import com.sdg.components.controls.IHudMessage;
 			import com.sdg.control.PDAController;
 			import com.sdg.view.pda.interfaces.IPDASidePanel;
-			
+
 			[Bindable]
 			private var _controller:PDAController;
 			private var _isInitialized:Boolean = false;
-			
+
 			public function init(controller:PDAController = null):void
 			{
 				this.controller = controller;
 				refresh();
 				_isInitialized = true;
 			}
-			
+
 			public function refresh():void
 			{
 				messageButtons.selected = notificationsButton;
 			}
-			
+
 			public function close():void
 			{
 				messagesList.dataProvider = null;
 				currentList = null;
 			}
-			
+
 			private function set currentList(value:MessagesArrayList):void
 			{
 				_controller.hudcontroller.currentList = value;
 				messagesList.dataProvider = value;
 			}
-			
+
 			public function set controller(value:PDAController):void
 			{
 				_controller = value;
 			}
-			
+
 			public function get isInitialized():Boolean
 			{
 				return _isInitialized;
 			}
-			
+
 			public function get sidePanel():IPDASidePanel
 			{
 				return null;
 			}
-			
+
 			public function get panelName():String
 			{
 				return "Notifications";
@@ -65,15 +65,15 @@
 	<pda:WindowMenuControl id="messageButtons" width="100%" horizontalCenter="0" bottom="0"
 		paddingTop="0" paddingBottom="2" paddingLeft="10" paddingRight="10">
 		<pda:MainMenuButton id="notificationsButton" width="37" height="40" labelText="My Notifications"
-			glowTrigger="{_controller.hudcontroller.personalMessagesList.hasNewMessages}" iconSource="assets/swfs/pda/icon_myMessages.swf"
+			glowTrigger="{_controller.hudcontroller.personalMessagesList.hasNewMessages}" iconSource="swfs/pda/icon_myMessages.swf"
 			callBack="{function():void {currentList = _controller.hudcontroller.personalMessagesList}}"
 			mouseOverSound="{_controller.mouseOverSound}" clickSound="{_controller.clickSound}"/>
 		<pda:MainMenuButton id="jabsButton" width="37" height="40" labelText="Buddies Notifications"
-			glowTrigger="{_controller.hudcontroller.buddiesMessagesList.hasNewMessages}" iconSource="assets/swfs/pda/icon_buddiesMessages.swf"
+			glowTrigger="{_controller.hudcontroller.buddiesMessagesList.hasNewMessages}" iconSource="swfs/pda/icon_buddiesMessages.swf"
 			callBack="{function():void {currentList = _controller.hudcontroller.buddiesMessagesList}}"
 			mouseOverSound="{_controller.mouseOverSound}" clickSound="{_controller.clickSound}"/>
 		<pda:MainMenuButton id="requestsButton" width="37" height="40" labelText="Requests"
-			glowTrigger="{_controller.hudcontroller.requestsList.hasNewMessages}" iconSource="assets/swfs/pda/icon_requests.swf"
+			glowTrigger="{_controller.hudcontroller.requestsList.hasNewMessages}" iconSource="swfs/pda/icon_requests.swf"
 			callBack="{function():void {currentList = _controller.hudcontroller.requestsList}}"
 			mouseOverSound="{_controller.mouseOverSound}" clickSound="{_controller.clickSound}"/>
 	</pda:WindowMenuControl>

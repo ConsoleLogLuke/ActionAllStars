@@ -13,41 +13,41 @@
 			public function init(params:Object):void
 			{
 			}
-			
+
 			public function close():void
 			{
 				PopUpManager.removePopUp(this);
 			}
-			
+
 			private function onTeamSelectInit(event:Event):void
 			{
 				try
 				{
 					// get the swf
 					var swf:Object = Object(teamSelectSwf.content);
-					
+
 					// add our listeners
 					swf.addEventListener("teamSelected", onTeamsSelected);
-					
+
 					// pass the params to the swf
 					swf.applicationDomain = Environment.getApplicationDomain();
-					
+
 					var avatar:Avatar = ModelLocator.getInstance().avatar;
 					var params:Object = new Object;
 					var team:Team;
-					
+
 					team = avatar.getFavoriteTeam(League.NBA_ID);
 					if (team != null) params.basketball = team.teamId;
-					
+
 					team = avatar.getFavoriteTeam(League.MLB_ID);
 					if (team != null) params.baseball = team.teamId;
-					
+
 					team = avatar.getFavoriteTeam(League.AAS_FOOTBALL_ID);
 					if (team != null) params.football = team.teamId;
-					
+
 					team = avatar.favoriteTeam;
 					if (team != null) params.topTeam = team.teamId;
-					
+
 					swf.selectedTeams = params;
 				}
 				catch(e:Error)
@@ -55,52 +55,52 @@
 					trace("error: " + e.message);
 					close();
 				}
-				
+
 				function onTeamsSelected(event:Event):void
 				{
 					var favTeams:Object = swf.selectedTeams;
-					
+
 					var saveObject:Object = new Object();
 					var teamIndex:int = 1;
-					
+
 					if (favTeams.basketball != null)
 					{
 						saveObject["team" + teamIndex] = favTeams.basketball;
-						
+
 						if (favTeams.topTeam == favTeams.basketball)
 						{
 							saveObject.teamFlag = teamIndex;
 						}
 						teamIndex++;
 					}
-					
+
 					if (favTeams.baseball != null)
 					{
 						saveObject["team" + teamIndex] = favTeams.baseball;
-						
+
 						if (favTeams.topTeam == favTeams.baseball)
 						{
 							saveObject.teamFlag = teamIndex;
 						}
 						teamIndex++;
 					}
-					
+
 					if (favTeams.football != null)
 					{
 						saveObject["team" + teamIndex] = favTeams.football;
-						
+
 						if (favTeams.topTeam == favTeams.football)
 						{
 							saveObject.teamFlag = teamIndex;
 						}
 						teamIndex++;
 					}
-					
+
 					CairngormEventDispatcher.getInstance().dispatchEvent(new SaveFavTeamsEvent(saveObject));
 					close();
 				}
 			}
 		]]>
 	</mx:Script>
-	<mx:Image id="teamSelectSwf" source="assets/swfs/teamAffinity/teamSelect.swf" init="onTeamSelectInit(event)"/>
+	<mx:Image id="teamSelectSwf" source="swfs/teamAffinity/teamSelect.swf" init="onTeamSelectInit(event)"/>
 </mx:Canvas>

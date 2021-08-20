@@ -5,49 +5,49 @@
 		<![CDATA[
 			protected var state:String;
 			protected var itemTypeId:int;
-			
+
 			protected function init():void
 			{
 				if (itemTypeId != data.itemTypeId && itemTypeIcon != null)
 				{
 					itemTypeId = data.itemTypeId;
-					itemTypeIcon.source = 'assets/swfs/turfBuilder/itemType_' + itemTypeId + '.swf';
+					itemTypeIcon.source = 'swfs/turfBuilder/itemType_' + itemTypeId + '.swf';
 					itemTypeIcon.addEventListener(Event.COMPLETE, onComplete);
 					itemTypeIcon.addEventListener(IOErrorEvent.IO_ERROR, onIOError);
 					itemTypeLabel.text = data.name;
 				}
 			}
-			
+
 			protected function drawCircle():void
 			{
 				redCircle.graphics.lineStyle(1, 0xffffff);
 				redCircle.graphics.beginFill(0x80002A);
 				redCircle.graphics.drawCircle(9, 9, 9);
 			}
-			
+
 			protected function onComplete(event:Event):void
 			{
 				itemTypeIcon.removeEventListener(Event.COMPLETE, onComplete);
 				itemTypeIcon.removeEventListener(IOErrorEvent.IO_ERROR, onIOError);
 			}
-			
+
 			protected function onIOError(event:IOErrorEvent):void
 			{
 				itemTypeIcon.removeEventListener(Event.COMPLETE, onComplete);
 				itemTypeIcon.removeEventListener(IOErrorEvent.IO_ERROR, onIOError);
-				itemTypeIcon.source = 'assets/swfs/turfBuilder/itemType_default.swf';
+				itemTypeIcon.source = 'swfs/turfBuilder/itemType_default.swf';
 			}
-			
+
 			protected function onMouseOver():void
 			{
 				iconState = true;
 			}
-			
+
 			protected function onMouseOut():void
 			{
 				iconState = state == "selected";
 			}
-			
+
 			protected function set iconState(highlight:Boolean):void
 			{
 				try
@@ -56,16 +56,16 @@
 				}
 				catch(e:Error) {}
 			}
-			
+
 			override public function get currentState():String
 			{
 				return state;
 			}
-			
+
 			override public function set currentState(value:String):void
 			{
 				state = value;
-				
+
 				iconState = state == "selected";
 			}
 		]]>
@@ -73,7 +73,7 @@
 	<mx:Label id="itemTypeLabel" horizontalCenter="0" y="6" fontSize="12" fontWeight="bold" fontFamily="EuroStyle"
 		color="0xffffff" filters="{[new GlowFilter(0x000000, 1, 4, 4, 10)]}"/>
 	<mx:Image id="itemTypeIcon" horizontalCenter="0" y="20" horizontalAlign="center" verticalAlign="middle"/>
-	
+
 	<mx:Canvas visible="{data.numItems != 0}" width="18" height="18" horizontalCenter="21" bottom="3">
 		<mx:UIComponent id="redCircle" creationComplete="drawCircle()"/>
 		<mx:Label text="{data.numItems}" fontFamily="EuroStyle" fontSize="9" horizontalCenter="-1" verticalCenter="1"/>

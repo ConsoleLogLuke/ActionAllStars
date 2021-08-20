@@ -4,24 +4,24 @@
 	borderStyle="solid" borderThickness="1" borderColor="#333333">
 	<mx:Canvas id="header" width="100%" height="45" >
 		<mx:Label id="headerText" x="20" y="8" fontWeight="bold" fontSize="22" />
-		<mx:Image id="allStarsLogo" source="assets/swfs/actionAllstarsLogo.swf" x="212" visible="false" />
+		<mx:Image id="allStarsLogo" source="swfs/actionAllstarsLogo.swf" x="212" visible="false" />
 	</mx:Canvas>
 	<mx:Canvas id="line1" width="100%" height="1"/>
 	<mx:Canvas width="100%">
 		<!--<sdgcontrols:AvatarPreview id="avatarPreview" width="316" avatarHorizontalAlign="27" backgroundImage=""/>-->
-		<!--<mx:Image id="memberShield" x="244" y="7" source="assets/swfs/Shield.swf" visible="false" />-->
+		<!--<mx:Image id="memberShield" x="244" y="7" source="swfs/Shield.swf" visible="false" />-->
 		<mx:Canvas id="background" height="345"/>
 		<mx:VBox id="starMeter" bottom="10" left="7" verticalGap="8"/>
 		<mx:VBox right="8" y="7" horizontalAlign="center">
-			<mx:Image id="memberShield" source="assets/swfs/Shield.swf"/>
-			<mx:UIComponent id="badgeContainer"/>			
+			<mx:Image id="memberShield" source="swfs/Shield.swf"/>
+			<mx:UIComponent id="badgeContainer"/>
 		</mx:VBox>
 	</mx:Canvas>
 	<mx:Canvas id="line2" width="100%" height="2"/>
 	<mx:HBox id="footer" width="100%" height="45" horizontalAlign="center" verticalAlign="middle" >
 		<mx:Label id="footerText" x="20" y="8" fontWeight="bold" fontSize="22" />
 	</mx:HBox>
-	
+
 	<mx:Script>
 		<![CDATA[
 			import com.sdg.model.AvatarLevelStatus;
@@ -34,7 +34,7 @@
 			import com.sdg.utils.Constants;
 			import com.sdg.model.Avatar;
 			import com.sdg.net.Environment;
-			
+
 			protected var _avatar:Avatar;
 			protected var _avatarImage:LayeredImage;
 			protected var _backgroundContainer:Sprite;
@@ -43,91 +43,91 @@
 			private var _isInit:Boolean;
 			protected var _backgroundHeight:uint;
 			protected var _badgeShield:BadgeShield;
-			
+
 			public function init():void
 			{
 				var textDropShadow:DropShadowFilter = new DropShadowFilter(2, 45, 0, 1, 4, 4);
-				
+
 				// Set header.
 				header.setStyle("backgroundColor", levelColor);
 				headerText.setStyle("color", textColor);
 				headerText.filters = [textDropShadow];
-				
+
 				// set the footer
-				footer.setStyle("backgroundColor", levelColor);		
+				footer.setStyle("backgroundColor", levelColor);
 				footerText.setStyle("color", textColor);
 				footerText.filters = [textDropShadow];
-				
+
 				// Create background.
 				_backgroundContainer = new Sprite();
 				background.rawChildren.addChild(_backgroundContainer);
-				
+
 				// Create background mask.
 				_backgroundMask = new Sprite();
 				_backgroundContainer.addChild(_backgroundMask);
-				
+
 				// Create avatar image.
 				_avatarImage = new LayeredImage();
 				rawChildren.addChild(_avatarImage);
-				
+
 				_backgroundHeight = background.height;
-				
+
 				_isInit = true;
 			}
-			
+
 			/**
 			 * Sets the avatar for this card.  The card is drawn here, when the avatar is set.
-			 */ 
+			 */
 			public function set avatar(avatar:Avatar):void
 			{
 				if (!_isInit) init();
-				
+
 				// Keep reference to the avatar.
 				_avatar = avatar;
-				
+
 				for each (var font:Font in Font.enumerateFonts())
 				{
 					trace(font.fontName);
 				}
-				
+
 				// Update background.
 				updateBackground();
-				
+
 				// Hide avatar image.
 				_avatarImage.visible = false;
-				
+
 				// Load avatar images.
 				_avatarImage.addEventListener(Event.COMPLETE, onAvatarImageComplete);
 				_avatarImage.loadItemImage(_avatar);
-				
+
 				// set the header
 				header.setStyle("backgroundColor", levelColor);
 				headerText.text = avatar.levelName;
 
 				// set the footer
-				footer.setStyle("backgroundColor", levelColor);	
+				footer.setStyle("backgroundColor", levelColor);
 				footerText.text = avatar.name;
-				
+
 				// color the accent lines
 				var lineColor:String = avatar.level == 5 ? "#e2a000" : "#ffffff";
-				line1.setStyle("backgroundColor", lineColor);	
+				line1.setStyle("backgroundColor", lineColor);
 				line2.setStyle("backgroundColor", lineColor);
-				
+
 				// show the member shield if necessary
 				memberShield.visible = memberShield.includeInLayout = avatar.isPremiumMember;
-				
+
 				allStarsLogo.visible = true;
-				
+
 				var levelStatus:AvatarLevelStatus = LevelManager.GetAvatarLevelStatus(avatar);
 				starMeter.removeAllChildren();
 				for (var i:int = 1; i <= levelStatus.levelIndex; i++)
 				{
 					var star:Image = new Image();
-					star.source = "assets/swfs/pda/Star_Customizer.swf";
+					star.source = "swfs/pda/Star_Customizer.swf";
 					starMeter.addChild(star);
 					star.addEventListener(Event.INIT, setStarColors);
 				}
-				
+
 				if (avatar.equippedBadge == null)
 				{
 					if (_badgeShield)
@@ -139,39 +139,39 @@
 				else
 					setBadgeIcon(avatar.equippedBadge);
 			}
-			
+
 			public function setBadgeIcon(equippedBadge:String):void
 			{
 				var eBadgeArray:Array = equippedBadge.split("|", 5);
 				var badgeId:int = eBadgeArray[0];
 				var level:int = eBadgeArray[4];
-				
+
 				if (_badgeShield == null)
 				{
 					_badgeShield = new BadgeShield();
 				}
-				
+
 				_badgeShield.badgeWidth = 80;
 				_badgeShield.badgeHeight = 80;
 				_badgeShield.level = level;
 				_badgeShield.badgeId = badgeId;
-				
+
 				_badgeShield.addEventListener("badge_completed", onBadgeCompleted);
-				
+
 				function onBadgeCompleted(event:Event):void
 				{
 					_badgeShield.removeEventListener("badge_completed", onBadgeCompleted);
-					
+
 					badgeContainer.addChild(_badgeShield);
 					badgeContainer.width = _badgeShield.width;
 					badgeContainer.height = _badgeShield.height;
 				}
 			}
-			
+
 			private function setStarColors(event:Event):void
 			{
 				event.currentTarget.removeEventListener(Event.INIT, setStarColors);
-				
+
 				try
 				{
 					var swf:Object = Object(event.currentTarget);
@@ -179,32 +179,32 @@
 					swf.content.borderColor = textColor;
 				}
 				catch(e:Error) {}
-				
+
 			}
-			
+
 			public function close():void
 			{
 				// remove the avatar from the preview control so we don't see it when launching this dialog the next time
 				//avatarPreview.cleanUp();
 				_avatarImage.visible = false;
 			}
-			
+
 			public function addApparel(apparel:InventoryItem):void
 			{
 				_avatarImage.mergeUrlArray(_avatar.getLayeredImageUrlArrayWithNewItems([apparel]));
 			}
-			
+
 			public function updateApparel():void
 			{
 				_avatarImage.mergeUrlArray(_avatar.getLayeredImageUrlArray());
 				updateBackground();
 			}
-			
+
 			public function updateBackground():void
 			{
 				var backgroundUrl:String = (_avatar.background) ? ItemUtil.GetPreviewUrl(_avatar.background.itemId) : ItemUtil.GetPreviewUrl(4167);
 				var newBackground:DisplayObject = new QuickLoader(backgroundUrl, onComplete);
-				
+
 				function onComplete():void
 				{
 					// Remove previous background.
@@ -212,41 +212,41 @@
 					{
 						if (_backgroundContainer.contains(_background)) _backgroundContainer.removeChild(_background);
 					}
-					
+
 					// Set new background.
 					_background = newBackground;
 					_background.mask = _backgroundMask;
 					_backgroundContainer.addChild(_background);
-					
+
 					// Position it.
 					_background.y = _backgroundHeight / 2 - _background.height / 2;
-					
+
 					updateMask();
 				}
 			}
-			
+
 			protected function updateMask():void
 			{
 				_backgroundMask.graphics.clear();
 				_backgroundMask.graphics.beginFill(0x00ff00);
 				_backgroundMask.graphics.drawRect(0, 0, width - (getStyle("borderThickness") * 2), _backgroundHeight);
 			}
-			
+
 			private function get levelColor():uint
 			{
 				return PreviewUtil.getAvatarLevelColor(_avatar);
 			}
-			
+
 			private function get textColor():uint
 			{
 				return PreviewUtil.getAvatarTextColor(_avatar);
 			}
-			
+
 			private function onAvatarImageComplete(e:Event):void
 			{
 				// Remove event listener.
 				_avatarImage.removeEventListener(Event.COMPLETE, onAvatarImageComplete);
-				
+
 				_avatarImage.x = width / 2 - _avatarImage.width / 2;
 				_avatarImage.y = height / 2 - _avatarImage.height / 2;
 				_avatarImage.visible = true;

@@ -3,22 +3,22 @@
 	xmlns:mx="http://www.adobe.com/2006/mxml"
 	implements="com.sdg.components.dialog.ISdgDialog"
 	width="753" height="588">
-	
+
 	<mx:Script>
 		<![CDATA[
 			import com.sdg.components.controls.AvatarPreview;
-			
+
 			private var _email:String;
 //			private var _showMonthFree:Boolean = false;
-			
+
 			public function init(params:Object):void
 			{
 				var avatarPreview:AvatarPreview = AvatarPreview(params.avatarPreview);
 				avatarPreview.setStyle("backgroundImage", null);
 				//avatarPreview.height = 431;
-				
+
 				_email = String(params.emailAddress);
-				
+
 				var cc:int = int(params.cc);
 //				if (cc == 8 || cc == 9)
 //					_showMonthFree = true;
@@ -30,11 +30,11 @@
 //				avatarPreview.avatarWidthAdjust = 50;
 				previewer.addChild(avatarPreview);
 			}
-			
+
 			public function close():void
 			{
 			}
-			
+
 			private function displayEmail(email:String):void
 			{
 				try
@@ -51,7 +51,7 @@
 			}
 		]]>
 	</mx:Script>
-	<mx:Image id="congratsMessage" source="assets/swfs/congratsMessage.swf" complete="displayEmail(_email)"/>
+	<mx:Image id="congratsMessage" source="swfs/congratsMessage.swf" complete="displayEmail(_email)"/>
 	<mx:Canvas id="previewer" x="-21" y="88"/>
 	<!--<mx:VBox width="339" height="400" horizontalAlign="center" x="-39">
 		<mx:Canvas width="240" height="100%" backgroundColor="#0000ff"/>

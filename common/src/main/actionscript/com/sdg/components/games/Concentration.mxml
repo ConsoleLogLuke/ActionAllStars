@@ -5,7 +5,7 @@
 	xmlns:controls="com.sdg.components.controls.*"
 	implements="com.sdg.components.dialog.ISdgDialog"
 	verticalScrollPolicy="off" horizontalScrollPolicy="off"
-    backgroundImage="assets/swfs/gameBackground.swf"
+    backgroundImage="swfs/gameBackground.swf"
     backgroundSize="100%" >
 	<mx:VBox paddingTop="20" paddingBottom="25" paddingLeft="20" paddingRight="25" >
 		<mx:Script>
@@ -73,8 +73,8 @@
 					_gameSessionId = params.gameSessionId;
 
 					// load our sounds
-					//_cardFlipSound = new Sound(new URLRequest("assets/audio/cardFlip.mp3"));
-					_matchFoundSound = new Sound(new URLRequest("assets/audio/matchFound.mp3"));
+					//_cardFlipSound = new Sound(new URLRequest("audio/cardFlip.mp3"));
+					_matchFoundSound = new Sound(new URLRequest("audio/matchFound.mp3"));
 
 					// turn off the main chatInup control
 					//ChatInput(Application.application.mainLoader.child.console.chatInput).listenForValidation = false;
@@ -925,7 +925,7 @@
 		<!-- title -->
 		<mx:Canvas width="100%">
 			<mx:Label id="title" text="Concentration!" fontSize="38" verticalCenter="0" horizontalCenter="0" />
-			<mx:Image id="closeButton" source="assets/swfs/closeButton.swf" right="5" top="5" mouseChildren="false" buttonMode="true"
+			<mx:Image id="closeButton" source="swfs/closeButton.swf" right="5" top="5" mouseChildren="false" buttonMode="true"
 				rollOver="onCloseButtonRollOver(event)"	rollOut="onCloseButtonRollOut(event)" click="onCloseButtonClick(event)" />
 		</mx:Canvas>
 

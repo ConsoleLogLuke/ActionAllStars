@@ -2,7 +2,7 @@
 <mx:Canvas
 	xmlns:mx="http://www.adobe.com/2006/mxml"
     xmlns:sdgcontrols="com.sdg.components.controls.*"
-    xmlns:business="com.sdg.business.*" 
+    xmlns:business="com.sdg.business.*"
 	implements="com.sdg.components.dialog.ISdgDialog"
 	horizontalScrollPolicy="off"
 	verticalScrollPolicy="off"
@@ -15,7 +15,7 @@
 			import com.sdg.events.ConfirmTradingCardDeleteEvent;
 			import com.sdg.events.TradingCardDeleteEvent;
 			import com.sdg.events.TradingCardDeletedEvent;
-			
+
 			import com.adobe.cairngorm.control.CairngormEventDispatcher;
 
 			import mx.controls.Image;
@@ -24,7 +24,7 @@
 
 			private var _tradingCardIdToDelete:uint;
 			private var _swf:Object;
-			
+
 			public function init(params:Object):void
 			{
 				CairngormEventDispatcher.getInstance().addEventListener(TradingCardDeletedEvent.TRADING_CARD_DELETED, onCardDeleted);
@@ -34,8 +34,8 @@
             {
             	PopUpManager.removePopUp(this);
             	CairngormEventDispatcher.getInstance().removeEventListener(TradingCardDeletedEvent.TRADING_CARD_DELETED, onCardDeleted);
-            } 
-            
+            }
+
             private function closeSwf(e:Event):void
             {
             	close();
@@ -48,13 +48,13 @@
             	_tradingCardIdToDelete = obj.tradingCardId;
 				SdgAlert.show("Are you sure want to delete this card", "Confirm Delete!", SdgAlert.YES | SdgAlert.NO, SdgAlert.NO, deleteCard);
             }
-            
+
             private function onCardDeleted(event:TradingCardDeletedEvent):void
             {
            		SdgAlert.show("Card deleted", "Success!");
            		_swf.content.reloadCardAlbum();
             }
-            
+
             private function deleteCard(event:CloseEvent):void
             {
   				if(event.detail == SdgAlert.YES)
@@ -63,33 +63,33 @@
 					dispatchEvent(new TradingCardDeleteEvent(ModelLocator.getInstance().avatar.avatarId, _tradingCardIdToDelete));
 					//close();
 				}
-            	
+
             }
-            
+
             private function openSwf():void
             {
 				_swf.content.init("CardAlbum", ModelLocator.getInstance().avatar);
 				_swf.content.addEventListener(Event.CLOSE, closeSwf);
 				_swf.content.addEventListener(ConfirmTradingCardDeleteEvent.CONFIRM_TRADING_CARD_DELETE, confirmDelete);
             }
-            
-            public function componentSwfLoaded(event:Event):void 
-			{   
-			
+
+            public function componentSwfLoaded(event:Event):void
+			{
+
 				try
 				{
-					_swf = Object(tradingCardAlbum); 
+					_swf = Object(tradingCardAlbum);
 					openSwf();
 				}
 				catch(e:Error)
 				{
 					trace("card album error = " + e.message);
 				}
-				
-			}  
+
+			}
 
 		]]>
 	</mx:Script>
 
-	<mx:Image id="tradingCardAlbum" source="assets/swfs/TradingCardGame.swf" complete="componentSwfLoaded(event)"  />
+	<mx:Image id="tradingCardAlbum" source="swfs/TradingCardGame.swf" complete="componentSwfLoaded(event)"  />
 </mx:Canvas>

@@ -320,13 +320,13 @@
 
 	<!--<mx:HBox verticalAlign="middle" horizontalGap="4" x="4" y="374">
 		<mx:HBox horizontalGap="2">
-			<mx:Image id="sortAlpha" source="assets/swfs/pda/friendsList/friends_sortIcons_alphabetical.swf"
+			<mx:Image id="sortAlpha" source="swfs/pda/friendsList/friends_sortIcons_alphabetical.swf"
 				click="{sortByName()}" buttonMode="true" mouseOver="onMouseOver(event)" mouseOut="onMouseOut(event)"/>
-			<mx:Image id="sortLevel" source="assets/swfs/pda/friendsList/friends_sortIcons_star.swf"
+			<mx:Image id="sortLevel" source="swfs/pda/friendsList/friends_sortIcons_star.swf"
 				click="{sortByLevel()}" buttonMode="true" mouseOver="onMouseOver(event)" mouseOut="onMouseOut(event)"/>
-			<mx:Image id="sortGuest" source="assets/swfs/pda/friendsList/friends_sortIcons_guest.swf"
+			<mx:Image id="sortGuest" source="swfs/pda/friendsList/friends_sortIcons_guest.swf"
 				click="{sortByGuest()}" buttonMode="true" mouseOver="onMouseOver(event)" mouseOut="onMouseOut(event)"/>
-			<mx:Image id="sortTheme" source="assets/swfs/pda/friendsList/friends_sortIcons_party.swf"
+			<mx:Image id="sortTheme" source="swfs/pda/friendsList/friends_sortIcons_party.swf"
 				click="{sortByTheme()}" buttonMode="true" mouseOver="onMouseOver(event)" mouseOut="onMouseOut(event)"/>
 		</mx:HBox>
 		<mx:Label id="sortText" fontFamily="EuroStyle" fontSize="11" fontWeight="bold" color="0xffffff" alpha=".5"/>

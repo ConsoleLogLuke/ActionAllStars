@@ -202,5 +202,5 @@
 		</mx:Canvas>
 	</mx:ViewStack>
 
-	<!--<mx:SWFLoader id="upSell" source="assets/swfs/kioskGoPremium.swf" visible="false" init="initSwf()"/>-->
+	<!--<mx:SWFLoader id="upSell" source="swfs/kioskGoPremium.swf" visible="false" init="initSwf()"/>-->
 </mx:Canvas>

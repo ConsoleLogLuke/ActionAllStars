@@ -167,7 +167,7 @@
 			*/
 		]]>
 	</mx:Script>
-		<!--<mx:Image source="assets/swfs/TradingCardGame.swf" complete="componentSwfLoaded(event)"  />-->
+		<!--<mx:Image source="swfs/TradingCardGame.swf" complete="componentSwfLoaded(event)"  />-->
 
 		<sdgcontrols:TitlePanel showCloseButton="true" close="close()" cornerRadius="10" title="Trading Card Kiosk" horizontalAlign="center" paddingBottom="10" paddingTop="10" paddingLeft="10" paddingRight="10" borderStyle="solid" height="480" width="740" helpId="2105">
 				<sdgcontrols:BoxContainer styleName="lightBlue" width="100%">

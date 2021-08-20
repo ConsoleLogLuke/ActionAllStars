@@ -750,7 +750,7 @@
 			<sdgcontrols:AvatarPreview id="avatarPreview" y="28" horizontalCenter="0"/>
 			<sdgcontrols:SimpleItemPreview id="itemPreview" y="28" horizontalCenter="0" includeInLayout="false" visible="false"/>
 			<mx:Image id="avatarCardIcon" x="3" y="31"/>
-			<mx:Image id="starMeter" y="372" width="259" source="assets/swfs/StarMeter_1.swf"
+			<mx:Image id="starMeter" y="372" width="259" source="swfs/StarMeter_1.swf"
 				horizontalCenter="0" init="onstarMeterInit(event)" includeInLayout="false" visible="false"/>
 			<mx:HBox id="buddyDetails" y="378" horizontalCenter="0" >
 				<mx:Button id="buttonAddRemoveBuddy" click="{addRemoveBuddy()}" styleName="buddy" />
@@ -844,5 +844,5 @@
 	</mx:Canvas>
 
 	<mx:SWFLoader id="pickemResultsIn" visible="false"/>
-	<!--<mx:Image id="jabCounter" source="assets/swfs/hudCount.swf" includeInLayout="false" visible="false" init="{this.setJabCounter(this._jabCount)}" />-->
+	<!--<mx:Image id="jabCounter" source="swfs/hudCount.swf" includeInLayout="false" visible="false" init="{this.setJabCounter(this._jabCount)}" />-->
 </mx:Canvas>

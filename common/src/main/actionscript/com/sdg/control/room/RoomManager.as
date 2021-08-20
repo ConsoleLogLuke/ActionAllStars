@@ -39,19 +39,19 @@ package com.sdg.control.room
 	import com.sdg.util.AssetUtil;
 	import com.sdg.utils.Constants;
 	import com.sdg.utils.MainUtil;
-	
+
 	import flash.display.StageDisplayState;
 	import flash.events.EventDispatcher;
 	import flash.external.ExternalInterface;
-	
+
 	import mx.core.Application;
 	import mx.events.CloseEvent;
-	
+
 	[Bindable]
 	public class RoomManager extends EventDispatcher
 	{
 		public static const GAME_LIMIT_EXCEPTIONS:Array = [17, 18, 108, 67, 68];
-		
+
 		private var _preventSendItemAction:Boolean;
 		private var _currentRoom:Room;
 		private var _roomEnterStatus:uint = 0;
@@ -65,18 +65,18 @@ package com.sdg.control.room
 		public var itemCount:int = 0;
 		private static var _isAwaitingEnterAction:Boolean = false;
 		private static var _isAwaitingRoomRefresh:Boolean = false;
-		
+
 		private var _roomChangePreventionTargets:QuickList = new QuickList();
 		private var _socketEnabled:Boolean = true;
 		private var _userController:AvatarController;
-		
+
 		protected var roomBuilder:RoomBuilder = new RoomBuilder();
 		public var socketMethods:SocketRoomMethods = new SocketRoomMethods();
 		protected var userAvatar:Avatar = ModelLocator.getInstance().avatar;
 		public var homeTurfAvatar:Avatar;
-		
+
 		private static var _instance:RoomManager;
-		
+
 		public function RoomManager()
 		{
 			if (_instance)
@@ -84,44 +84,44 @@ package com.sdg.control.room
 
 			CairngormEventDispatcher.getInstance().addEventListener(ShowOverlayEvent.OVERLAY, onShowOverlayEvent);
 		}
-		
+
 		////////////////////
 		// PUBLIC FUNCTIONS
 		////////////////////
-		
+
 		public static function getInstance():RoomManager
 		{
 			if (_instance == null) _instance = new RoomManager();
 			return _instance;
 		}
-		
+
 		public static function isGameWithGamePlayLimit(gameId:int):Boolean
 		{
 			return GAME_LIMIT_EXCEPTIONS.indexOf(gameId) < 0;
 		}
-		
+
 		public function allowRoomChange(target:Object):void
 		{
 			_roomChangePreventionTargets.removeValue(target);
-			
+
 			if (_roomEnterStatus == 1 && !_roomChangePreventionTargets.length)
 			{
 				startRoomEnter();
 			}
 		}
-		
+
 		public function preventRoomChange(target:Object):void
 		{
 			_roomChangePreventionTargets.push(target);
 		}
-		
+
 		public function enterRoom(roomId:String, checkNumAvatars:Boolean = true):void
 		{
 			// Ignore if a request has already been made for this roomId.
 			if (roomId == pendingRoomId || roomId == currentRoomId) return;
 			if (_isAwaitingEnterAction == true) return;
 			if (_isAwaitingRoomRefresh == true) return;
-			
+
 			// If trying to enter room 0,
 			// show the world map and do not
 			// enter a room.
@@ -130,7 +130,7 @@ package com.sdg.control.room
 				dispatchEvent(new RoomManagerEvent(RoomManagerEvent.REQUEST_FOR_WORLD_MAP));
 				return;
 			}
-			
+
 			// Check if the room is the local user's private room (home turf).
 			// If it is then dispatch a user action to the server.
 			//if (roomId == userAvatar.privateRoom)
@@ -140,7 +140,7 @@ package com.sdg.control.room
 				//params.actionValue = '1';
 				//if (Constants.QUEST_ENABLED == true) SocketClient.getInstance().sendPluginMessage('room_manager', SocketRoomEvent.USER_ACTION, params);
 			//}
-			
+
 			// Check if entering the maze from the football field.
 			if (roomId == 'public_1000' && _currentRoom.id == 'public_121')
 			{
@@ -150,7 +150,7 @@ package com.sdg.control.room
 					MainUtil.showDialog(SaveYourGameDialog);
 					return;
 				}
-				
+
 				// If avatar has already completed the maze,
 				// give them an option to skip.
 				var achievementId:int = 574;
@@ -166,7 +166,7 @@ package com.sdg.control.room
 					mazeSkipDialog = MainUtil.showDialog(MazeSkipDialog, mazeSkipParams);
 					return;
 				}
-				
+
 				function onMazeSkip():void
 				{
 					// Re-route avatar to locker room.
@@ -174,14 +174,14 @@ package com.sdg.control.room
 					mazeSkipDialog.close();
 					continueEnterRoom();
 				}
-				
+
 				function onMazeContinue():void
 				{
 					mazeSkipDialog.close();
 					continueEnterRoom();
 				}
 			}
-			
+
 			// Log when entering the stadium. Should just be needed
 			// This can't be done via a unique room entries since
 			// there are multiple error states people could see.
@@ -189,9 +189,9 @@ package com.sdg.control.room
 			{
 				LoggingUtil.sendClickLogging(LoggingUtil.ROOM_ENTER_CLICK_STADIUM);
 			}
-			
+
 			continueEnterRoom();
-			
+
 			function continueEnterRoom():void
 			{
 				_pendingRoomId = roomId;
@@ -199,23 +199,23 @@ package com.sdg.control.room
 				_checkNumAvatars = checkNumAvatars;
 				_isAwaitingEnterAction = false;
 				_isAwaitingRoomRefresh = true;
-				
-				// Dispatch change event. 
+
+				// Dispatch change event.
 				// private room editor listens to this to allow the user a chance to cancel a room exit
 				dispatchEvent(new RoomManagerEvent(RoomManagerEvent.ENTER_ROOM_INIT));
-				
+
 				var roomIdArray:Array = roomId.split("_");
-				var roomIdNum:int = roomIdArray[0] == "public" ? roomIdArray[1] : 1; 
+				var roomIdNum:int = roomIdArray[0] == "public" ? roomIdArray[1] : 1;
 				CairngormEventDispatcher.getInstance().addEventListener(RoomCheckEvent.ROOM_CHECKED, onRoomChecked);
 				CairngormEventDispatcher.getInstance().dispatchEvent(new RoomCheckEvent(userAvatar.avatarId, roomIdNum));
 			}
 		}
-		
+
 		public function isTeleportingForbiddenRoom(roomId:String = null):Boolean
 		{
 			if (roomId == null)
 				roomId = currentRoomId;
-			
+
 			var array:Array = roomId.split("public_");
 			if (array.length > 1)
 			{
@@ -227,12 +227,12 @@ package com.sdg.control.room
 			}
 			return false;
 		}
-		
+
 		public function isUnderwaterRoom(roomId:String = null):Boolean
 		{
 			if (roomId == null)
 				roomId = currentRoomId;
-			
+
 			var array:Array = roomId.split("public_");
 			if (array.length > 1)
 			{
@@ -242,12 +242,12 @@ package com.sdg.control.room
 			}
 			return false;
 		}
-		
+
 		public function isMazeRoom(roomId:String = null):Boolean
 		{
 			if (roomId == null)
 				roomId = currentRoomId;
-			
+
 			var array:Array = roomId.split("public_");
 			if (array.length > 1)
 			{
@@ -257,7 +257,7 @@ package com.sdg.control.room
 			}
 			return false;
 		}
-		
+
 		public function exitRoom():void
 		{
 			if (_currentRoom)
@@ -270,45 +270,45 @@ package com.sdg.control.room
 				currentRoom = null;
 			}
 		}
-		
+
 		public function sendChat(text:String):void
 		{
 			userController.chat(text);
 		}
-		
+
 		public function sendRoomUpdate():void
 		{
 			//_socketEnabled = true;
 			//addSessionListeners();
-			
+
 			socketMethods.sendEnumUpdated();
 		}
-		
+
 		public function sendItemAction(item:SdgItem, action:String, params:Object, consequence:Object = null):void
 		{
 			socketMethods.sendItemAction(item.itemClassId, item.id, action, params, consequence);
 		}
-		
+
 		public function updateRoomTheme(params:Object, roomController:RoomController):void
 		{
 			// Set the pending room XML.
 			_pendingRoomXML = XML(XML(params.response).room);
-			
+
 			// turn off tile tiggers
 			userController.enableTileTriggers = false;
-			
+
 			// if layout not the same as old layout, remove items from room
 			//if (_currentRoom.layoutId != _pendingRoomXML.roomId)
 			//	_currentRoom.removeAllInventoryItems();
-			
+
 			roomBuilder.updateRoom(_pendingRoomXML);
-			
+
 			roomController.context.setUpRoom();
 			roomController.setupRoomSound(_currentRoom);
-			
+
 			//socketMethods.getEnumeration();
 		}
-		
+
 		public function handleUserAtGameLimit():void
 		{
 			// The user has reached their game play limit for the day.
@@ -317,7 +317,7 @@ package com.sdg.control.room
 			var mvpDialog:CustomMVPAlert = CustomMVPAlert.show(AssetUtil.GetGameAssetUrl(99, 'mvp_upsell_games.swf'), mvpButtonId, onMvpUpsellClose);
 			LoggingUtil.sendClickLogging(3745);
 			return;
-			
+
 			function onMvpUpsellClose(e:Object):void
 			{
 				// Check if we should go to mvp page.
@@ -326,14 +326,14 @@ package com.sdg.control.room
 				if (identifier == mvpButtonId) MainUtil.goToMVP(mvpButtonId);
 			}
 		}
-		
+
 		public function isUserAtGamePlayLimit(userMembershipStatis:int, gameId:int):Boolean
 		{
 			if (userMembershipStatis != MembershipStatus.PREMIUM)
 			{
 				// Create Exception Games
 				var exception:Boolean = !isGameWithGamePlayLimit(gameId);
-				
+
 				var gamePlayCount:int = GamePlayCounter.getPlayCount(gameId);
 				if ((gamePlayCount > (GamePlayCounter.MAX_FREE_PLAYS_PER_DAY - 1)) && (!exception))
 				{
@@ -341,17 +341,17 @@ package com.sdg.control.room
 					return true;
 				}
 			}
-			
+
 			return false;
 		}
-		
+
 		public function loadGame(gameId:int, achievementId:int=0, avatarId:int=0, team1ItemId:int = 0, team2ItemId:int = 0, checkGamePlayLimit:Boolean = false):void
 		{
 			if (!ExternalInterface.available) return;
-			
+
 			// If we are currently entering a room, ignore this action.
 			if (isEnteringRoom) return;
-			
+
 			// Make sure the local user has not reached their daily game play limit.
 			if (checkGamePlayLimit && isUserAtGamePlayLimit(userAvatar.membershipStatus, gameId))
 			{
@@ -360,29 +360,29 @@ package com.sdg.control.room
 				handleUserAtGameLimit();
 				return;
 			}
-			
+
 			// Send the stage to normal display state.
 			Application.application.stage.displayState = StageDisplayState.NORMAL;
-			
+
 			Application.application.frameRate = .01;
 			avatarId = (avatarId == 0) ? userAvatar.avatarId : avatarId;
 			_lastGamePlayedId = gameId;
-			
+
 			CairngormEventDispatcher.getInstance().dispatchEvent(new GameAttributesEvent(avatarId, gameId, achievementId, team1ItemId, team2ItemId));
-			
+
 			SocketClient.sendMessage("room_manager","startGame","gameEvent", {gameId:gameId, avatarId:avatarId, achievementId:achievementId, team1Id:team1ItemId, team2Id:team2ItemId});
-			
+
 			// Dispatch an event that signifies a game is being loaded.
 			dispatchEvent(new ExternalGameEvent(ExternalGameEvent.LOAD_GAME));
-			
+
 			CairngormEventDispatcher.getInstance().dispatchEvent(new RoomNavigateEvent(RoomNavigateEvent.EXIT_ROOM));
-			
+
 			// leave any invite panels we are in
 			var invitePanel:InvitePanel = InvitePanel(Application.application.mainLoader.child.invitePanel);
 			if (invitePanel.visible)
 				invitePanel.closeAndUpdatePanels();
 		}
-		
+
 		public function teleportToRoom(roomId:String):Boolean
 		{
 			// if the room you are teleporting to is maze room
@@ -401,7 +401,7 @@ package com.sdg.control.room
 					roomId = "public_121";
 					LoggingUtil.sendClickLogging(LoggingUtil.TELEPORT_CLOSEST_POINT);
 				}
-				
+
 			}
 			else if (isUnderwaterRoom(roomId))
 			{
@@ -429,7 +429,7 @@ package com.sdg.control.room
 			{
 				// Trying to teleport to a game room.
 				// DO not allow this.
-				
+
 				// Try to determine which game room the user is trying to teleport to.
 				// Try to teleport to the hub room of that game.
 				var vals:Array = roomId.split('_');
@@ -453,19 +453,19 @@ package com.sdg.control.room
 			{
 				LoggingUtil.sendClickLogging(LoggingUtil.TELEPORT_SUCCESS);
 			}
-			
+
 			CairngormEventDispatcher.getInstance().dispatchEvent(new RoomNavigateEvent(RoomNavigateEvent.ENTER_ROOM, roomId));
 			return true;
 		}
-		
+
 		////////////////////
 		// PROTECTED FUNCTIONS
 		////////////////////
-		
+
 		protected function onRoomChecked(event:RoomCheckEvent):void
 		{
 			CairngormEventDispatcher.getInstance().removeEventListener(RoomCheckEvent.ROOM_CHECKED, onRoomChecked);
-			
+
 			switch (event.status)
 			{
 				case 1:
@@ -484,7 +484,7 @@ package com.sdg.control.room
 					break;
 				case 421: // does not own badge
 					var code:int = event.codeId;
-					//MainUtil.showDialog(InWorldShopDialog, "assets/swfs/snorkel_popUp.swf");
+					//MainUtil.showDialog(InWorldShopDialog, "swfs/snorkel_popUp.swf");
 					//MainUtil.showDialog(InWorldShopDialog, Environment.getApplicationUrl() + "/test/static/clipart/codeLogoTemplate?codeId=" + event.codeId);
 					if (code == 13)
 					{
@@ -510,14 +510,14 @@ package com.sdg.control.room
 					else if (codeId == 10)
 					{
 						LoggingUtil.sendClickLogging(LoggingUtil.MVP_UPSELL_VIEW_MAVS_ARCADE);
-						var alert:MVPAlert = MVPAlert.show("Maverick's Arcade is for MVP Members only. Become part of the MVP team now " + 
+						var alert:MVPAlert = MVPAlert.show("Maverick's Arcade is for MVP Members only. Become part of the MVP team now " +
 								"to unlock all the awesome sports and arcade games in Action AllStars!", "Join the Team!", onClose);
 						alert.addButton("Become A Member", LoggingUtil.MVP_UPSELL_CLICK_MAVS_ARCADE, 250);
 					}
 					else if (codeId == 11)
 					{
 						LoggingUtil.sendClickLogging(LoggingUtil.MVP_UPSELL_VIEW_HOME_DUGOUT);
-						var alert2:MVPAlert = MVPAlert.show("This room is for MVP Members only. Become part of the MVP team now " + 
+						var alert2:MVPAlert = MVPAlert.show("This room is for MVP Members only. Become part of the MVP team now " +
 								"to unlock all the awesome sports and arcade games in Action AllStars!", "Join the Team!", onClose);
 						alert2.addButton("Become A Member", LoggingUtil.MVP_UPSELL_CLICK_HOME_DUGOUT, 250);
 					}
@@ -527,7 +527,7 @@ package com.sdg.control.room
 						CustomMVPAlert.show(Environment.getApplicationUrl() + "/test/gameSwf/gameId/82/gameFile/mvp_upsell_" + codeId + ".swf",
 											LoggingUtil.MVP_UPSELL_CLICK_MAVERICKS, onClose);
 					}
-					
+
 					_pendingRoomId = "";
 					_isAwaitingRoomRefresh = false;
 					break;
@@ -559,71 +559,71 @@ package com.sdg.control.room
 					_isAwaitingRoomRefresh = false;
 					break;
 			}
-			
+
 			function onCloseEquipZombieOutfit(event:Event):void
 			{
 				PDAController.getInstance().showAvatar(ModelLocator.getInstance().avatar);
 			}
-			
+
    			function onClose(event:CloseEvent):void
 			{
 				var identifier:int = event.detail;
-				
-				if (identifier == LoggingUtil.MVP_UPSELL_CLICK_MAVS_ARCADE || 
+
+				if (identifier == LoggingUtil.MVP_UPSELL_CLICK_MAVS_ARCADE ||
 				    identifier == LoggingUtil.MVP_UPSELL_CLICK_HOME_DUGOUT ||
 				    identifier == LoggingUtil.MVP_UPSELL_CLICK_MAVERICKS)
 					MainUtil.goToMVP(identifier);
 			}
 		}
-		
+
 		////////////////////
 		// PRIVATE FUNCTIONS
 		////////////////////
-		
+
 		private function startRoomEnter():void
 		{
 			// first see how many user's we have in this room
 			socketMethods.addEventListener(SocketRoomEvent.NUM_AVATARS, roomEnterHandler);
 			socketMethods.getAvatarCountInRoom(_pendingRoomId);
 		}
-		
+
 		private function roomEnterHandler(event:SocketRoomEvent):void
 		{
 			// Remove avatar count listener.
 			var _avatarXML:XML = XML(event.params.numAvatars);
 			socketMethods.removeEventListener(SocketRoomEvent.NUM_AVATARS, roomEnterHandler);
-			
+
 			// room lock logic
 			var roomIdArray:Array = _pendingRoomId.split("_");
 			if (roomIdArray[0] == "private") // if the room is a private room
 			{
-				var roomAvatarId:int = roomIdArray[1]; 
+				var roomAvatarId:int = roomIdArray[1];
 				if (roomAvatarId != userAvatar.avatarId) // if this is not your room
 				{
 					var lockMode:int = int(_avatarXML.lockMode);
-					
+
 					// room lock set to 3 = only owner can enter
 					// room lock set to 1 = only buddies can enter
-					
+
 					if (lockMode == Constants.TURF_ACCESS_PRIVATE || (lockMode == Constants.TURF_ACCESS_FRIENDS && _avatarXML.isFriend == 0))
 					{
 						var lockMessage:String = lockMode == Constants.TURF_ACCESS_PRIVATE ? "This turf is locked." : "This turf is open to friends only.";
 						_pendingRoomId = "";
-						
+
 						SdgAlertChrome.show(lockMessage, "Sorry");
 						_isAwaitingRoomRefresh = false;
 						return;
 					}
 				}
 			}
-			
+
 			if (int(_avatarXML.numAvatars) >= int(_avatarXML.maxAvatars) && _checkNumAvatars)
 			{
 				var linkId:Object = LoggingUtil.roomFullLinkIdMapping[_pendingRoomId];
-				
+
 				if (linkId != null)
 					LoggingUtil.sendClickLogging(linkId as int);
-				
+
 				RoomFullDialog.show(_pendingRoomId);
 				_pendingRoomId = "";		// allows reentry into same room from world after room full rejection
 				//SdgAlert.show("Sorry, this room is currently full. Try again later.", "Room Full");
@@ -631,75 +631,75 @@ package com.sdg.control.room
 				_isAwaitingRoomRefresh = false;
 				return;
 			}
-			
+
 			// if the invite panel is up - close it
 			if (userController.invitePanelOn)
-			{ 
+			{
 			    var invitePanel:InvitePanel = InvitePanel(Application.application.mainLoader.child.invitePanel);
                 invitePanel.closeAndUpdatePanels();
-			}	
-			
+			}
+
 			dispatchEvent(new RoomManagerEvent(RoomManagerEvent.ENTER_ROOM_START));
-			
+
 			CairngormEventDispatcher.getInstance().dispatchEvent(new HudEvent(HudEvent.ROOM_CHANGE, null));
-			
+
 			_roomEnterStatus = 2;
 			socketEnabled = true;
 			socketMethods.addEventListener(SocketRoomEvent.CONFIG, enterConfigHandler);
 			socketMethods.getConfig(_pendingRoomId);
 		}
-		
+
 		private function enterConfigHandler(event:SocketRoomEvent):void
 		{
 			// Remove config listener.
 			socketMethods.removeEventListener(SocketRoomEvent.CONFIG, enterConfigHandler);
-			
+
 			// Exit the previous room.
 			removeSessionListeners();
 			socketMethods.exit();
-			
+
 			// Set the pending room XML.
 			_pendingRoomXML = XML(XML(event.params.response).room);
 			trace("\n\nRoom Config:", _pendingRoomXML.toXMLString() + "\n\n");
-			
+
 			// Join room.
 			socketMethods.addEventListener(SocketRoomEvent.JOIN, enterJoinHandler);
 			socketMethods.join(_pendingRoomId);
 		}
-		
+
 		private function enterJoinHandler(event:SocketRoomEvent):void
 		{
 			// turn off tile tiggers while we join the room
 			userController.enableTileTriggers = false;
-				
+
 			_roomEnterStatus = 0;
-			
+
 			// Remove join listener.
 			socketMethods.removeEventListener(SocketRoomEvent.JOIN, enterJoinHandler);
-			
+
 			// Remove all items in the previous room.
 			if (_currentRoom)
 			{
 				_currentRoom.removeAllItems();
 				_currentRoom.removeAllClientItems();
 			}
-			
+
 			// Build room.
 			roomBuilder.buildRoom(_pendingRoomXML);
 			var room:Room = roomBuilder.getRoom();
-			
+
 			// Set the new room as current.
 			currentRoom = room;
-			
+
 			dispatchEvent(new RoomManagerEvent(RoomManagerEvent.ENTER_ROOM_COMPLETE));
-			
+
 			// Add listeners for socket events.
 			addSessionListeners();
-			
+
 			// Get enumeration.
 			socketMethods.getEnumeration();
 		}
-		
+
 		private function onShowOverlayEvent(ev:ShowOverlayEvent):void
 		{
 			if (currentRoomId && userController.behaviorRunning)
@@ -707,11 +707,11 @@ package com.sdg.control.room
 				userController.stopWalking();
 			}
 		}
-		
+
 		private function addSessionListeners():void
-		{	
+		{
 			if (!_socketEnabled) return;
-			
+
 			socketMethods.addEventListener(SocketRoomEvent.JOIN, userJoinHandler);
 			socketMethods.addEventListener(SocketRoomEvent.EXIT, userExitHandler);
 			socketMethods.addEventListener(SocketRoomEvent.ENUMERATION, enumerationHandler);
@@ -721,7 +721,7 @@ package com.sdg.control.room
 			socketMethods.addEventListener(SocketRoomEvent.BOT_ADDED, botAddedHandler);
 			socketMethods.addEventListener(SocketRoomEvent.BOT_REMOVED, botRemovedHandler);
 		}
-		
+
 		private function removeSessionListeners():void
 		{
 			socketMethods.removeEventListener(SocketRoomEvent.JOIN, userJoinHandler);
@@ -733,16 +733,16 @@ package com.sdg.control.room
 			socketMethods.addEventListener(SocketRoomEvent.BOT_ADDED, botAddedHandler);
 			socketMethods.addEventListener(SocketRoomEvent.BOT_REMOVED, botRemovedHandler);
 		}
-		
+
 		////////////////////
 		// GET/SET FUNCTIONS
 		////////////////////
-		
+
 		public function get currentRoom():Room
 		{
 			return _currentRoom;
 		}
-		
+
 		protected function set currentRoom(value:Room):void
 		{
 			if (_currentRoom)
@@ -750,12 +750,12 @@ package com.sdg.control.room
 				_currentRoom.removeEventListener(RoomEnumEvent.ENUM_REFRESH, onRoomEnumRefressh);
 				_prevRoomId = _currentRoom.id;
 			}
-			
+
 			_currentRoom = value;
 			if (_currentRoom != null) _currentRoom.addEventListener(RoomEnumEvent.ENUM_REFRESH, onRoomEnumRefressh);
 			_pendingRoomId = null;
 		}
-		
+
 		public function get currentRoomId():String
 		{
 			return (_currentRoom) ? _currentRoom.id : null;
@@ -764,7 +764,7 @@ package com.sdg.control.room
 
 		/**
 		 * Return path to current tutorial help text xml for this room
-		 * or null 
+		 * or null
 		 */
 		public function get currentbgHelpTextUrl():String
 		{
@@ -773,34 +773,34 @@ package com.sdg.control.room
 
 		/**
 		 * Return path to current tutorial help swf for this room
-		 * or null 
+		 * or null
 		 */
 		public function get currentbgSwfUrl():String
 		{
 			return (_currentRoom) ? _currentRoom.bgSwfUrl : null;
 		}
-		
+
 		public function get pendingRoomId():String
 		{
 			return _pendingRoomId;
 		}
-		
+
 		public function get prevRoomId():String
 		{
 			return _prevRoomId;
 		}
-		
+
 		public function get socketEnabled():Boolean
 		{
 			return _socketEnabled;
 		}
-		
+
 		public function set socketEnabled(value:Boolean):void
 		{
 			if (value != _socketEnabled)
 			{
 				_socketEnabled = value;
-				
+
 				if (_socketEnabled)
 				{
 					// If we're connected to a room, add socket event
@@ -809,7 +809,7 @@ package com.sdg.control.room
 					{
 						addSessionListeners();
 						socketMethods.getEnumeration();
-						
+
 						// Set the avatar status to available.
 						userAvatar.statusId = Avatar.AVAILABLE_STATUS;
 					}
@@ -818,33 +818,33 @@ package com.sdg.control.room
 				{
 					// Set the avatar status to away.
 					userAvatar.statusId = Avatar.AWAY_STATUS;
-					
+
 					// Remove socket event listeners.
 					removeSessionListeners();
 				}
 			}
 		}
-		
+
 		public function get userController():AvatarController
 		{
 			return _userController;
 		}
-		
+
 		public function set userController(controller:AvatarController):void
 		{
 			_userController = controller;
-			
+
 			// increase speed for skateboarders
 			// WHAT THE $@&%#@! ????? - Tommy
 			if (_userController.avatar && _userController.avatar.isWearingSkateboardingOutfit)
 				_userController.walkSpeedMultiplier = 1.75;
 		}
-		
+
 		public static function get isEnteringRoom():Boolean
 		{
 			return (_isAwaitingEnterAction || _isAwaitingRoomRefresh);
 		}
-		
+
 		public function get roomContext():IRoomContext
 		{
 			return _roomContext;
@@ -853,11 +853,11 @@ package com.sdg.control.room
 		{
 			_roomContext = value;
 		}
-		
+
 		////////////////////
 		// EVENT HANDLERS
 		////////////////////
-		
+
 		private function enumerationHandler(event:SocketRoomEvent):void
 		{
 			// Update room elements.
@@ -865,41 +865,41 @@ package com.sdg.control.room
 			// turn on tile triggers
 			userController.enableTileTriggers = true;
 		}
-		
+
 		private function userJoinHandler(event:SocketRoomEvent):void
 		{
 			// Add the entered avatar to the room.
 			roomBuilder.buildItems(XML(event.params.userAdded));
 		}
-		
+
 		private function userExitHandler(event:SocketRoomEvent):void
 		{
 			// Remove the exited avatar.
 			var avatarXML:XMLList = XML(event.params.userRemoved).avatar;
 			_currentRoom.removeAvatarById(avatarXML.aId);
 		}
-		
+
 		private function botAddedHandler(event:SocketRoomEvent):void
 		{
 			roomBuilder.buildItems(XML(event.params.botAdded));
 		}
-		
+
 		private function botRemovedHandler(event:SocketRoomEvent):void
 		{
 			var botXML:XMLList = XML(event.params.botRemoved).i;
 			_currentRoom.removeInventoryItemById(botXML.Id);
 		}
-		
+
 		private function itemActionHandler(event:SocketRoomEvent):void
 		{
 			var params:Object = event.params;
 			var actionXML:XML;
 			var item:SdgItem;
-			
+
 			if (event.type == SocketRoomEvent.AVATAR_ACTION)
 			{
 				actionXML = XML(params.avatarAction);
-				
+
 				if (actionXML.action == "jab")
 					item = _currentRoom.getAvatarById(actionXML.toAvatarId);
 				else if (actionXML.action == "acceptInvite")
@@ -920,24 +920,24 @@ package com.sdg.control.room
 			{
 				trace("RoomManager: Unable to parse item action.");
 				return;
-			}		
-			
+			}
+
 			if (item)
 			{
 				dispatchEvent(new RoomItemActionEvent(
 					RoomItemActionEvent.ROOM_ITEM_ACTION, item, actionXML.action, actionXML));
 			}
 		}
-		
+
 		private function itemUpdateHandler(event:SocketRoomEvent):void
 		{
 			roomBuilder.buildItem(XML(event.params.update));
 		}
-		
+
 		private function onRoomEnumRefressh(e:RoomEnumEvent):void
 		{
 			_isAwaitingRoomRefresh = false;
 		}
-		
+
 	}
 }

@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <mx:Image xmlns:mx="http://www.adobe.com/2006/mxml" width="625" height="509"
 	implements="com.sdg.components.dialog.ISdgDialog"
-	source="assets/swfs/scoreCard.swf" init="initSwf()">
-	
+	source="swfs/scoreCard.swf" init="initSwf()">
+
 	<mx:Script>
 		<![CDATA[
 			import mx.managers.PopUpManager;
 			private var _numCorrect:int;
-			
+
 			public function init(params:Object):void
 			{
 				_numCorrect = int(params);
 			}
-			
+
 			private function initSwf():void
 			{
 				try
@@ -28,17 +28,17 @@
 					trace("overlaySwf error: " + e.message);
 				}
 			}
-			
+
 			private function onClose(event:Event):void
 			{
 				event.currentTarget.removeEventListener(Event.CLOSE, onClose);
 				close();
 			}
-			
+
 			public function close():void
 			{
 				PopUpManager.removePopUp(this);
-			}			
+			}
 		]]>
 	</mx:Script>
 </mx:Image>

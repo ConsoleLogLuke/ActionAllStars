@@ -8,7 +8,7 @@ package com.sdg.messageBoard.views
 	import com.sdg.messageBoard.models.MessageBoardModel;
 	import com.sdg.model.ModelLocator;
 	import com.sdg.net.QuickLoader;
-	
+
 	import flash.display.DisplayObject;
 	import flash.display.Sprite;
 	import flash.events.MouseEvent;
@@ -17,14 +17,14 @@ package com.sdg.messageBoard.views
 	import flash.text.TextField;
 	import flash.text.TextFieldAutoSize;
 	import flash.text.TextFormat;
-	
+
 	import mx.collections.ArrayCollection;
-	
+
 	public class CorkBoardView extends Sprite
 	{
 		private static const NUM_ROWS:int = 2;
 		private static const NUM_COLUMNS:int = 4;
-		
+
 		private var _model:MessageBoardModel;
 		private var _page:int;
 		private var _leftButton:DisplayObject;
@@ -38,23 +38,23 @@ package com.sdg.messageBoard.views
 		private var _addMessageButton:DisplayObject;
 		private var _closeButton:DisplayObject;
 		private var _reportButton:DisplayObject;
-		
+
 		private var _messageContainer:Sprite;
 		private var _selectedMessage:TurfMessageView;
 		private var _pageNumTF:TextField;
 		private var _toolTipTF:TextField;
-		
+
 		public function CorkBoardView(model:MessageBoardModel)
 		{
 			super();
-			
+
 			_model = model;
-			
+
 			_model.addEventListener(MessageBoardEvent.MESSAGE_LIST_UPDATED, onMessageListUpdated, false, 0, true);
 			_model.addEventListener(MessageBoardEvent.MESSAGE_DELETED, onMessageDeleted, false, 0, true);
-			
-			var background:QuickLoader = new QuickLoader("assets/swfs/turfBuilder/msgBoard/MsgBoard.swf", onBGComplete);
-			
+
+			var background:QuickLoader = new QuickLoader("swfs/turfBuilder/msgBoard/MsgBoard.swf", onBGComplete);
+
 			// page number
 			_pageNumTF = new TextField();
 			_pageNumTF.embedFonts = true;
@@ -63,13 +63,13 @@ package com.sdg.messageBoard.views
 			_pageNumTF.selectable = false;
 			_pageNumTF.y = 96;
 			addChild(_pageNumTF);
-			
-			_leftButton = new QuickLoader("assets/swfs/turfBuilder/msgBoard/LeftArrow.swf", onLeftArrowComplete);
-			_rightButton = new QuickLoader("assets/swfs/turfBuilder/msgBoard/RightArrow.swf", onRightArrowComplete);
-			
-			_replyButton = new QuickLoader("assets/swfs/turfBuilder/msgBoard/ReplyMessage.swf", onReplyButtonComplete);
-			_deleteButton = new QuickLoader("assets/swfs/turfBuilder/msgBoard/DeleteMessage.swf", onDeleteButtonComplete);
-			
+
+			_leftButton = new QuickLoader("swfs/turfBuilder/msgBoard/LeftArrow.swf", onLeftArrowComplete);
+			_rightButton = new QuickLoader("swfs/turfBuilder/msgBoard/RightArrow.swf", onRightArrowComplete);
+
+			_replyButton = new QuickLoader("swfs/turfBuilder/msgBoard/ReplyMessage.swf", onReplyButtonComplete);
+			_deleteButton = new QuickLoader("swfs/turfBuilder/msgBoard/DeleteMessage.swf", onDeleteButtonComplete);
+
 			_goHomeTurfButton = new CircleIconVisit();
 			_goHomeTurfButton.scaleX = _goHomeTurfButton.scaleY = 1.3;
 			_goHomeTurfButton.x = 214;
@@ -80,11 +80,11 @@ package com.sdg.messageBoard.views
 			_goHomeTurfButton.addEventListener(MouseEvent.CLICK, onHomeTurfButtonClick, false, 0, true);
 			_goHomeTurfButton.addEventListener(MouseEvent.MOUSE_OVER, onButtonMouseOver, false, 0, true);
 			_goHomeTurfButton.addEventListener(MouseEvent.MOUSE_OUT, onButtonMouseOut, false, 0, true);
-			
-			_reportButton = new QuickLoader("assets/swfs/turfBuilder/msgBoard/ReportUser.swf", onReportButtonComplete);
-			
-			_addMessageButton = new QuickLoader("assets/swfs/turfBuilder/msgBoard/AddMessage.swf", onAddMessageButtonComplete);
-			
+
+			_reportButton = new QuickLoader("swfs/turfBuilder/msgBoard/ReportUser.swf", onReportButtonComplete);
+
+			_addMessageButton = new QuickLoader("swfs/turfBuilder/msgBoard/AddMessage.swf", onAddMessageButtonComplete);
+
 			_toolTipTF = new TextField();
 			_toolTipTF.embedFonts = true;
 			_toolTipTF.defaultTextFormat = new TextFormat('EuroStyle', 17, 0xffffff, true);
@@ -94,18 +94,18 @@ package com.sdg.messageBoard.views
 			_toolTipTF.y = 565;
 			_toolTipTF.filters = [new GlowFilter(0x000000, 1, 6, 6, 10)];
 			addChild(_toolTipTF);
-			
-			_closeButton = new QuickLoader("assets/swfs/turfBuilder/msgBoard/ButtonClose.swf", onCloseButtonComplete);
-			
+
+			_closeButton = new QuickLoader("swfs/turfBuilder/msgBoard/ButtonClose.swf", onCloseButtonComplete);
+
 			setPage(0);
-			
+
 			function onBGComplete():void
 			{
 				addChildAt(background.content, 0);
 				_pageNumTF.x = width/2 - _pageNumTF.width/2;
 			}
 		}
-		
+
 		private function onCloseButtonComplete():void
 		{
 			_closeButton = QuickLoader(_closeButton).content;
@@ -114,12 +114,12 @@ package com.sdg.messageBoard.views
 			addChild(_closeButton);
 			_closeButton.addEventListener(MouseEvent.CLICK, onCloseButtonClick, false, 0, true);
 		}
-		
+
 		private function onCloseButtonClick(event:MouseEvent):void
 		{
 			dispatchEvent(new MessageBoardEvent(MessageBoardEvent.CLOSE_MESSAGE_BOARD));
 		}
-		
+
 		private function onAddMessageButtonComplete():void
 		{
 			_addMessageButton = QuickLoader(_addMessageButton).content;
@@ -129,17 +129,17 @@ package com.sdg.messageBoard.views
 			addChild(_addMessageButton);
 			_addMessageButton.addEventListener(MouseEvent.CLICK, onAddMessageClick, false, 0, true);
 		}
-		
+
 		private function onReplyClick(event:MouseEvent):void
 		{
 			dispatchAddMessageEvent(_selectedMessage.turfMessage.sender.avatarId, MessageBoardEvent.REPLY_MESSAGE);
 		}
-		
+
 		private function onAddMessageClick(event:MouseEvent):void
 		{
 			dispatchAddMessageEvent(_model.currentRoom.ownerId, MessageBoardEvent.ADD_MESSAGE);
 		}
-		
+
 		private function dispatchAddMessageEvent(recipientId:int, eventType:String):void
 		{
 			// Make sure the user is not in 'warned' mode.
@@ -154,7 +154,7 @@ package com.sdg.messageBoard.views
 				dispatchEvent(event);
 			}
 		}
-		
+
 		private function onReportButtonComplete():void
 		{
 			var loader:QuickLoader = _reportButton as QuickLoader;
@@ -165,14 +165,14 @@ package com.sdg.messageBoard.views
 			_reportButton.filters = [new DropShadowFilter(10, 60, 0, .25)];
 			addChild(_reportButton);
 			Sprite(_reportButton).buttonMode = true;
-			
+
 			enableButton(_reportButton, loader.mouseEnabled);
-			
+
 			_reportButton.addEventListener(MouseEvent.CLICK, onReportClick, false, 0, true);
 			_reportButton.addEventListener(MouseEvent.MOUSE_OVER, onButtonMouseOver, false, 0, true);
 			_reportButton.addEventListener(MouseEvent.MOUSE_OUT, onButtonMouseOut, false, 0, true);
 		}
-		
+
 		private function onReplyButtonComplete():void
 		{
 			var loader:QuickLoader = _replyButton as QuickLoader;
@@ -183,14 +183,14 @@ package com.sdg.messageBoard.views
 			_replyButton.filters = [new DropShadowFilter(10, 60, 0, .25)];
 			addChild(_replyButton);
 			Sprite(_replyButton).buttonMode = true;
-			
+
 			enableButton(_replyButton, loader.mouseEnabled);
-			
+
 			_replyButton.addEventListener(MouseEvent.CLICK, onReplyClick, false, 0, true);
 			_replyButton.addEventListener(MouseEvent.MOUSE_OVER, onButtonMouseOver, false, 0, true);
 			_replyButton.addEventListener(MouseEvent.MOUSE_OUT, onButtonMouseOut, false, 0, true);
 		}
-		
+
 		private function onDeleteButtonComplete():void
 		{
 			var loader:QuickLoader = _deleteButton as QuickLoader;
@@ -201,28 +201,28 @@ package com.sdg.messageBoard.views
 			_deleteButton.filters = [new DropShadowFilter(10, 60, 0, .25)];
 			addChild(_deleteButton);
 			Sprite(_deleteButton).buttonMode = true;
-			
+
 			enableButton(_deleteButton, loader.mouseEnabled);
-			
+
 			_deleteButton.addEventListener(MouseEvent.CLICK, onDeleteClick, false, 0, true);
 			_deleteButton.addEventListener(MouseEvent.MOUSE_OVER, onButtonMouseOver, false, 0, true);
 			_deleteButton.addEventListener(MouseEvent.MOUSE_OUT, onButtonMouseOut, false, 0, true);
 		}
-		
+
 		private function onHomeTurfButtonClick(event:MouseEvent):void
 		{
 			var e:MessageBoardEvent = new MessageBoardEvent(MessageBoardEvent.GO_TO_SENDER_TURF);
 			e.turfMessage = _selectedMessage.turfMessage;
 			dispatchEvent(e);
 		}
-		
+
 		private function onButtonMouseOver(event:MouseEvent):void
 		{
 			var button:DisplayObject = event.currentTarget as DisplayObject;
 			var buttonFilters:Array = button.filters;
 			buttonFilters.unshift(new GlowFilter(0xffffff, 1, 6, 6, 10));
 			button.filters = buttonFilters;
-			
+
 			var tooltip:String = "";
 			switch (button)
 			{
@@ -245,10 +245,10 @@ package com.sdg.messageBoard.views
 					tooltip = "Report Message";
 					break;
 			}
-			
+
 			_toolTipTF.text = tooltip;
 		}
-		
+
 		private function onButtonMouseOut(event:MouseEvent):void
 		{
 			var button:DisplayObject = event.currentTarget as DisplayObject;
@@ -257,7 +257,7 @@ package com.sdg.messageBoard.views
 			button.filters = buttonFilters;
 			_toolTipTF.text = "";
 		}
-		
+
 		private function onLeftArrowComplete():void
 		{
 			var loader:QuickLoader = _leftButton as QuickLoader;
@@ -269,7 +269,7 @@ package com.sdg.messageBoard.views
 			_leftButton.visible = loader.visible;
 			_leftButton.addEventListener(MouseEvent.CLICK, onArrowClick, false, 0, true);
 		}
-		
+
 		private function onRightArrowComplete():void
 		{
 			var loader:QuickLoader = _rightButton as QuickLoader;
@@ -281,7 +281,7 @@ package com.sdg.messageBoard.views
 			_rightButton.visible = loader.visible;
 			_rightButton.addEventListener(MouseEvent.CLICK, onArrowClick, false, 0, true);
 		}
-		
+
 		private function onArrowClick(event:MouseEvent):void
 		{
 			var button:DisplayObject = event.currentTarget as DisplayObject;
@@ -294,7 +294,7 @@ package com.sdg.messageBoard.views
 				setPage(_page + 1);
 			}
 		}
-		
+
 		private function updateFriendButton():void
 		{
 			var button:DisplayObject;
@@ -306,7 +306,7 @@ package com.sdg.messageBoard.views
 					_removeFriendButton.scaleX = _removeFriendButton.scaleY = 1.3;
 					Sprite(_removeFriendButton).buttonMode = true;
 				}
-				
+
 				button = _removeFriendButton;
 			}
 			else
@@ -317,17 +317,17 @@ package com.sdg.messageBoard.views
 					_addFriendButton.scaleX = _addFriendButton.scaleY = 1.3;
 					Sprite(_addFriendButton).buttonMode = true;
 				}
-				
+
 				button = _addFriendButton;
 			}
-			
+
 			setFriendButton(button);
 		}
-			
+
 		private function setFriendButton(button:DisplayObject):void
 		{
 			if (_friendButton == button) return;
-			
+
 			if (_friendButton != null)
 			{
 				_friendButton.removeEventListener(MouseEvent.CLICK, onFriendButtonClick);
@@ -335,7 +335,7 @@ package com.sdg.messageBoard.views
 				_friendButton.removeEventListener(MouseEvent.MOUSE_OUT, onButtonMouseOut);
 				removeChild(_friendButton);
 			}
-				
+
 			_friendButton = button;
 			_friendButton.addEventListener(MouseEvent.CLICK, onFriendButtonClick, false, 0, true);
 			_friendButton.addEventListener(MouseEvent.MOUSE_OVER, onButtonMouseOver, false, 0, true);
@@ -345,7 +345,7 @@ package com.sdg.messageBoard.views
 			_friendButton.x = 271;
 			_friendButton.y = 580;
 		}
-		
+
 		private	function onFriendButtonClick(event:MouseEvent):void
 		{
 			var eventType:String
@@ -357,45 +357,45 @@ package com.sdg.messageBoard.views
 			{
 				eventType = MessageBoardEvent.REMOVE_BUDDY;
 			}
-			
+
 			var e:MessageBoardEvent = new MessageBoardEvent(eventType);
 			e.turfMessage = _selectedMessage.turfMessage;
 			dispatchEvent(e);
 		}
-		
+
 		private function onReportClick(event:MouseEvent):void
 		{
 			updateMessage(MessageBoardEvent.REPORT_MESSAGE);
 		}
-		
+
 		private function onDeleteClick(event:MouseEvent):void
 		{
 			updateMessage(MessageBoardEvent.DELETE_MESSAGE);
 		}
-		
+
 		private function updateMessage(eventType:String):void
 		{
 			var event:MessageBoardEvent = new MessageBoardEvent(eventType);
 			event.turfMessage = _selectedMessage.turfMessage;
 			dispatchEvent(event);
 		}
-		
+
 		private function updateButtons():void
 		{
 			updateFriendButton();
-			
+
 			var replyButtonEnabled:Boolean;
 			var deleteButtonEnabled:Boolean;
 			var goHomeTurfButtonEnabled:Boolean;
 			var friendButtonEnabled:Boolean;
 			var reportButtonEnabled:Boolean;
-			
+
 			if (_selectedMessage != null)
 			{
 				var currentRoomOwnerId:int = _model.currentRoom.ownerId;
 				var avatarId:int = ModelLocator.getInstance().avatar.avatarId;
 				var senderId:int = _selectedMessage.turfMessage.sender.avatarId;
-				
+
 				if (currentRoomOwnerId == avatarId)
 				{
 					replyButtonEnabled = true;
@@ -403,41 +403,41 @@ package com.sdg.messageBoard.views
 				}
 				else if (senderId == avatarId)
 					deleteButtonEnabled = true;
-				
+
 				if (senderId != currentRoomOwnerId)
 					goHomeTurfButtonEnabled = true;
-				
+
 				if (senderId != avatarId)
 					friendButtonEnabled = true;
-				
+
 				reportButtonEnabled = true;
 			}
-			
+
 			enableButton(_replyButton, replyButtonEnabled);
 			enableButton(_deleteButton, deleteButtonEnabled);
 			enableButton(_goHomeTurfButton, goHomeTurfButtonEnabled);
 			enableButton(_friendButton, friendButtonEnabled);
 			enableButton(_reportButton, reportButtonEnabled);
 		}
-		
+
 		private function enableButton(button:DisplayObject, value:Boolean):void
 		{
 			var buttonSprite:Sprite = button as Sprite;
-			
+
 			buttonSprite.mouseEnabled = buttonSprite.mouseChildren = value;
 			buttonSprite.alpha = value ? 1 : .5;
 		}
-		
+
 		public function showReplySuccess():void
 		{
 			SdgAlertChrome.show("Your message has been sent.", "Message Sent");
 		}
-		
+
 		public function showReportSuccess():void
 		{
 			ModeratorAlertChrome.show("Thank you for reporting this message", "Message Reported");
 		}
-		
+
 		public function handleUpdateError(actionType:int):void
 		{
 			var errorMessage:String;
@@ -449,21 +449,21 @@ package com.sdg.messageBoard.views
 			{
 				errorMessage = "Report Message Error";
 			}
-			
+
 			SdgAlertChrome.show(errorMessage, "Time Out");
 		}
-		
+
 		public function handleMessageListError():void
 		{
 			SdgAlertChrome.show("Message List Error", "Time Out");
 		}
-		
+
 		private function setPage(value:int):void
 		{
 			var messagesPerPage:int = NUM_ROWS * NUM_COLUMNS;
 			var messages:ArrayCollection = _model.messages;
 			var maxPage:int = Math.max(0, Math.ceil(messages.length / messagesPerPage) - 1);
-			
+
 			if (value < 0 || value > maxPage)
 			{
 				if (_page < 0)
@@ -473,27 +473,27 @@ package com.sdg.messageBoard.views
 				else
 					return;
 			}
-			
+
 			_page = value;
-			
+
 			_leftButton.visible = _page > 0;
-			_rightButton.visible = _page < maxPage; 
-			
+			_rightButton.visible = _page < maxPage;
+
 			_pageNumTF.text = "PAGE " + (_page + 1) + "/" + (maxPage + 1);
 			_pageNumTF.x = width/2 - _pageNumTF.width/2;
-			
+
 			if (_messageContainer != null)
 			{
 				closeMessages();
 				removeChild(_messageContainer);
 			}
 			setSelectedMessage(null);
-			
+
 			_messageContainer = new Sprite();
 			addChildAt(_messageContainer, 1);
 			_messageContainer.x = 70;
 			_messageContainer.y = 150;
-			
+
 			var index:int;
 			var messageView:TurfMessageView;
 			var startIndex:int = _page * messagesPerPage;
@@ -505,18 +505,18 @@ package com.sdg.messageBoard.views
 				messageView.y = Math.floor((index % messagesPerPage) / NUM_COLUMNS) * 205;
 				messageView.x = (index % NUM_COLUMNS) * 200;
 				messageView.buttonMode = true;
-				
+
 				messageView.addEventListener(MouseEvent.CLICK, onMessageClick, false, 0, true);
 				messageView.addEventListener(MouseEvent.MOUSE_OVER, onMouseOver, false, 0, true);
 				messageView.addEventListener(MouseEvent.MOUSE_OUT, onMouseOut, false, 0, true);
 			}
 		}
-		
+
 		private function closeMessages():void
 		{
 			var index:int;
 			var messageView:TurfMessageView;
-			
+
 			for (index = 0; index < _messageContainer.numChildren; index++)
 			{
 				messageView = _messageContainer.getChildAt(index) as TurfMessageView;
@@ -526,85 +526,85 @@ package com.sdg.messageBoard.views
 				messageView.destroy();
 			}
 		}
-		
+
 		private function onMouseOver(event:MouseEvent):void
 		{
 			var turfMessage:TurfMessageView = event.currentTarget as TurfMessageView;
 			turfMessage.setHighlight(true);
 		}
-		
+
 		private function onMouseOut(event:MouseEvent):void
 		{
 			var turfMessage:TurfMessageView = event.currentTarget as TurfMessageView;
 			if (_selectedMessage == turfMessage) return;
 			turfMessage.setHighlight(false);
 		}
-		
+
 		private function onMessageClick(event:MouseEvent):void
 		{
 			setSelectedMessage(event.currentTarget as TurfMessageView);
 		}
-		
+
 		private function setSelectedMessage(value:TurfMessageView):void
 		{
 			if (_selectedMessage != null)
 			{
 				if (_selectedMessage == value) return;
-				
+
 				_selectedMessage.setHighlight(false);
 			}
-			
+
 			_selectedMessage = value;
-			
+
 			if (_selectedMessage != null)
 				_selectedMessage.setHighlight(true);
-			
+
 			updateButtons();
 		}
-		
+
 		private function onMessageListUpdated(event:MessageBoardEvent):void
 		{
 			setPage(0);
 		}
-		
+
 		private function onMessageDeleted(event:MessageBoardEvent):void
 		{
 			setPage(_page);
 		}
-		
+
 		public function close():void
 		{
 			_model.removeEventListener(MessageBoardEvent.MESSAGE_LIST_UPDATED, onMessageListUpdated);
 			_model.removeEventListener(MessageBoardEvent.MESSAGE_DELETED, onMessageDeleted);
-			
+
 			_goHomeTurfButton.removeEventListener(MouseEvent.CLICK, onHomeTurfButtonClick);
 			_goHomeTurfButton.removeEventListener(MouseEvent.MOUSE_OVER, onButtonMouseOver);
 			_goHomeTurfButton.removeEventListener(MouseEvent.MOUSE_OUT, onButtonMouseOut);
-			
+
 			_closeButton.removeEventListener(MouseEvent.CLICK, onCloseButtonClick);
-			
+
 			_addMessageButton.removeEventListener(MouseEvent.CLICK, onAddMessageClick);
-			
+
 			_reportButton.removeEventListener(MouseEvent.CLICK, onReportClick);
 			_reportButton.removeEventListener(MouseEvent.MOUSE_OVER, onButtonMouseOver);
 			_reportButton.removeEventListener(MouseEvent.MOUSE_OUT, onButtonMouseOut);
-			
+
 			_deleteButton.removeEventListener(MouseEvent.CLICK, onDeleteClick);
 			_deleteButton.removeEventListener(MouseEvent.MOUSE_OVER, onButtonMouseOver);
 			_deleteButton.removeEventListener(MouseEvent.MOUSE_OUT, onButtonMouseOut);
-			
+
 			_leftButton.removeEventListener(MouseEvent.CLICK, onArrowClick);
-			
+
 			_rightButton.removeEventListener(MouseEvent.CLICK, onArrowClick);
-			
+
 			_friendButton.removeEventListener(MouseEvent.CLICK, onFriendButtonClick);
 			_friendButton.removeEventListener(MouseEvent.MOUSE_OVER, onButtonMouseOver);
 			_friendButton.removeEventListener(MouseEvent.MOUSE_OUT, onButtonMouseOut);
-			
+
 			_replyButton.removeEventListener(MouseEvent.CLICK, onReplyClick);
 			_replyButton.removeEventListener(MouseEvent.MOUSE_OVER, onButtonMouseOver);
 			_replyButton.removeEventListener(MouseEvent.MOUSE_OUT, onButtonMouseOut);
-			
+
 			closeMessages();
 		}
 	}

@@ -13,49 +13,49 @@
 			import com.adobe.cairngorm.control.CairngormEventDispatcher;
 			import com.sdg.view.pda.interfaces.IPDASidePanel;
 			import com.sdg.control.PDAController;
-			
+
 			[Bindable]
 			private var _controller:PDAController;
 			private var _isInitialized:Boolean = false;
-			
+
 			public function init(controller:PDAController = null):void
 			{
 				this.controller = controller;
-				
+
 				refresh();
 				_isInitialized = true;
 			}
-			
+
 			public function refresh():void
 			{
 				_controller.getScorecard();
 				_controller.addEventListener("pickemDataComplete", onCollectionComplete);
 			}
-			
+
 			public function close():void
 			{
 			}
-			
+
 			public function set controller(value:PDAController):void
 			{
 				_controller = value;
 			}
-			
+
 			public function get isInitialized():Boolean
 			{
 				return _isInitialized;
 			}
-			
+
 			public function get sidePanel():IPDASidePanel
 			{
 				return null;
 			}
-			
+
 			public function get panelName():String
 			{
 				return "Sports Psychic";
 			}
-			
+
 			private function onCollectionComplete(event:Event):void
 			{
 				_controller.removeEventListener("pickemDataComplete", onCollectionComplete);
@@ -69,29 +69,29 @@
 					pickemList.selectedIndex = 0;
 					onSelection();
 				}
-				
+
 				var sharedObject:SharedObject = ModelLocator.getInstance().pickemSharedObject;
 				if (sharedObject.data.newPickemResults != null && sharedObject.data.avatarId == ModelLocator.getInstance().avatar.avatarId)
 				{
 					if (sharedObject.data.newPickemResults == "true")
 						MainUtil.showDialog(PickemResultsDialog, _controller.pickemData.numCorrect, false);
-					
+
 					sharedObject.clear();
 				}
 			}
-			
+
 			private function onIOError(image:Image, text:Text, string:String):void
 			{
 				image.visible = false;
 				text.visible = true;
 				text.text = string;
 			}
-			
+
 			private function onSelection():void
 			{
 				var selection:Object = _controller.pickemData.pickemPicks.getItemAt(pickemList.selectedIndex);
 				question.text = selection.question;
-				
+
 				if (_controller.pickemData.status == "unresolved")
 				{
 					unresolved.visible = unresolved.includeInLayout = true;
@@ -102,15 +102,15 @@
 					choice1Percent.text = percentages[0] + "%";
 					choice2Percent.text = percentages[1] + "%";
 					voteMeter.setMeter(percentages[0], percentages[1]);
-					
+
 					shortMessage.text = "Return tomorrow for results";
 				}
 				else if (_controller.pickemData.status == "resolved")
 				{
 					resolved.visible = resolved.includeInLayout = true;
 					unresolved.visible = unresolved.includeInLayout = false;
-					
-					
+
+
 					pickImage.visible = true;
 					pickText.visible = false;
 					if (selection.selected > -1)
@@ -121,32 +121,32 @@
 					}
 					else
 					{
-						pickImage.source = null; 
+						pickImage.source = null;
 					}
-					
+
 					winnerImage.visible = true;
 					winnerText.visible = false;
 					// is a tie
 					if (selection.correct > 1)
-						winnerImage.source = "assets/swfs/pda/tie.swf";
+						winnerImage.source = "swfs/pda/tie.swf";
 					else if (selection.correct > -1)
 					{
 						winnerImage.source = selection.images[selection.correct];
 						winnerImage.addEventListener(IOErrorEvent.IO_ERROR,
 							function(event:Event):void {onIOError(winnerImage, winnerText, selection.answer[selection.correct])});
 					}
-					
+
 					if (selection.isCorrect)
 					{
-						thumb.source = "assets/swfs/pda/thumbsUp.swf";
+						thumb.source = "swfs/pda/thumbsUp.swf";
 						thumbText.text = "Correct";
 					}
 					else
 					{
-						thumb.source = "assets/swfs/pda/thumbsDown.swf";
+						thumb.source = "swfs/pda/thumbsDown.swf";
 						thumbText.text = "Incorrect";
 					}
-					
+
 					var numCorrect:int = _controller.pickemData.numCorrect;
 					var numTokensEarned:int = numCorrect > 0 ? Math.pow(2, numCorrect - 1) : 0;
 					var strTokens:String = numTokensEarned == 1 ? " token." : " tokens."
@@ -158,7 +158,7 @@
 	<mx:Canvas borderStyle="solid" borderThickness="3" borderColor="#1f3361" cornerRadius="10" width="100%" height="375" backgroundColor="#14213f">
 		<mx:VBox id="played" width="100%" height="100%" verticalGap="0" horizontalAlign="center">
 			<mx:Label text="Your picks are highlighted in white" color="#999999"/>
-			
+
 			<mx:List id="pickemList" paddingRight="0" paddingLeft="0" paddingTop="0" paddingBottom="0" dataProvider="{_controller.pickemData.pickemPicks}"
 				width="100%" backgroundColor="#000000" columnCount="1" rowCount="5" change="onSelection()"
 				borderStyle="solid" borderThickness="1" borderColor="#1f3361" borderSides="top"
@@ -167,7 +167,7 @@
 			<mx:VBox borderStyle="solid" borderThickness="4" borderColor="#1f3361" borderSides="top" width="100%" height="100%"
 				horizontalAlign="center" verticalGap="0">
 				<mx:Text id="question" width="290" height="36" color="#ffffff" textAlign="center" selectable="false"/>
-				
+
 				<mx:HBox id="resolved" width="100%" height="100%" visible="false" includeInLayout="false"
 					paddingLeft="5" paddingRight="5" paddingTop="5" paddingBottom="5" horizontalGap="5">
 					<mx:VBox backgroundColor="#1f3361" width="180" height="100%" horizontalAlign="center"
@@ -198,7 +198,7 @@
 						</mx:VBox>
 					</mx:VBox>
 				</mx:HBox>
-				
+
 				<mx:VBox id="unresolved" width="100%" height="100%" horizontalAlign="center"
 					paddingLeft="3" paddingRight="3" paddingTop="5" paddingBottom="5" visible="false" includeInLayout="false">
 					<mx:VBox width="100%" height="100%" horizontalAlign="center" verticalAlign="middle" backgroundColor="#1f3361"
@@ -229,6 +229,6 @@
 				text="to play Sports Psychic!" color="#4d9ccc"/>
 		</mx:VBox>
 	</mx:Canvas>
-	
+
 	<mx:Label id="shortMessage" horizontalCenter="0" bottom="0" filters="{[new GlowFilter(0xffffff, .60, 10, 10, 2, 2)]}" fontSize="15"/>
 </mx:Canvas>

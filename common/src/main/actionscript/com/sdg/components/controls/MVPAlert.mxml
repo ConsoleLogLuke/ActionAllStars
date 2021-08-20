@@ -7,7 +7,7 @@
 			import mx.managers.PopUpManager;
 			import mx.events.CloseEvent;
 			import mx.controls.Button;
-			
+
 			public function addButton(label:String, identifier:int = -1, width:int = 122, height:int = 38, fontSize:int = 18):Button
 			{
 				var button:Button = new Button();
@@ -20,46 +20,46 @@
 				button.label = label;
 				button.addEventListener(MouseEvent.CLICK, onClick);
 				return button;
-				
+
 				function onClick(event:MouseEvent):void
 				{
 					close(identifier);
 				}
 			}
-			
+
 			public function show(message:String, title:String, closeHandler:Function = null,
-								customBackground:String = "assets/swfs/mvp/BackgroundDenied.swf"):void
+								customBackground:String = "swfs/mvp/BackgroundDenied.swf"):void
 			{
 				if (closeHandler != null)
 					addEventListener(CloseEvent.CLOSE, closeHandler);
-				
+
 				visible = true;
-				
+
 				MainUtil.showModalDialog(null, null, this);
-				
+
 				titleText.text = title;
 				messageText.text = message;
-				
+
 				setStyle("backgroundImage", customBackground);
 			}
-			
+
 			/**
 			 * Static show method.
 			 */
 			public static function show(message:String, title:String, closeHandler:Function = null,
-										customBackground:String = "assets/swfs/mvp/BackgroundDenied.swf"):MVPAlert
+										customBackground:String = "swfs/mvp/BackgroundDenied.swf"):MVPAlert
 			{
 				var alert:MVPAlert = new MVPAlert();
 				alert.show(message, title, closeHandler, customBackground);
 				return alert;
 			}
-			
+
 			public function close(closeDetail:int = -1):void
 			{
 				var event:CloseEvent = new CloseEvent(CloseEvent.CLOSE, false, true, closeDetail);
-				
+
 				dispatchEvent(event);
-				
+
 				if (!event.isDefaultPrevented())
 				{
 					visible = false;
@@ -86,7 +86,7 @@
 			paddingLeft: 8; paddingTop: 8; paddingRight: 8; paddingBottom: 8;
 			skin:ClassReference("com.sdg.components.skins.ButtonSkin");
 		}
-		
+
 		Button.xButton
 		{
 			color: #ffffff;

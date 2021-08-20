@@ -297,7 +297,7 @@
 
 			public function socketLogin():void
 			{
-				postStarsWaiting("assets/swfs/preloader.swf");
+				postStarsWaiting("swfs/preloader.swf");
 				dispatchEvent(new SocketLoginEvent(Server.getCurrentId()));
 			}
 

@@ -1,40 +1,40 @@
 <?xml version="1.0" encoding="utf-8"?>
 <controls:MessageView xmlns:mx="http://www.adobe.com/2006/mxml" xmlns:controls="com.sdg.components.controls.*"
 	implements="com.sdg.components.controls.IHudMessage" width="294" height="86">
-	
+
 	<mx:Script>
 		<![CDATA[
 			import com.sdg.control.HudController;
-			
+
 			private var _isPersonal:Boolean;
-			
+
 			[Bindable]
 			public var message:String;
-			
+
 			[Bindable]
 			public var iconSource:String;
-			
+
 			protected var _removeCallback:Function;
-			
+
 			public function get isPersonal():Boolean
 			{
 				return _isPersonal;
 			}
-			
+
 			public function set isPersonal(value:Boolean):void
 			{
 				_isPersonal = value;
 			}
-			
+
 			protected function onClick(bool:Boolean):void
 			{
 				_removeCallback(this);
 			}
-			
+
 			public function set read(value:Boolean):void
 			{
 			}
-			
+
 			public function set removeCallback(value:Function):void
 			{
 				_removeCallback = value;
@@ -45,22 +45,22 @@
 		<mx:Image id="notificationIcon" source="{iconSource}"/>
 		<mx:Text id="messageBox" width="100%" text="{message}" fontFamily="EuroStyle" fontSize="12" fontWeight="bold"
 			filters="{[new GlowFilter(0x000000, 1, 5, 5, 10)]}" selectable="false"/>
-		
+
 		<mx:Canvas height="100%">
-			<mx:Image source="assets/swfs/hud/thumbsUp.swf" verticalAlign="top" click="{onClick(true)}"/>
-			<mx:Image source="assets/swfs/hud/thumbsDown.swf" bottom="0" verticalAlign="bottom" click="{onClick(false)}"/>
+			<mx:Image source="swfs/hud/thumbsUp.swf" verticalAlign="top" click="{onClick(true)}"/>
+			<mx:Image source="swfs/hud/thumbsDown.swf" bottom="0" verticalAlign="bottom" click="{onClick(false)}"/>
 		</mx:Canvas>
-		
+
 		<!--<mx:Canvas width="22" height="100%" backgroundColor="#06427d">
 			<mx:Canvas id="thumbsUpButton" width="18" height="30" borderStyle="none" top="2" horizontalCenter="0" backgroundColor="#0955a2"
 				mouseOver="{thumbsUpButton.setStyle('backgroundColor', 0x0d78e3)}" mouseOut="{thumbsUpButton.setStyle('backgroundColor', 0x0955a2)}"
 				buttonMode="true" mouseChildren="false" click="{onClick(true)}">
-				<mx:Image source="assets/swfs/pda/thumbsUp.swf" width="100%" height="100%" horizontalAlign="center" verticalAlign="middle"/>
+				<mx:Image source="swfs/pda/thumbsUp.swf" width="100%" height="100%" horizontalAlign="center" verticalAlign="middle"/>
 			</mx:Canvas>
 			<mx:Canvas id="thumbsDownButton" width="18" height="30" borderStyle="none" bottom="2" horizontalCenter="0" backgroundColor="#0955a2"
 				mouseOver="{thumbsDownButton.setStyle('backgroundColor', '#0d78e3')}" mouseOut="{thumbsDownButton.setStyle('backgroundColor', '#0955a2')}"
 				buttonMode="true" mouseChildren="false" click="{onClick(false)}">
-				<mx:Image source="assets/swfs/pda/thumbsDown.swf" width="100%" height="100%" horizontalAlign="center" verticalAlign="middle"/>
+				<mx:Image source="swfs/pda/thumbsDown.swf" width="100%" height="100%" horizontalAlign="center" verticalAlign="middle"/>
 			</mx:Canvas>
 		</mx:Canvas>-->
 	</mx:HBox>

@@ -235,7 +235,7 @@
 		]]>
 	</mx:Script>
 
-	<mx:Image id="swfBg" source="assets/swfs/activation.swf" complete="goToPage(_pageNum)"/>
+	<mx:Image id="swfBg" source="swfs/activation.swf" complete="goToPage(_pageNum)"/>
 
 	<mx:VBox width="100%" height="100%" horizontalAlign="center" verticalGap="0" paddingTop="120">
 
@@ -272,7 +272,7 @@
 					overSkin="@Embed('images/registration/backOver_button.png')" />
 			</mx:VBox>
 			<mx:VBox id="continueBox" width="100%" height="100%" verticalAlign="middle" horizontalAlign="right">
-				<mx:Image id="continueButton" source="assets/swfs/continueButton.swf" click="goToNextPage()"
+				<mx:Image id="continueButton" source="swfs/continueButton.swf" click="goToNextPage()"
 					complete="setButtonText('Continue', true)"/>
 			</mx:VBox>
 		</mx:HBox>

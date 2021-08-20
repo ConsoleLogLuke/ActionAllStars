@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" implements="com.sdg.components.dialog.ISdgDialog" width="446" height="380"
-	backgroundImage="assets/swfs/registration/bg_Registration.swf">
+	backgroundImage="swfs/registration/bg_Registration.swf">
 	<mx:Script>
 		<![CDATA[
 			import com.sdg.logging.LoggingUtil;
@@ -629,7 +629,7 @@
 	<mx:HBox id="errorArea" backgroundColor="0x9c2a42" visible="false" width="330" horizontalCenter="0" y="20"
 		borderColor="#820b1e" borderStyle="solid" borderThickness="2" cornerRadius="5"
 		paddingBottom="5" paddingTop="5" paddingLeft="5" paddingRight="5" verticalAlign="middle">
-		<mx:Image source="assets/swfs/registration/exclamationPoint.swf" verticalAlign="middle"/>
+		<mx:Image source="swfs/registration/exclamationPoint.swf" verticalAlign="middle"/>
 		<mx:Text id="errorText" fontSize="13" fontFamily="EuroStyle" fontWeight="bold" textAlign="left" selectable="false" width="278" color="0xffffff"
 			paddingBottom="0" paddingTop="0" paddingLeft="0" paddingRight="0"/>
 	</mx:HBox>

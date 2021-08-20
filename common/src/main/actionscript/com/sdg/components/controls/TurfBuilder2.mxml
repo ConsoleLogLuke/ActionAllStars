@@ -446,12 +446,12 @@
 		</mx:Canvas>
 	</mx:Canvas>
 
-	<mx:Canvas id="categoryListBar" width="100%" height="65" rollOver="playAnimation(_slideShow)" backgroundImage="assets/swfs/turfBuilder/NavigationBar.swf">
+	<mx:Canvas id="categoryListBar" width="100%" height="65" rollOver="playAnimation(_slideShow)" backgroundImage="swfs/turfBuilder/NavigationBar.swf">
 		<controls:HorizontalListCustom id="categoryList" columnWidth="100" rowHeight="63" columnCount="6"
 				paddingTop="0" paddingBottom="0" paddingLeft="0" paddingRight="0" horizontalCenter="0" verticalCenter="0"
 				horizontalScrollPolicy="off" backgroundAlpha="0" borderStyle="none"
 				itemRenderer="com.sdg.components.renderers.ItemTypeRenderer"/>
-		<mx:Image source="assets/swfs/turfBuilder/resetButton.swf" left="15" verticalCenter="0" buttonMode="true" click="clearTurf()"/>
-		<mx:Image source="assets/swfs/turfBuilder/exitButton.swf" right="15" verticalCenter="0" buttonMode="true" click="onFinishedClicked(event)"/>
+		<mx:Image source="swfs/turfBuilder/resetButton.swf" left="15" verticalCenter="0" buttonMode="true" click="clearTurf()"/>
+		<mx:Image source="swfs/turfBuilder/exitButton.swf" right="15" verticalCenter="0" buttonMode="true" click="onFinishedClicked(event)"/>
 	</mx:Canvas>
 </mx:Canvas>

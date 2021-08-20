@@ -16,11 +16,11 @@ package com.sdg.view.pda
 		protected var _checkColor:uint;
 		protected var _isChecked:Boolean;
 		protected var _checkMarkImage:DisplayObject;
-		
+
 		public function CheckBox()
 		{
 			super();
-			
+
 			// Set default values.
 			_width = 20;
 			_height = 20;
@@ -28,51 +28,51 @@ package com.sdg.view.pda
 			_boxLineThickness = 2;
 			_checkColor = 0x00cc00;
 			_isChecked = false;
-			
+
 			render();
 		}
-		
+
 		////////////////////
 		// INSTANCE METHODS
 		////////////////////
-		
+
 		private function render():void
 		{
 			// Draw box.
 			graphics.clear();
 			graphics.lineStyle(_boxLineThickness, _boxLineColor);
 			graphics.drawRect(0, 0, _width, _height);
-			
+
 			// Draw check.
 			if (_isChecked == true)
 			{
 				// If check mark image is null, load the image.
 				var checkMarkLoader:Loader;
-				
+
 				if (_checkMarkImage == null)
 				{
 					// Load the check mark image.
-					var url:String = 'assets/swfs/checkMark.swf';
+					var url:String = 'swfs/checkMark.swf';
 					var request:URLRequest = new URLRequest(url);
 					checkMarkLoader = new Loader();
 					checkMarkLoader.contentLoaderInfo.addEventListener(Event.COMPLETE, onImageComplete);
 					checkMarkLoader.contentLoaderInfo.addEventListener(IOErrorEvent.IO_ERROR, onImageError);
 					checkMarkLoader.load(request);
-					
+
 					function onImageComplete(e:Event):void
 					{
 						// Remove listeners.
 						checkMarkLoader.contentLoaderInfo.removeEventListener(Event.COMPLETE, onImageComplete);
 						checkMarkLoader.contentLoaderInfo.removeEventListener(IOErrorEvent.IO_ERROR, onImageError);
-						
+
 						// Set image reference.
 						_checkMarkImage = checkMarkLoader.content;
 						addChild(_checkMarkImage);
-						
+
 						// Re-render.
 						render();
 					}
-					
+
 					function onImageError(e:IOErrorEvent):void
 					{
 						// Remove listeners.
@@ -88,7 +88,7 @@ package com.sdg.view.pda
 					_checkMarkImage.height *= checkScale;
 					_checkMarkImage.x = _width / 2 - _checkMarkImage.width / 2;
 					_checkMarkImage.y = _height / 2 - _checkMarkImage.height / 2;
-					
+
 					// Show check mark.
 					_checkMarkImage.visible = true;
 				}
@@ -98,35 +98,35 @@ package com.sdg.view.pda
 				_checkMarkImage.visible = false;
 			}
 		}
-		
+
 		////////////////////
 		// GET/SET METHODS
 		////////////////////
-		
+
 		override public function get width():Number
 		{
 			return _width;
 		}
-		
+
 		override public function set width(value:Number):void
 		{
 			if (value == _width) return;
 			_width = value;
 			render();
 		}
-		
+
 		override public function get height():Number
 		{
 			return _height;
 		}
-		
+
 		override public function set height(value:Number):void
 		{
 			if (value == _height) return;
 			_height = value;
 			render();
 		}
-		
+
 		public function get isChecked():Boolean
 		{
 			return _isChecked;
@@ -137,6 +137,6 @@ package com.sdg.view.pda
 			_isChecked = value;
 			render();
 		}
-		
+
 	}
 }

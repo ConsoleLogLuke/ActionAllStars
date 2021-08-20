@@ -2,7 +2,7 @@
 <mx:Canvas
 	xmlns:mx="http://www.adobe.com/2006/mxml"
     xmlns:sdgcontrols="com.sdg.components.controls.*"
-    xmlns:business="com.sdg.business.*" 
+    xmlns:business="com.sdg.business.*"
 	implements="com.sdg.components.dialog.ISdgDialog"
 	horizontalScrollPolicy="off"
 	verticalScrollPolicy="off"
@@ -15,53 +15,53 @@
 			import mx.managers.PopUpManager;
 			import mx.events.PropertyChangeEvent;
 			import mx.binding.utils.ChangeWatcher;
-			
+
             private var _swfParams:Object;
             private var _questTaken:Boolean;
-            
+
             // no longer needed
             //private var _gameLogoUrl:String;
-             
+
 			public function init(params:Object):void
 			{
 
 				_swfParams = new Object();
-				// notice that this is somewhat of a hack because quest status is also set in 
+				// notice that this is somewhat of a hack because quest status is also set in
 				// the setRewardParams method
 
 				_questTaken = (params.achievementId != null) ? true : false;
-				
-				// set it to fail by default as it will be changed in setRewards 
+
+				// set it to fail by default as it will be changed in setRewards
 				_swfParams.questStatus = _questTaken ? 0 : 2;
-				
+
 				_swfParams.xPoints = 0;
 				_swfParams.tokens = 0;
 				_swfParams.hasLeveledUp = false;
 				_swfParams.gameID = params.gameId;
 				_swfParams.xPointsNeeded = 0;
-				
+
 				trace("quest status from post game before setting rewards" + _swfParams.questStatus);
-				
+
 				if (params.rewards) setRewardParams(params.rewards);
-				
+
 				var avatar:Avatar = ModelLocator.getInstance().avatar;
-				
+
 				_swfParams.percentage = normalizePercentage(avatar.level, avatar.points);
 				_swfParams.ranking = avatar.levelName;
-	
+
 				if (ModelLocator.getInstance().avatarLevels[avatar.level + 1] != null)
 				{
 					_swfParams.xPointsNeeded = ModelLocator.getInstance().avatarLevels[avatar.level + 1].pointsToLevel - avatar.points;
 				}
 				trace("quest status from post game " + _swfParams.questStatus);
 			}
-			
+
 			// normalize percentage
 			private function normalizePercentage(level:int, points:int):Number
 			{
 				var basePercentage:int = 25 * (level - 1);
 				var nextLevel:int = (level < AvatarLevel.MAX_LEVEL_NUMBER) ? level + 1 : AvatarLevel.MAX_LEVEL_NUMBER;
-				
+
 				var nextPointTrigger:int = ModelLocator.getInstance().avatarLevels[nextLevel].pointsToLevel;
 				var previousTrigger:int = ModelLocator.getInstance().avatarLevels[level].pointsToLevel;
 				var gap:int = nextPointTrigger - previousTrigger;
@@ -70,7 +70,7 @@
 				var percent:int = basePercentage + Math.round(relativePercentage / (AvatarLevel.MAX_LEVEL_NUMBER - 1));
 				return percent;
 			}
-			
+
 			private function setRewardParams(rewards:Array):void
 			{
 				for each (var reward:Reward in rewards)
@@ -81,17 +81,17 @@
 							trace("quest completed = " + reward.rewardValue);
 							_swfParams.questStatus = (reward.rewardValue > 0) ? 1 : 0;
 							break;
-							
+
 						case Reward.EXPERIENCE:
 							trace("points =" + reward.rewardValue);
 							_swfParams.xPoints = reward.rewardValue;
 							break;
-						
+
 						case Reward.CURRENCY:
 							trace("currency =" + reward.rewardValue);
 							_swfParams.tokens = reward.rewardValue;
 							break;
-						
+
 						case Reward.LEVEL_UP:
 							trace("level up =" + reward.rewardValueTotal);
 							_swfParams.hasLeveledUp = true;
@@ -99,14 +99,14 @@
 					}
 				}
 			}
-			
+
             public function close():void
             {
             	PopUpManager.removePopUp(this);
-            } 
-            
-            public function componentSwfLoaded(event:Event):void 
-			{   
+            }
+
+            public function componentSwfLoaded(event:Event):void
+			{
 				try
 				{
 					event.currentTarget.content.init(_swfParams);
@@ -115,7 +115,7 @@
 				{
 					trace("error " + e.message);
 				}
-			}  
+			}
 
 		]]>
 	</mx:Script>
@@ -127,23 +127,23 @@
 							<mx:GridRow width="100%" height="100%">
 									<mx:GridItem height="100%" horizontalAlign="center" paddingTop="11">
 									<mx:VBox verticalGap="14">
-								         <mx:Image id="gameImage" source="assets/swfs/gameTitle.swf" complete="componentSwfLoaded(event)"/>
-								         <mx:Image id="tokens" source="assets/swfs/tokens.swf" complete="componentSwfLoaded(event)" />
+								         <mx:Image id="gameImage" source="swfs/gameTitle.swf" complete="componentSwfLoaded(event)"/>
+								         <mx:Image id="tokens" source="swfs/tokens.swf" complete="componentSwfLoaded(event)" />
 									</mx:VBox>
 									</mx:GridItem>
 									<mx:GridItem width="100%" height="100%" horizontalAlign="center">
-										<mx:Image id="meter" source="assets/swfs/thermometer.swf" complete="componentSwfLoaded(event)" />
+										<mx:Image id="meter" source="swfs/thermometer.swf" complete="componentSwfLoaded(event)" />
 									</mx:GridItem>
 									<mx:GridItem height="100%" horizontalAlign="center" paddingTop="11">
 									<mx:VBox verticalGap="14">
-								        <mx:Image id="status" source="assets/swfs/questStatus.swf" complete="componentSwfLoaded(event)" />
-								        <mx:Image id="message" source="assets/swfs/xp.swf" complete="componentSwfLoaded(event)" />
+								        <mx:Image id="status" source="swfs/questStatus.swf" complete="componentSwfLoaded(event)" />
+								        <mx:Image id="message" source="swfs/xp.swf" complete="componentSwfLoaded(event)" />
 									</mx:VBox>
 									</mx:GridItem>
 							</mx:GridRow>
 					</mx:Grid>
 					</sdgcontrols:BoxContainer>
                 </sdgcontrols:BoxContainer>
-		</sdgcontrols:TitlePanel>	
+		</sdgcontrols:TitlePanel>
 
 </mx:Canvas>

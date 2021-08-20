@@ -3,7 +3,7 @@
 	xmlns:mx="http://www.adobe.com/2006/mxml"
 	xmlns:sdgcontrols="com.sdg.components.controls.*"
 	width="925" height="665" layout="absolute"
-	creationComplete="init()" backgroundImage="assets/swfs/registration/LoginBackground.swf">
+	creationComplete="init()" backgroundImage="swfs/registration/LoginBackground.swf">
 	<mx:Image source="{Environment.getApplicationUrl() + '/test/static/upsell/loginPage?partnerId=0'}"/>
 
 	<mx:Script>
@@ -123,7 +123,7 @@
 		selectedUpIcon="@Embed('images/registration/checkedBlueBorder.png')"
 		selectedOverIcon="@Embed('images/registration/checkedBlueBorder.png')"/>
 
-	<mx:Image source="assets/swfs/registration/Button_NewAthlete.swf" x="38" y="555" click="onCreateAthleteClick(event)"/>
-	<mx:Image source="assets/swfs/registration/Login_Kid.swf" x="205" y="540"/>
-	<mx:Image id="loginButton" source="assets/swfs/registration/Button_Login.swf" x="786" y="552" click="onLoginClick(event)"/>
+	<mx:Image source="swfs/registration/Button_NewAthlete.swf" x="38" y="555" click="onCreateAthleteClick(event)"/>
+	<mx:Image source="swfs/registration/Login_Kid.swf" x="205" y="540"/>
+	<mx:Image id="loginButton" source="swfs/registration/Button_Login.swf" x="786" y="552" click="onLoginClick(event)"/>
 </mx:Module>

@@ -301,7 +301,7 @@
 					if (planDisplay && planIcon)
 					{
 						planDisplay.text = ID_DISPLAY_PLAN_MAP[planType].plan + " Membership";
-						planIcon.source = "assets/swfs/membership/" + planType + ".swf";
+						planIcon.source = "swfs/membership/" + planType + ".swf";
 					}
 					if (continueButton)
 						continueButton.label = "Login";
@@ -368,13 +368,13 @@
 		<!-- page 1 -->
 		<mx:VBox id="stack_1" paddingTop="0" paddingBottom="0" paddingLeft="0" paddingRight="0" verticalGap="0" horizontalAlign="center">
 			<!--<mx:HBox width="100%" height="200" horizontalAlign="center" horizontalGap="10">
-				<mx:Image id="monthly" source="assets/swfs/bronzePricePoint.swf" click="selectPlan(event)" buttonMode="true"/>
-				<mx:Image id="sixMonths" source="assets/swfs/silverPricePoint.swf" click="selectPlan(event)" buttonMode="true"/>
-				<mx:Image id="twelveMonths" source="assets/swfs/goldPricePoint.swf" click="selectPlan(event)" buttonMode="true"/>
+				<mx:Image id="monthly" source="swfs/bronzePricePoint.swf" click="selectPlan(event)" buttonMode="true"/>
+				<mx:Image id="sixMonths" source="swfs/silverPricePoint.swf" click="selectPlan(event)" buttonMode="true"/>
+				<mx:Image id="twelveMonths" source="swfs/goldPricePoint.swf" click="selectPlan(event)" buttonMode="true"/>
 			</mx:HBox>
 
 			<mx:Image source="@Embed('images/membership/membershipImage.jpg')"/>-->
-			<mx:Image id="page1Swf" source="assets/swfs/membership/page1.swf" init="onPage1Init(event)"/>
+			<mx:Image id="page1Swf" source="swfs/membership/page1.swf" init="onPage1Init(event)"/>
 		</mx:VBox>
 
 		<!-- page 2 & 3-->

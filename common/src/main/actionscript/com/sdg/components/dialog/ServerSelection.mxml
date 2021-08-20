@@ -4,7 +4,7 @@
     xmlns:sdgcontrols="com.sdg.components.controls.*"
 	horizontalScrollPolicy="off" width="810" height="451"
 	verticalScrollPolicy="off" implements="com.sdg.components.dialog.ISdgDialog">
-	
+
 	<mx:Script>
 		<![CDATA[
 			import com.sdg.components.renderers.ServerRendererChrome;
@@ -25,26 +25,26 @@
 			import mx.core.Application;
 			import com.sdg.components.renderers.ServerRenderer;
 			import com.adobe.cairngorm.control.CairngormEventDispatcher;
-			
+
 			[Bindable]
             private var _servers:ArrayCollection;
-            
+
             private var _selectedServer:Server;
             private var _disableSelect:Boolean = false;
             private var _forceFailOver:Boolean = false;
-            
+
 			public function init(params:Object):void
 			{
 				this._forceFailOver = params.forceFailOver;
 				trace("ServerSelection: forceFailOver = " + _forceFailOver);
-				
+
 				this.setFocus();
-			
+
 				var av:Avatar = ModelLocator.getInstance().avatar;
-				CairngormEventDispatcher.getInstance().addEventListener(ServerListEvent.LIST_COMPLETED, onListCompleted);					
+				CairngormEventDispatcher.getInstance().addEventListener(ServerListEvent.LIST_COMPLETED, onListCompleted);
 				dispatchEvent(new ServerListEvent());
 			}
-			
+
 			private function onListCompleted(event:ServerListEvent):void
 			{
 				// filter out the Safe Chat if the avatar is in ultra safe chat mode
@@ -64,19 +64,19 @@
 				{
 					_servers = ModelLocator.getInstance().servers;
 				}
-				
+
 				if (_servers.length <= 8)
 				{
 					servers.width = 720;
 					servers.verticalScrollPolicy = "off";
 				}
-				
+
 				if (event.isAfterHours)
-					afterHourImage.source = "assets/swfs/SafeChat.swf";
-				
+					afterHourImage.source = "swfs/SafeChat.swf";
+
 				CairngormEventDispatcher.getInstance().removeEventListener(ServerListEvent.LIST_COMPLETED, onListCompleted);
 			}
-			
+
 			private function selectServer():void
 			{
 				if (!_disableSelect && servers.selectedItem)
@@ -99,13 +99,13 @@
 				PopUpManager.removePopUp(this);
 			}
 		]]>
-	
+
 	</mx:Script>
 	<mx:Style>
 
 	</mx:Style>
-	
-	<mx:Image source="assets/swfs/registration/serverSelectBG.swf"/>
+
+	<mx:Image source="swfs/registration/serverSelectBG.swf"/>
 	<sdgcontrols:ItemTileList itemRenderer="com.sdg.components.renderers.ServerRendererChrome"
 		horizontalCenter="0" verticalCenter="-4" verticalScrollPolicy="on"
 		columnWidth="360" rowHeight="78" id="servers" click="selectServer()"

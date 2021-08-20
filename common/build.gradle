@@ -10,7 +10,7 @@ dependencies {
     merged rootProject.fileTree(dir: 'libs/game', include: ['*.swc'])
     merged rootProject.fileTree(dir: 'libs/general', include: ['*.swc'])
 
-    merged project(':assets')
+    external project(':assets')
 }
 
 tasks.register('generateSources', Sync) {

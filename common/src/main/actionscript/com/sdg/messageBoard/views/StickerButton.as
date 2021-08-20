@@ -1,19 +1,19 @@
 package com.sdg.messageBoard.views
 {
 	import com.sdg.net.QuickLoader;
-	
+
 	import flash.display.DisplayObject;
-	
+
 	public class StickerButton extends MessageOptionButton
 	{
 		public static const NUM_STICKERS:int = 10;
-		
+
 		public function StickerButton(stickerId:int, width:Number, height:Number)
 		{
 			super(stickerId);
-			
-			var sticker:DisplayObject = new QuickLoader("assets/swfs/turfBuilder/msgBoard/sticker" + stickerId + ".swf", onComplete);
-			
+
+			var sticker:DisplayObject = new QuickLoader("swfs/turfBuilder/msgBoard/sticker" + stickerId + ".swf", onComplete);
+
 			function onComplete():void
 			{
 				sticker = QuickLoader(sticker).content;
@@ -21,6 +21,6 @@ package com.sdg.messageBoard.views
 				sticker.scaleX = sticker.scaleY = scale;
 				addChild(sticker);
 			}
-		} 
+		}
 	}
 }

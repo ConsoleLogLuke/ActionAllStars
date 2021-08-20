@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<mx:Canvas 
-	xmlns:mx="http://www.adobe.com/2006/mxml" 
+<mx:Canvas
+	xmlns:mx="http://www.adobe.com/2006/mxml"
 	xmlns:sdgcontrols="com.sdg.components.controls.*"
 	implements="com.sdg.components.dialog.ISdgDialog"
 	mouseDownOutside="close()" rollOut="closeTimer.start()" rollOver="closeTimer.reset()" creationComplete="onCreationComplete()">
-	 
+
 	<mx:Script>
-	
+
 		<![CDATA[
 			import com.sdg.net.socket.SocketClient;
 			import com.sdg.utils.MainUtil;
@@ -17,47 +17,47 @@
 			import com.sdg.model.Avatar;
 			import com.sdg.control.room.RoomManager;
 			import com.sdg.utils.EventUtil;
-			
+
 			import flash.events.TimerEvent;
 			import flash.utils.Timer;
-			
-			import mx.events.FlexMouseEvent;		
+
+			import mx.events.FlexMouseEvent;
 			import mx.managers.PopUpManager;
-			
+
 			private var closeTimer:Timer = new Timer(2000, 1);
 			private var _avatar:Avatar;
 			private var _decrementJabCounter:Function;
 			private var _button:Button;
 			private var _customizer:AvatarCustomizer;
 			private var _isUpSell:Boolean;
-			
+
 			public function init(params:Object):void
 		    {
 		    	_avatar = params.avatar as Avatar;
 		    	//_decrementJabCounter = params.decrementJabCounter;
 		    	_button = params.button as Button;
-		    	_customizer = params.avatarCustomizer; 
+		    	_customizer = params.avatarCustomizer;
 		    	//_isUpSell = params.isUpSell;
 		    	closeTimer.addEventListener(TimerEvent.TIMER_COMPLETE, EventUtil.createEventInvoker(close));
 		    }
-		    
+
    		    public function close():void
 	        {
             	PopUpManager.removePopUp(this);
             	closeTimer.reset();
             }
-            
+
             private function onCreationComplete():void
             {
             	bubble.addEventListener(ResizeEvent.RESIZE, onBubbleResize);
-            	
+
             	// add the buttons to the bubble
             	if (_isUpSell)
             	{
             		// just one big button
             		bubble.columns = 1;
             		bubble.rows = 1;
-            		bubble.addButton("assets/swfs/jabUpgrade.swf", doUpsell); 
+            		bubble.addButton("swfs/jabUpgrade.swf", doUpsell);
 		            SocketClient.getInstance().sendPluginMessage("avatar_handler", "jabUpsell", { isClicked:0 });
             	}
             	else
@@ -65,23 +65,23 @@
             		bubble.buttonWidth = 40;
             		bubble.buttonHeight = 40;
             		bubble.columns = 7;
-            		
+
             		// subtract one from jabsLength to account for the gameInvite jab
             		var jabsLength:int = ModelLocator.getInstance().jabList.length - 1;
             		bubble.rows = (jabsLength + bubble.columns - 1) / bubble.columns;
-            		
+
 					// add the buttons
 					for each (var jab:Jab in ModelLocator.getInstance().jabList)
-					{	
+					{
 						// regular jabs have id's less than 100
 						if (jab.jabId > 99)
 							continue;
-							
+
 						bubble.addButton(jab.jabIconUrl, doJab, jab, Jab.getMessage(jab.toolTip, ModelLocator.getInstance().avatar.name, _customizer.avatar.name));
 					}
-            	}	
+            	}
             }
-            
+
             private function onBubbleResize(event:Event):void
             {
 				// position the dialog above the button
@@ -89,35 +89,35 @@
 				var pointPanel:Point = _customizer.titlePanel.parent.localToGlobal(new Point(_customizer.titlePanel.x, _customizer.titlePanel.y));
 				this.x = pointPanel.x + (_customizer.titlePanel.width / 2) - (bubble.width / 2);
 				this.y = pointButton.y - bubble.height;
-				
+
 				bubble.triangleX = pointButton.x - this.x + (_button.width / 2);
             }
 
             private function doJab(event:Event):void
             {
             	var jab:Jab = event.currentTarget.data as Jab;
-            	
+
             	// show the jab message
 				RoomManager.getInstance().userController.jab(_avatar.avatarId, _avatar.name, jab.jabId);
-				
+
 				// decrement the user's available jabs
 				//_decrementJabCounter();
-				
+
 				// close this JabDialog
 				close();
-				
+
 				// close the avatarCustomerizer
 				_customizer.close();
             }
-            
+
             private function doUpsell(event:Event):void
-            { 
+            {
     			SocketClient.getInstance().sendPluginMessage("avatar_handler", "jabUpsell", { isClicked:1 });
     			MainUtil.navigateToMonthFreePage(13);
     		}
-            
+
 		]]>
-		
+
 	</mx:Script>
 	<sdgcontrols:ButtonsBubble id="bubble" />
 </mx:Canvas>

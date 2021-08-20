@@ -863,7 +863,7 @@
 		}
 	</mx:Style>
 
-	<mx:Image id="swfBg" source="assets/swfs/registration.swf" complete="goToPage(_pageNum)"/>
+	<mx:Image id="swfBg" source="swfs/registration.swf" complete="goToPage(_pageNum)"/>
 
 	<!-- body -->
 	<mx:ViewStack id="pageStack" width="100%" height="460" top="120">
@@ -1086,7 +1086,7 @@
 		</mx:ViewStack>
 
 		<mx:VBox id="continueBox" width="30%" height="100%" verticalAlign="middle" horizontalAlign="right">
-			<mx:Image id="continueButton" source="assets/swfs/continueButton.swf" click="goToNextPage()"
+			<mx:Image id="continueButton" source="swfs/continueButton.swf" click="goToNextPage()"
 				complete="setButtonText('Continue', true)"/>
 		</mx:VBox>
 	</mx:HBox>

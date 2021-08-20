@@ -167,7 +167,7 @@
 		public function addButton(iconUrl:String, onButtonClicked:Function = null, params:Object = null, toolTip:String = null):void
 		{
 			var image:Image = new Image();
-			iconUrl = StringUtil.beginsWith(iconUrl, "assets/") ? iconUrl : Environment.getApplicationUrl() + iconUrl;
+			iconUrl = StringUtil.beginsWith(iconUrl, "") ? iconUrl : Environment.getApplicationUrl() + iconUrl;
 
 			image.buttonMode = true;
 			image.data = params;

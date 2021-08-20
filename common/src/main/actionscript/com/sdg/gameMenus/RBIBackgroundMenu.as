@@ -1,20 +1,20 @@
 package com.sdg.gameMenus
 {
 	import com.sdg.net.QuickLoader;
-	
+
 	import flash.display.DisplayObject;
 	import flash.text.TextField;
 	import flash.text.TextFieldAutoSize;
 	import flash.text.TextFormat;
-	
+
 	public class RBIBackgroundMenu extends BackgroundMenu
 	{
 		protected var _menuText:TextField;
-		
+
 		public function RBIBackgroundMenu(width:Number, height:Number)
 		{
-			super("assets/swfs/rbi/rbiBGMenu.swf", width, height);
-			
+			super("swfs/rbi/rbiBGMenu.swf", width, height);
+
 			_menuText = new TextField();
 			_menuText.defaultTextFormat = new TextFormat('EuroStyle', 30, 0x848A8C, true);
 			_menuText.embedFonts = true;
@@ -22,9 +22,9 @@ package com.sdg.gameMenus
 			_menuText.selectable = false;
 			_menuText.mouseEnabled = false;
 			addChild(_menuText);
-			
-			var gameLogo:DisplayObject = new QuickLoader("assets/swfs/rbi/rbiLogo.swf", onComplete);
-			
+
+			var gameLogo:DisplayObject = new QuickLoader("swfs/rbi/rbiLogo.swf", onComplete);
+
 			function onComplete():void
 			{
 				gameLogo.x = _width/2 - gameLogo.width/2;
@@ -32,7 +32,7 @@ package com.sdg.gameMenus
 				addChild(gameLogo);
 			}
 		}
-		
+
 		override public function set body(value:GameBody):void
 		{
 			super.body = value;

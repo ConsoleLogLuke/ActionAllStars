@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" backgroundImage="assets/swfs/turfBuilder/TurfBuilderContainer.swf" width="594" height="256"
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" backgroundImage="swfs/turfBuilder/TurfBuilderContainer.swf" width="594" height="256"
 	creationComplete="init()" xmlns:controls="com.sdg.components.controls.*" rollOver="slideShow.play()" rollOut="rollOutHandler()"
 	showEffect="{slideShow}" hideEffect="{slideHide}" show="categoryList.selectedIndex = 0">
 
@@ -401,13 +401,13 @@
     <mx:Move id="slideMinimize" target="{this}" yTo="{startY - 76}" duration="300" startDelay="100" easingFunction="Sine.easeOut" effectStart="slideShow.stop()"/>
 
     <mx:Canvas width="588" y="22" horizontalCenter="0">
-		<mx:Image source="assets/swfs/turfBuilder/button_Left.swf" left="0"
+		<mx:Image source="swfs/turfBuilder/button_Left.swf" left="0"
 			click="scrollCategoryList(categoryList.horizontalScrollPosition - 1)"/>
 		<controls:HorizontalListCustom id="categoryList" columnWidth="77" rowHeight="41" columnCount="7"
 			paddingTop="0" paddingBottom="0" paddingLeft="0" paddingRight="0" horizontalCenter="0"
 			horizontalScrollPolicy="off" backgroundAlpha="0" borderStyle="none"
 			itemRenderer="com.sdg.components.renderers.ItemTypeRenderer" dataProvider="{itemTypeList}"/>
-		<mx:Image source="assets/swfs/turfBuilder/button_Right.swf" right="0"
+		<mx:Image source="swfs/turfBuilder/button_Right.swf" right="0"
 			click="scrollCategoryList(categoryList.horizontalScrollPosition + 1)"/>
 	</mx:Canvas>
 	<!-- heading -->

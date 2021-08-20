@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="925" height="665"
-	implements="com.sdg.components.dialog.ISdgDialog" backgroundImage="assets/swfs/registration/inviteFriends_printPage.swf">
+	implements="com.sdg.components.dialog.ISdgDialog" backgroundImage="swfs/registration/inviteFriends_printPage.swf">
 	<mx:Script>
 		<![CDATA[
 			import com.sdg.logging.LoggingUtil;
@@ -16,33 +16,33 @@
 			import com.sdg.printshop.printitem.IPrintItem;
 			import mx.managers.PopUpManager;
 			import com.sdg.view.avatarcard.AvatarCardFront;
-			
+
 			public function init(params:Object):void
 			{
 				// Extract Params
 				var sourceId:uint = params.sourceId;
-				
+
 				// Log Viewing the page
 				logView();
-				
+
 				// Set Up Printable Item
 				var printItem:IPrintItem = new ReferAFriendPrintableItem();
 				printItem.addEventListener(PrintShopEvent.PAGE_COMPLETE,onPageComplete);
 				var page:Sprite = null;
-				
+
 				var cardFront:AvatarCardFront = new AvatarCardFront(params.avatar, 224, 315);
 				cardFront.addEventListener(Event.COMPLETE, onCardFrontReady);
 				cardFront.init();
 				cardFront.visible = false;
 				rawChildren.addChild(cardFront);
-				
+
 				var cardBack:AvatarCardReferFriendBack = new AvatarCardReferFriendBack(params.avatar, 224, 315);
 				//var cardBack:AvatarCardReferFriendBack = new AvatarCardReferFriendBack(params.avatar, 320, 450);
 				cardBack.addEventListener(Event.COMPLETE, onCardBackReady);
 				cardBack.init();
 				cardBack.visible = false;
 				rawChildren.addChild(cardBack);
-				
+
 				//Add Save Button
 				var printButton:StoreNavBar;
 				printButton = new StoreNavBar(200, 40, "Print Card");
@@ -54,11 +54,11 @@
 				printButton.labelX = printButton.width/2 - printButton.labelWidth/2;
 				printButton.labelColor = 0x9D330B;
 				printButton.borderStyle = new LineStyle(0x913300, 1, 1);
-				
+
 				var gradientBoxMatrix:Matrix = new Matrix();
 				gradientBoxMatrix.createGradientBox(printButton.width, printButton.height, Math.PI/2, 0, 0);
 				printButton.gradient = new GradientStyle(GradientType.LINEAR, [0xF7D85B, 0xD88616], [1, 1], [0, 255], gradientBoxMatrix);
-				
+
 				//add button to dialog
 				rawChildren.addChild(printButton);
 				printButton.x = 150;
@@ -66,7 +66,7 @@
 
 				//add listener
 				printButton.addEventListener(MouseEvent.CLICK,onClick);
-				
+
 				// add close button
 				var closeBtn:RoundCornerCloseButton = new RoundCornerCloseButton();
 				closeBtn.x = 880;
@@ -75,28 +75,28 @@
 				closeBtn.addEventListener(MouseEvent.CLICK, onCloseClick);
 				//closeBtn.visible = false;
 				this.rawChildren.addChild(closeBtn);
-				
+
 				function onPageComplete(e:PrintShopEvent):void
 				{
 					page = printItem.getPrintPage();
 				}
-				
+
 				function onClick():void
 				{
 					logPrint();
-					
+
 					if (page)
 					{
 						PrintUtil.print(page);
-					}	
+					}
 					close();
 				}
-				
+
 				function onCloseClick(event:MouseEvent):void
 				{
 					close();
 				}
-				
+
 				function onCardFrontReady(event:Event):void
 				{
 					cardFront.removeEventListener(Event.COMPLETE, onCardFrontReady);
@@ -106,7 +106,7 @@
 					cardFront.filters = [new DropShadowFilter(4, 45, 0x444444)];
 					cardFront.visible = true;
 				}
-				
+
 				function onCardBackReady(event:Event):void
 				{
 					cardBack.removeEventListener(Event.COMPLETE, onCardBackReady);
@@ -116,7 +116,7 @@
 					cardBack.filters = [new DropShadowFilter(4, 45, 0x444444)];
 					cardBack.visible = true;
 				}
-				
+
 				function logView():void
 				{
 					if (sourceId==621)
@@ -136,7 +136,7 @@
 						LoggingUtil.sendClickLogging(LoggingUtil.RAF_REFER_A_FRIEND_PDA_VIEW);
 					}
 				}
-				
+
 				function logPrint():void
 				{
 					if (sourceId==621)
@@ -157,11 +157,11 @@
 					}
 				}
 			}
-			
+
 			public function close():void
 			{
 				PopUpManager.removePopUp(this);
-			}	
+			}
 		]]>
 	</mx:Script>
 </mx:Canvas>

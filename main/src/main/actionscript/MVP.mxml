@@ -215,7 +215,7 @@
 	</mx:Style>
 
 	<mx:Canvas id="page2" visible="false">
-		<mx:Image source="assets/swfs/mvp/mvplogin.swf"/>
+		<mx:Image source="swfs/mvp/mvplogin.swf"/>
 
 		<mx:Canvas x="39" y="100">
 			<mx:Label text="You must have" fontFamily="EuroStyle" fontSize="11" fontWeight="bold" color="0x666666"/>
@@ -236,20 +236,20 @@
 				x="157" y="214" buttonMode="true" mouseChildren="false"
 				click="MainUtil.goToUrl('retrieveInformation.jsp');"/>
 
-		<mx:Image id="selectedPlan" source="assets/swfs/mvp/SelectedPlan.swf"/>
+		<mx:Image id="selectedPlan" source="swfs/mvp/SelectedPlan.swf"/>
 
 		<mx:HBox x="374" y="120" horizontalGap="6">
 			<mx:Canvas width="146" height="110">
-				<mx:Image id="monthly" source="assets/swfs/mvp/monthly.swf" horizontalCenter="0" y="30" click="plan = MONTHLY" buttonMode="true"/>
+				<mx:Image id="monthly" source="swfs/mvp/monthly.swf" horizontalCenter="0" y="30" click="plan = MONTHLY" buttonMode="true"/>
 			</mx:Canvas>
 			<mx:Canvas width="146" height="110">
-				<mx:Image id="sixMonths" source="assets/swfs/mvp/6month.swf" horizontalCenter="0" y="30" click="plan = SIX_MONTHS" buttonMode="true"/>
+				<mx:Image id="sixMonths" source="swfs/mvp/6month.swf" horizontalCenter="0" y="30" click="plan = SIX_MONTHS" buttonMode="true"/>
 			</mx:Canvas>
 			<mx:Canvas width="146" height="110">
-				<mx:Image id="twelveMonths" source="assets/swfs/mvp/12month.swf" horizontalCenter="0" y="30" click="plan = TWELVE_MONTHS" buttonMode="true"/>
+				<mx:Image id="twelveMonths" source="swfs/mvp/12month.swf" horizontalCenter="0" y="30" click="plan = TWELVE_MONTHS" buttonMode="true"/>
 			</mx:Canvas>
 		</mx:HBox>
-		<!--<mx:Image source="assets/swfs/mvp/bestDeal.swf" x="794" y="140"/>-->
+		<!--<mx:Image source="swfs/mvp/bestDeal.swf" x="794" y="140"/>-->
 
 		<mx:RadioButtonGroup id="paymentType" selectedValue="{Constants.CREDIT_CARD}"/>
 		<mx:VBox x="50" y="330" verticalGap="40">

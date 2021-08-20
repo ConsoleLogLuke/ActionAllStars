@@ -12,5 +12,5 @@
 			filters="{data.selected == 1 ? [new GlowFilter(0xffffff, .60, 10, 10, 3, 2)] : null}"/>
 	</mx:HBox>
 	<mx:Image width="20" height="20" horizontalAlign="center" verticalAlign="middle" left="10" verticalCenter="0"
-		source="{data.isCorrect ? 'assets/swfs/pda/thumbsUp.swf' : 'assets/swfs/pda/thumbsDown.swf'}" visible="{data.status == 'resolved'}"/>
+		source="{data.isCorrect ? 'swfs/pda/thumbsUp.swf' : 'swfs/pda/thumbsDown.swf'}" visible="{data.status == 'resolved'}"/>
 </mx:Canvas>

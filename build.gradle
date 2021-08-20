@@ -27,7 +27,6 @@ subprojects {
         flexSDK rootProject.files("sdks/flex_sdk_${flexSdkVersion}.zip")
     }
 
-
     additionalCompilerOptions = ['-warnings=false']
 
     afterEvaluate {

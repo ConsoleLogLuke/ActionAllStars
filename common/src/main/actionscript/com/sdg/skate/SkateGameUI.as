@@ -95,9 +95,9 @@ package com.sdg.skate
 			_timeProgressUI = new SkateGameClock();
 
 			// Load point display asset.
-			var scoreDisplayLoader:QuickLoader = new QuickLoader('assets/swfs/skate/point_display.swf', onScoreDisplayComplete, null, 1, 5000);
+			var scoreDisplayLoader:QuickLoader = new QuickLoader('swfs/skate/point_display.swf', onScoreDisplayComplete, null, 1, 5000);
 			// Load multiplier display asset.
-			var multiplierDisplayLoader:QuickLoader = new QuickLoader('assets/swfs/skate/skate_multiplier_display.swf', onMultiplierDisplayComplete, null, 1, 5000);
+			var multiplierDisplayLoader:QuickLoader = new QuickLoader('swfs/skate/skate_multiplier_display.swf', onMultiplierDisplayComplete, null, 1, 5000);
 			// Load trick sheet.
 			var trickSheetLoader:QuickLoader = new QuickLoader(AssetUtil.GetGameAssetUrl(67, 'trick_sheet.swf'), onTrickSheetComplete, null, 1, 5000);
 

@@ -3,27 +3,27 @@
 	<mx:Script>
 
  		<![CDATA[
- 
+
 /**
 *	when called with old and new values for
  *  experience points and tokens ( currency )
- * 
+ *
  * run up the display over time using TICK_TIME
  * rate (ms)
 */
-//			[Embed(source="assets/fonts/GIL.TTF", fontFamily="GillSans")]
-//			private var gillsans:Class; 
-		
+//			[Embed(source="fonts/GIL.TTF", fontFamily="GillSans")]
+//			private var gillsans:Class;
+
 		private static const TICK_TIME:int = 10;		// rollup rate
-	
+
 		public var plevelName:String;
 		public var XpPoints_t0:int;	// starting points
 		private var XpPoints_t1:int;	// points to run up to
-		
+
 		public var Tokens_t0:int;		// starting tokens ( currency )
 		private var Tokens_t1:int;		// tokens to run up to
-		
-		private var rollupTimer:Timer; 
+
+		private var rollupTimer:Timer;
 
 		/**
 		*  @param plevelName			- string the current level of a user
@@ -31,17 +31,17 @@
 		*  @param pnumTokens 			- user's current displayed tokens total
 		*  @param pnumxpPointsAward = 0 - number of points awarded
 		*  @param pnumTokensAward = 0	- number of tokens awarded
-		*/ 
+		*/
 
 		public function init( levelname:String, points:int , currency:int ):void
 		{
 			XpPoints_t1 = XpPoints_t0 = points;		// equal everyone up
 			Tokens_t1 = Tokens_t0 = currency;
 			plevelName = levelname;
-			
-			rankTextField.text = "RANK: "  +  plevelName; 	// 
+
+			rankTextField.text = "RANK: "  +  plevelName; 	//
 			xpTextField.text = "XP: " + XpPoints_t0;		// post them
-			tokensTextField.text = "TOKENS: " + Tokens_t0;  // 
+			tokensTextField.text = "TOKENS: " + Tokens_t0;  //
 		}
 
 		/** rollup
@@ -49,78 +49,78 @@
 		 * increments all scores with awards points left to display
 		 * when all points racked kill timer
 		 */
-		
+
 		private function rollup(event:TimerEvent):void
 				{	//	trace("tickevent in rollup" + event.target.currentCount);
 
 				 var _xpRunRate:int;
 				 var _tkRunRate:int;
-				
+
 				// first set the scaling for Experience Points
-				 
-				 if( Math.abs(XpPoints_t0 - XpPoints_t1 ) > 100 ) 
+
+				 if( Math.abs(XpPoints_t0 - XpPoints_t1 ) > 100 )
 				 { _xpRunRate = 100; }
 				 else
-				 { _xpRunRate = 1; }				
+				 { _xpRunRate = 1; }
 
 				// then set the sign - things do go down
-				
-				 if( (XpPoints_t0 - XpPoints_t1 ) > 0 ) 
-				 { _xpRunRate *= -1; }				
-				
-				// now the same for Currency aka Tokens
-				
-				 if( Math.abs(Tokens_t0 - Tokens_t1 ) > 100 ) 
-				 { _tkRunRate = 100; }
-				 else				
-				 { _tkRunRate = 1; }				
 
-				 if( (Tokens_t0 - Tokens_t1 ) > 0 ) 
-				 { _tkRunRate *= -1; }				
+				 if( (XpPoints_t0 - XpPoints_t1 ) > 0 )
+				 { _xpRunRate *= -1; }
+
+				// now the same for Currency aka Tokens
+
+				 if( Math.abs(Tokens_t0 - Tokens_t1 ) > 100 )
+				 { _tkRunRate = 100; }
+				 else
+				 { _tkRunRate = 1; }
+
+				 if( (Tokens_t0 - Tokens_t1 ) > 0 )
+				 { _tkRunRate *= -1; }
 
 				// now trap negative scores ( there should never be any )
 				if( XpPoints_t0 < 0 )	{ 	XpPoints_t0 = 0;	XpPoints_t1 = 0; 	}
 				if( Tokens_t0 	< 0 )	{	Tokens_t0 	= 0;	Tokens_t1 	= 0;	}
 
 				// no negative scores update the bug
-								
+
 				if( XpPoints_t0 != XpPoints_t1 )
 				{	XpPoints_t0 += _xpRunRate;		}
 
-						 
+
 				if( Tokens_t0 != Tokens_t1 )
 				{	Tokens_t0 += _tkRunRate;	}
 
 				// update the display
-				
-				rankTextField.text = "RANK: "  +  plevelName; 
+
+				rankTextField.text = "RANK: "  +  plevelName;
 				tokensTextField.text = 'TOKENS: ' + Tokens_t0;
 				xpTextField.text = 'XP: ' + XpPoints_t0;
-		
+
 				// test for end condtion - stop events when done
 				if( (XpPoints_t0 == XpPoints_t1) &&  (Tokens_t0 == Tokens_t1) )
-				{		stop();		}	
-				
+				{		stop();		}
+
 			}
-			
+
 		/**
  		*  show display, run timer on ourselves until we get
  		*  a false return from Rollup telling us we are done
- 		* 
+ 		*
  		*/
-		
+
 		public function start( property:String, level:String, oldValue:int, newValue:int):void
 		{
 			plevelName = level;
-			
-			if( property == "currency" ) 
-			{ 
+
+			if( property == "currency" )
+			{
 				Tokens_t0 = oldValue;
 				Tokens_t1 = newValue;
 			}
 
-			if( property == "points" ) 
-			{ 
+			if( property == "points" )
+			{
 				XpPoints_t0 = oldValue;
 				XpPoints_t1 = newValue;
 			}
@@ -132,22 +132,22 @@
 
 		/** stop
 		 *  all done, remove listener, shut down timer
-		 * 
+		 *
  		 */
-		
+
 		public function stop():void
 		{
 			rollupTimer.removeEventListener(TimerEvent.TIMER, rollup );
 		}
-		
+
 
 		]]>
 	</mx:Script>
 
 	<mx:VBox >
-		<mx:Text styleName="stats"  id = "rankTextField" selectable="false" />	
-		<mx:Text styleName="stats"  id = "xpTextField" selectable="false"/>	
+		<mx:Text styleName="stats"  id = "rankTextField" selectable="false" />
+		<mx:Text styleName="stats"  id = "xpTextField" selectable="false"/>
 		<mx:Text styleName="stats"  id = "tokensTextField" selectable="false"/>
 	</mx:VBox>
-	
+
 </mx:Canvas>

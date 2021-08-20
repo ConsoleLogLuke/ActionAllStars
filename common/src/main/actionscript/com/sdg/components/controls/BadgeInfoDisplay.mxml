@@ -301,13 +301,13 @@
 	</mx:Canvas>
 
 	<mx:Canvas x="45" y="427">
-		<mx:Image y="19" id="xpIcon" source="assets/swfs/point_icon.swf"  scaleX="1.3" scaleY="1.3" />
+		<mx:Image y="19" id="xpIcon" source="swfs/point_icon.swf"  scaleX="1.3" scaleY="1.3" />
 		<mx:Label x="48" y="6" id="badgeXP" fontSize="16" fontWeight="bold" fontFamily="EuroStyle"
 			height="22" filters="{[new GlowFilter(0x000000, 1, 4, 4, 10)]}" textAlign="right"/>
 	</mx:Canvas>
 
 	<mx:Canvas x="221" y="427">
-		<mx:Image y="19" id="coinIcon" source="assets/swfs/token_icon.swf" scaleX="1.3" scaleY="1.3" />
+		<mx:Image y="19" id="coinIcon" source="swfs/token_icon.swf" scaleX="1.3" scaleY="1.3" />
 		<mx:Label x="26" y="6" id="badgeTokens" fontSize="16" fontWeight="bold" fontFamily="EuroStyle"
 			height="22" filters="{[new GlowFilter(0x000000, 1, 4, 4, 10)]}" textAlign="right"/>
 	</mx:Canvas>

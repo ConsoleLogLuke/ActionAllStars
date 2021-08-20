@@ -393,7 +393,7 @@
 				if (status == true)
 				{
 					dispatchEvent(new ButtonClickLoggingEvent(LoggingUtil.RAF_ALMOST_DONE));
-					friendStatusTitle.source = "assets/swfs/registration/referAFriend_text_almost.swf";
+					friendStatusTitle.source = "swfs/registration/referAFriend_text_almost.swf";
 					friendStatusText.text = "Click Play Now to activate your account and claim your prize.";
 					getPrizeButton.setFocus();
 
@@ -402,7 +402,7 @@
 				else
 				{
 					dispatchEvent(new ButtonClickLoggingEvent(LoggingUtil.RAF_MISSPELLED_REFERRER_NAME));
-					friendStatusTitle.source = "assets/swfs/registration/referAFriend_text_oops.swf";
+					friendStatusTitle.source = "swfs/registration/referAFriend_text_oops.swf";
 					friendStatusText.text = "Make sure you spelled your friend's Athlete name correctly and try again.";
 
 					if (_verifyFriendCounter >= 3)
@@ -471,13 +471,13 @@
 			paddingLeft: 8; paddingTop: 8; paddingRight: 8; paddingBottom: 8;
 		}
 	</mx:Style>
-	<mx:Image id="clickPlayNow" source="assets/swfs/registration/ClickPlayNow.swf" right="16" y="515" visible="false"/>
+	<mx:Image id="clickPlayNow" source="swfs/registration/ClickPlayNow.swf" right="16" y="515" visible="false"/>
 	<!--<mx:Label id="clickPlayNow" text="Click Play Now" textAlign="center" fontFamily="EuroStyle"
 		color="#ffffff" fontWeight="bold" fontSize="16" visible="false" right="68" y="550"/>-->
 	<mx:VBox id="referAFriend" width="247" render="drawGradient()" right="8" y="170" horizontalAlign="center" verticalGap="0"
 		paddingTop="18" paddingBottom="15">
 		<mx:Canvas>
-			<mx:Image source="assets/swfs/registration/referAFriend_text_accept.swf" horizontalCenter="0"/>
+			<mx:Image source="swfs/registration/referAFriend_text_accept.swf" horizontalCenter="0"/>
 			<!--<mx:Label text="Invited By a Friend?" horizontalCenter="0"
 				fontSize="19" fontWeight="bold" fontFamily="EuroStyle" color="#549acf" fontThickness="100"/>-->
 			<mx:Text width="208" textAlign="center" y="35" horizontalCenter="0" selectable="false"
@@ -488,7 +488,7 @@
 				cornerRadius="10" borderStyle="solid" borderThickness="3" borderColor="#1e436d"
 				fontSize="15" fontWeight="bold" fontFamily="EuroStyle" color="#154561"
 				paddingTop="0" paddingBottom="0" paddingLeft="0" paddingRight="0"/>
-			<mx:Image id="getPrizeButton" source="assets/swfs/registration/getPrizeButton.swf" init="onGetPrizeInit()"
+			<mx:Image id="getPrizeButton" source="swfs/registration/getPrizeButton.swf" init="onGetPrizeInit()"
 				y="147" horizontalCenter="0" click="verifyName()" visible="false"/>
 
 			<mx:Label id="friendName" y="104" horizontalCenter="0" textAlign="center" visible="false" includeInLayout="false"
@@ -541,7 +541,7 @@
 						<mx:GridItem width="100%" height="100%" verticalAlign="middle" horizontalAlign="center">
 							<controls:RegRadioButton id="body" width="{body.selected ? 100 : 70}" height="{body.selected ? 100 : 70}"
 								borderThickness="{body.selected ? 3 : 2}" buttonMode="true" focusEnabled="false"
-								value="{PreviewUtil.BODY}" select="onItemTypeSelection(event)" iconSource="assets/swfs/registration/icon_Body.swf"
+								value="{PreviewUtil.BODY}" select="onItemTypeSelection(event)" iconSource="swfs/registration/icon_Body.swf"
 								styleName="{body.selected ? 'selected' : body.mouseOver ? 'mouseOver' : 'default'}"/>
 						</mx:GridItem>
 					</mx:GridRow>
@@ -549,7 +549,7 @@
 						<mx:GridItem width="100%" height="100%" verticalAlign="middle" horizontalAlign="center">
 							<controls:RegRadioButton id="hair" width="{hair.selected ? 100 : 70}" height="{hair.selected ? 100 : 70}"
 								borderThickness="{hair.selected ? 3 : 2}" buttonMode="true" focusEnabled="false"
-								value="{PreviewUtil.HAIR}" select="onItemTypeSelection(event)" iconSource="assets/swfs/registration/icon_Hair.swf"
+								value="{PreviewUtil.HAIR}" select="onItemTypeSelection(event)" iconSource="swfs/registration/icon_Hair.swf"
 								styleName="{hair.selected ? 'selected' : hair.mouseOver ? 'mouseOver' : 'default'}"/>
 						</mx:GridItem>
 					</mx:GridRow>
@@ -557,7 +557,7 @@
 						<mx:GridItem width="100%" height="100%" verticalAlign="middle" horizontalAlign="center">
 							<controls:RegRadioButton id="eyes" width="{eyes.selected ? 100 : 70}" height="{eyes.selected ? 100 : 70}"
 								borderThickness="{eyes.selected ? 3 : 2}" buttonMode="true" focusEnabled="false"
-								value="{PreviewUtil.EYES}" select="onItemTypeSelection(event)" iconSource="assets/swfs/registration/icon_Eyes.swf"
+								value="{PreviewUtil.EYES}" select="onItemTypeSelection(event)" iconSource="swfs/registration/icon_Eyes.swf"
 								styleName="{eyes.selected ? 'selected' : eyes.mouseOver ? 'mouseOver' : 'default'}"/>
 						</mx:GridItem>
 					</mx:GridRow>
@@ -565,7 +565,7 @@
 						<mx:GridItem width="100%" height="100%" verticalAlign="middle" horizontalAlign="center">
 							<controls:RegRadioButton id="mouth" width="{mouth.selected ? 100 : 70}" height="{mouth.selected ? 100 : 70}"
 								borderThickness="{mouth.selected ? 3 : 2}" buttonMode="true" focusEnabled="false"
-								value="{PreviewUtil.MOUTH}" select="onItemTypeSelection(event)" iconSource="assets/swfs/registration/icon_Mouth.swf"
+								value="{PreviewUtil.MOUTH}" select="onItemTypeSelection(event)" iconSource="swfs/registration/icon_Mouth.swf"
 								styleName="{mouth.selected ? 'selected' : mouth.mouseOver ? 'mouseOver' : 'default'}"/>
 						</mx:GridItem>
 					</mx:GridRow>
@@ -576,7 +576,7 @@
 						<mx:GridItem width="100%" height="100%" verticalAlign="middle" horizontalAlign="center">
 							<controls:RegRadioButton id="shirts" width="{shirts.selected ? 100 : 70}" height="{shirts.selected ? 100 : 70}"
 								borderThickness="{shirts.selected ? 3 : 2}" buttonMode="true" focusEnabled="false"
-								value="{PreviewUtil.SHIRTS}" select="onItemTypeSelection(event)" iconSource="assets/swfs/registration/icon_Shirt.swf"
+								value="{PreviewUtil.SHIRTS}" select="onItemTypeSelection(event)" iconSource="swfs/registration/icon_Shirt.swf"
 								styleName="{shirts.selected ? 'selected' : shirts.mouseOver ? 'mouseOver' : 'default'}"/>
 						</mx:GridItem>
 					</mx:GridRow>
@@ -584,7 +584,7 @@
 						<mx:GridItem width="100%" height="100%" verticalAlign="middle" horizontalAlign="center">
 							<controls:RegRadioButton id="pants" width="{pants.selected ? 100 : 70}" height="{pants.selected ? 100 : 70}"
 								borderThickness="{pants.selected ? 3 : 2}" buttonMode="true" focusEnabled="false"
-								value="{PreviewUtil.PANTS}" select="onItemTypeSelection(event)" iconSource="assets/swfs/registration/icon_Pants.swf"
+								value="{PreviewUtil.PANTS}" select="onItemTypeSelection(event)" iconSource="swfs/registration/icon_Pants.swf"
 								styleName="{pants.selected ? 'selected' : pants.mouseOver ? 'mouseOver' : 'default'}"/>
 						</mx:GridItem>
 					</mx:GridRow>
@@ -592,7 +592,7 @@
 						<mx:GridItem width="100%" height="100%" verticalAlign="middle" horizontalAlign="center">
 							<controls:RegRadioButton id="shoes" width="{shoes.selected ? 100 : 70}" height="{shoes.selected ? 100 : 70}"
 								borderThickness="{shoes.selected ? 3 : 2}" buttonMode="true" focusEnabled="false"
-								value="{PreviewUtil.SHOES}" select="onItemTypeSelection(event)" iconSource="assets/swfs/registration/icon_Shoes.swf"
+								value="{PreviewUtil.SHOES}" select="onItemTypeSelection(event)" iconSource="swfs/registration/icon_Shoes.swf"
 								styleName="{shoes.selected ? 'selected' : shoes.mouseOver ? 'mouseOver' : 'default'}"/>
 						</mx:GridItem>
 					</mx:GridRow>

@@ -93,9 +93,9 @@
 			{
 				// partnerId
 				if (value == 53 || value == 64)
-					createAthleteButton.source = "assets/swfs/monthFreeShield.swf";
+					createAthleteButton.source = "swfs/monthFreeShield.swf";
 				else
-					createAthleteButton.source = "assets/images/createFreeAccount_button.png";
+					createAthleteButton.source = "images/createFreeAccount_button.png";
 			}
 		]]>
 	</mx:Script>

@@ -16,29 +16,29 @@ package com.sdg.control.room.itemClasses
 	import com.sdg.utils.MainUtil;
 	import com.sdg.utils.PreviewUtil;
 	import com.sdg.store.StoreConstants;
-	
+
 	import flash.display.MovieClip;
 	import flash.events.Event;
 	import flash.events.MouseEvent;
-	
+
 	/**
 	 * The controller for food vendor room items like the hotdog cart, etc
-	 */ 
+	 */
 	public class FoodVender extends RoomItemController
 	{
 		private const HOTDOG_CART_VENDOR_ID:int = 589;
 		private const GAME_CART_VENDOR:int = 604;
 		private const SHOE_CHARGING_VENDOR_ID:int = 609;
-		
+
 		private var _foodVendorDisplay:MovieClip;
-		
+
 		public function FoodVender()
 		{
 			super();
 		}
-		
+
 		protected function showHotdogCartDialog(event:Event):void
-		{ 
+		{
 			// set up our parameters to the dialog
 			var params:Object = new Object();
 			params.button = _foodVendorDisplay;
@@ -49,28 +49,28 @@ package com.sdg.control.room.itemClasses
 			params.text = "What would you like to order?";
 			params.closeOnEmoting = true;
 			params.showEmoteBubble = false;
-			
+
 			// show the dialog
 			var dialog:EmoteDialog = MainUtil.showDialog(EmoteDialog, params, false, false) as EmoteDialog;
 			dialog.addEventListener(Event.CLOSE, onEmoteDialogClose);
 			var swf:Object = RoomItemSWF(display).content;
 			swf.isOrdering = true;
-		} 
-		
+		}
+
 		protected function showShoeChargingDialog(event:Event):void
 		{
 			var params:Object = new Object();
 			params.button = _foodVendorDisplay;
-			
+
 			// get the avatar's shoes
 			var avatar:Avatar = ModelLocator.getInstance().avatar;
 			var shoes:InventoryItem = avatar.apparel[PreviewUtil.getLayerId(PreviewUtil.SHOES)] as InventoryItem;
 			if (!shoes)
 			{
 				trace("showShoeChargingDialog: user has no shoes!");
-				return;	
-			} 
-			
+				return;
+			}
+
 			if (shoes.walkSpeedPercent < 0 || !shoes.cooldownSeconds)
 			{
 				params.text = "You must be wearing speed shoes in order to re-charge them here.";
@@ -87,7 +87,7 @@ package com.sdg.control.room.itemClasses
 				var chargesNeeded:int = 20 - shoes.charges;
 				const costPerCharge:int = 25;
 				var cost:int = chargesNeeded * costPerCharge;
-				
+
 				// make sure we have enough tokens
 				if (avatar.currency < cost)
 				{
@@ -96,49 +96,49 @@ package com.sdg.control.room.itemClasses
 				}
 				else
 				{
-					var chargesStr:String = chargesNeeded == 1 ? "charge" : "charges";	
+					var chargesStr:String = chargesNeeded == 1 ? "charge" : "charges";
 					params.text = "You need " + chargesNeeded + " " + chargesStr + " to repair your shoes.  Fix'em up for " + cost + " tokens";
 					params.buttonsType = ShoeChargingBubble.BUTTONS_OK_CANCEL;
 					params.bubbleHeight = 125;
 				}
-			}		
-			
+			}
+
 			// show the dialog
-			MainUtil.showDialog(ShoeChargingBubble, params, false, false); 
+			MainUtil.showDialog(ShoeChargingBubble, params, false, false);
 		}
-		
+
 		protected function showGameCartDialog():void
 		{
 			// promo message
 //			var params:Object = new Object();
 //			params.button = _foodVendorDisplay;
-//			params.swfPath = "assets/swfs/gameVendorMessage3.swf";
-//			MainUtil.showDialog(ShoeChargingBubble, params, false, false); 
+//			params.swfPath = "swfs/gameVendorMessage3.swf";
+//			MainUtil.showDialog(ShoeChargingBubble, params, false, false);
 
 			// see if we already have the game
 			CairngormEventDispatcher.getInstance().addEventListener(InventoryListEvent.LIST_COMPLETED, onGameInventoryListCompleted);
 			dispatchEvent(new InventoryListEvent(ModelLocator.getInstance().avatar.avatarId, PreviewUtil.BOARD_GAME));
 		}
-		
+
 		override protected function itemResourcesCompleteHandler(event:Event):void
 		{
 			super.itemResourcesCompleteHandler(event);
 			RoomItemSWF(display).addEventListener(RoomItemDisplayEvent.CONTENT, loadCompleteHandler);
 		}
-		
+
 		protected function loadCompleteHandler(event:Event):void
 		{
 			if (display == null) return;
-			
+
 			var swf:RoomItemSWF = RoomItemSWF(display);
 			var temp:Object = Object(swf.content);
-			var hotDogCart:MovieClip = temp.hotDogCart as MovieClip; 
+			var hotDogCart:MovieClip = temp.hotDogCart as MovieClip;
 			if (hotDogCart)
 			{
 				_foodVendorDisplay = hotDogCart;
 				_foodVendorDisplay.addEventListener(MouseEvent.CLICK, showHotdogCartDialog);
 			}
-			
+
 			var chargeStation:MovieClip = temp.chargeStationHitspot as MovieClip;
 			if (chargeStation)
 			{
@@ -152,7 +152,7 @@ package com.sdg.control.room.itemClasses
 				_foodVendorDisplay = gameCart;
 				_foodVendorDisplay.addEventListener(MouseEvent.CLICK, onCartClick);
 			}
-			
+
 			function onCartClick(event:MouseEvent):void
 			{
 				if (ModelLocator.getInstance().avatar.membershipStatus == 3)
@@ -161,7 +161,7 @@ package com.sdg.control.room.itemClasses
 					showGameCartDialog();
 			}
 		}
-		
+
 		protected function onEmoteDialogClose(event:Event):void
 		{
 			event.currentTarget.removeEventListener(Event.CLOSE, onEmoteDialogClose);
@@ -169,22 +169,22 @@ package com.sdg.control.room.itemClasses
 			if (swf.hasOwnProperty("isOrdering"))
 				swf.isOrdering = false;
 		}
-		
+
 		private function onGameInventoryListCompleted(ev:InventoryListEvent):void
         {
 			CairngormEventDispatcher.getInstance().removeEventListener(InventoryListEvent.LIST_COMPLETED, onGameInventoryListCompleted);
-			
+
         	var hasConcentration:Boolean = false;
        		for each (var item:InventoryItem in ModelLocator.getInstance().avatar.getInventoryListById(ev.itemTypeId))
        		{
        			if (item.itemId == 4242)
-       				hasConcentration = true;       			       			
+       				hasConcentration = true;
        		}
-       		
+
 			var params:Object = new Object();
 			params.button = _foodVendorDisplay;
-			params.swfPath = "assets/swfs/gameVendorMessage1.swf";
-			
+			params.swfPath = "swfs/gameVendorMessage1.swf";
+
        		// if we don't have concentration yet, just give it away
        		if (!hasConcentration)
        		{
@@ -193,10 +193,10 @@ package com.sdg.control.room.itemClasses
 				dispatchEvent(new ItemPurchaseEvent(ModelLocator.getInstance().avatar, gameItem, StoreConstants.STORE_ID_GAMEVENDOR));
        		}
        		else
-				params.swfPath = "assets/swfs/gameVendorMessage2.swf";
-				
+				params.swfPath = "swfs/gameVendorMessage2.swf";
+
 			// speak to the user
-			MainUtil.showDialog(ShoeChargingBubble, params, false, false); 
+			MainUtil.showDialog(ShoeChargingBubble, params, false, false);
         }
 	}
 }

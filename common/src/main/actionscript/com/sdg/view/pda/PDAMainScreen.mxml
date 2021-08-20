@@ -3,10 +3,10 @@
 	xmlns:controls="com.sdg.components.controls.*"
 	xmlns:pda="com.sdg.view.pda.*" implements="com.sdg.view.pda.interfaces.IPDAMainScreen"
 	width="374" height="584" creationComplete="{onCreationComplete()}">
-	
+
 	<!--<pda:PDAMainBacking2 id="pdaBacking" width="100%" height="100%"/>-->
-	<mx:Image id="pdaBacking" source="assets/swfs/pda/BASE_PDA_CASE.swf"/>
-	
+	<mx:Image id="pdaBacking" source="swfs/pda/BASE_PDA_CASE.swf"/>
+
 	<mx:Script>
 		<![CDATA[
 			import com.sdg.model.Badge;
@@ -29,63 +29,63 @@
 			import mx.binding.utils.BindingUtils;
 			import com.sdg.view.pda.interfaces.IPDASidePanel;
 			import com.sdg.view.pda.interfaces.IPDAButton;
-			
+
 			private var _mainPanel:IPDAMainPanel;
 			private var _sidePanel:IPDASidePanel;
-			
+
 			private var _controller:PDAController;
-			
+
 			private var _jabCount:Image;
 			private var _useHeader:Boolean;
-			
+
 			private function onCreationComplete():void
 			{
 				var powerButton:Image = new Image();
 				addChild(powerButton);
 				powerButton.setStyle("right", 25);
 				powerButton.setStyle("top", 21);
-				powerButton.source = "assets/swfs/pda/powerButton.swf";
+				powerButton.source = "swfs/pda/powerButton.swf";
 				powerButton.addEventListener(MouseEvent.CLICK, onPowerButtonClick);
-				
-				addHomeButton("assets/swfs/pda/homeButton.swf", menuControl, _controller.showMainMenu);
-				
+
+				addHomeButton("swfs/pda/homeButton.swf", menuControl, _controller.showMainMenu);
+
 				// Set default values.
 				_useHeader = true;
 			}
-			
+
 			private function onPowerButtonClick(event:MouseEvent):void
 			{
 				LoggingUtil.sendClickLogging(LoggingUtil.PDA_CLOSE_BUTTON);
 				_controller.hidePDA(event);
 			}
-			
+
 			private function setUpBuddyCard(buddyAvatar:Avatar):void
-			{				
+			{
 				useHeader = false;
 				menuControl.visible = false;
 				answerButton.visible = false;
 				buddyMenuControl.visible = true;
 				buddyMenuControl.removeAllButtons();
-				
+
 				var avatarIsBuddy:Boolean = _controller.isBuddy(buddyAvatar.avatarId);
-				
+
 				//Removed wtih new circle menu
-				
+
 				// add/remove buddy
 				var buddyButton:IPDAButton = addMenuButton(buddyMenuControl, function():void {_controller.addRemoveBuddy(buddyAvatar, avatarIsBuddy)},
-					"assets/swfs/pda/friendAdd.swf", "assets/swfs/pda/friendDelete.swf");
-				
+					"swfs/pda/friendAdd.swf", "swfs/pda/friendDelete.swf");
+
 				if (avatarIsBuddy)
 				{
 					buddyButton.toggleOn = false;
 				}
-				
+
 				// goto buddy home
-				addMenuButton(buddyMenuControl, function():void {_controller.gotoBuddyHome(buddyAvatar)}, "assets/swfs/pda/homeTurf.swf");
-				
+				addMenuButton(buddyMenuControl, function():void {_controller.gotoBuddyHome(buddyAvatar)}, "swfs/pda/homeTurf.swf");
+
 				// jab
-				//var jabButton:IPDAButton = addMenuButton(buddyMenuControl, function():void {showJabDialog(buddyAvatar, jabButton)},"assets/swfs/pda/jab.swf");
-					
+				//var jabButton:IPDAButton = addMenuButton(buddyMenuControl, function():void {showJabDialog(buddyAvatar, jabButton)},"swfs/pda/jab.swf");
+
 				//han: disable jabCount
 /*				if ( !_controller.isMember)
 				{
@@ -93,7 +93,7 @@
 					{
 						_jabCount = new Image();
 						this.addChild(_jabCount);
-						_jabCount.source = "assets/swfs/hudCount.swf";
+						_jabCount.source = "swfs/hudCount.swf";
 						_jabCount.addEventListener(Event.INIT, onJabCountInit);
 					}
 					_jabCount.visible = true;
@@ -101,38 +101,38 @@
 				}
 				*/
 				// report to moderator
-				//addMenuButton(buddyMenuControl, function():void {_controller.reportToModerator(buddyAvatar)}, "assets/swfs/pda/moderator.swf");
-				
+				//addMenuButton(buddyMenuControl, function():void {_controller.reportToModerator(buddyAvatar)}, "swfs/pda/moderator.swf");
+
 				// toggle ignore avatar
 				var ignoreButton:IPDAButton = addMenuButton(buddyMenuControl,
 					function():void {_controller.toggleIgnore(buddyAvatar); ignoreButton.toggleOn = !ignoreButton.toggleOn},
-					"assets/swfs/pda/ignoreOff.swf", "assets/swfs/pda/ignoreOn.swf");
-					
+					"swfs/pda/ignoreOff.swf", "swfs/pda/ignoreOn.swf");
+
 				if (_controller.isIgnored(buddyAvatar))
 					ignoreButton.toggleOn = false;
 			}
-			
+
 			private function setUpCallPanel():void
 			{
 				menuControl.visible = false;
 				buddyMenuControl.visible = false;
 				answerButton.visible = true;
-				
+
 				// Send the button to the ring state.
 				var abstarctButton:Object = answerButton.content;
 				if (abstarctButton.ring != null) abstarctButton.ring();
 			}
-			
+
 			private function onJabCountInit(event:Event):void
 			{
 				BindingUtils.bindSetter(setJabCounter, _controller, "jabCount");
 			}
-			
+
 			private function showJabDialog(buddyAvatar:Avatar, button:IPDAButton):void
 			{
 				var point:Point = this.parent.localToGlobal(new Point(this.x, this.y));
 				var buttonPoint:Point = buddyMenuControl.localToGlobal(new Point(button.x, button.y));
-				
+
 				//trace(this.parent.y + " " + this.y + " " + menuControl.y + " " + button.y + " " + button.height/2);
 				var initParams:Object = {
 					avatar:buddyAvatar,
@@ -143,27 +143,27 @@
 					//han: disable jabCount
 					isUpSell:false,//!_controller.isMember && _controller.jabCount < 1,
 					closeFunction:_controller.hidePDA};
-				
+
 				MainUtil.showDialog(JabDialog2, initParams, false, false);
 			}
-			
+
 			private function decrementJabCounter():void
 			{
 				_controller.jabCount--;
 			}
-			
+
 			private function setCounterPosition(event:Event):void
 			{
 				_jabCount.x = buddyMenuControl.x + event.currentTarget.x + event.currentTarget.width - 15;
 				_jabCount.y = buddyMenuControl.y + event.currentTarget.y + event.currentTarget.height - 15;
 			}
-			
+
 			private function setJabCounter(count:int):void
 			{
 				var swf:Object = Object(_jabCount);
 				swf.content.setMessageCount(count);
 			}
-			
+
 			private function addMenuButton(menu:MenuControl2, callBack:Function = null, iconSource:String = null, iconSourceToggleOff:String = null):PDAButton
 			{
 				var button:PDAButton = new PDAButton();
@@ -178,7 +178,7 @@
 				menu.addChild(button);
 				return button;
 			}
-			
+
 			private function addHomeButton(buttonUrl:String, menu:MenuControl2, callBack:Function = null):PDAButton3
 			{
 				var button:PDAButton3 = new PDAButton3();
@@ -191,51 +191,51 @@
 				menu.addChild(button);
 				return button;
 			}
-			
+
 			private function onAnswerClick(e:MouseEvent):void
 			{
 				// Dispatch a specific event.
 				dispatchEvent(new PDACallPanelEvent(PDACallPanelEvent.ANSWER_CLICK, true));
-				
+
 				// Send the button to the idle state.
 				var abstarctButton:Object = answerButton.content;
 				if (abstarctButton.idle != null) abstarctButton.idle();
 			}
-			
+
 			////////////////////
 			// GET/SET METHODS
 			////////////////////
-			
+
 			public function set useAlternateScreen(value:Boolean):void
 			{
 				Object(pdaBacking.content).useAlternateScreen = value;
 			}
-			
+
 			public function set useHeader(value:Boolean):void
 			{
 				_useHeader = value;
-				
+
 				Object(pdaBacking.content).useHeader = value;
-				
+
 				heading.visible = heading.includeInLayout = _useHeader;
-				
+
 				// Adjust size of main panel to accomodate.
 				if (_mainPanel != null)
 				{
 					_mainPanel.height = (_useHeader == true) ? 400 : 449;
 				}
 			}
-			
+
 			public function set controller(value:PDAController):void
 			{
 				_controller = value;
 			}
-			
+
 			public function get mainPanel():IPDAMainPanel
 			{
 				return _mainPanel;
 			}
-			
+
 			public function set mainPanel(panel:IPDAMainPanel):void
 			{
 				if (panel != _mainPanel)
@@ -246,7 +246,7 @@
 						_mainPanel.close();
 						mainPanelContainer.rawChildren.removeChild(DisplayObject(_mainPanel));
 					}
-					
+
 					// reset screen back to home button
 					useHeader = true;
 					useAlternateScreen = false;
@@ -254,26 +254,26 @@
 					answerButton.visible = false;
 					menuControl.visible = true;
 					if (_jabCount) _jabCount.visible = false;
-					
+
 					if (panel.sidePanel == null)
 						_controller.pdaView.sidePanel = null;
-					
+
 					_mainPanel = panel;
-					
+
 					_mainPanel.width = 316;
 					_mainPanel.height = (_useHeader == true) ? 400 : 449;
 					mainPanelContainer.rawChildren.addChild(DisplayObject(_mainPanel));
-					
+
 					heading.text = _mainPanel.panelName;
 				}
-				
+
 				if (_mainPanel is MainMenuPanel || _mainPanel is FriendsPanel || _mainPanel is BadgesPanel)
 					useAlternateScreen = true;
 				else if (_mainPanel is BuddyCardPanel)
 					setUpBuddyCard(BuddyCardPanel(_mainPanel).avatar);
 				else if (_mainPanel is PDACallPanel)
 					setUpCallPanel();
-				
+
 				if (_mainPanel.isInitialized)
 					_mainPanel.refresh();
 				else
@@ -289,16 +289,16 @@
 			textSelectedColor: #008a45;
 		}
 	</mx:Style>
-	
+
 	<mx:VBox id="window" width="316" height="455" top="24" horizontalCenter="0" verticalGap="0">
 		<mx:Label id="heading" paddingTop="10" width="100%" height="55" textAlign="center"
 			fontSize="22" fontThickness="200" fontFamily="EuroStyle" letterSpacing="1" filters="{[new GlowFilter(0x000000, 1, 8, 8, 10)]}"/>
 		<mx:Spacer height="5"/>
 		<mx:Canvas id="mainPanelContainer" width="100%" height="100%"/>
 	</mx:VBox>
-	
+
 	<pda:MenuControl2 id="menuControl" bottom="37" horizontalCenter="0" visible="false"/>
 	<pda:MenuControl2 id="buddyMenuControl" bottom="37" horizontalCenter="0" visible="false"/>
-	<mx:Image id="answerButton" source="assets/swfs/answer_button.swf" width="203" height="38" click="{onAnswerClick(event)}"
+	<mx:Image id="answerButton" source="swfs/answer_button.swf" width="203" height="38" click="{onAnswerClick(event)}"
 		bottom="10" horizontalCenter="0" visible="false"/>
 </mx:Canvas>
