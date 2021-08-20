@@ -6,14 +6,14 @@
 {
   font-family: EuroStyle;
   fontWeight: normal;
-  src: url('../fonts/EurostileLTStd-Demi.otf');
+  src: url('fonts/EurostileLTStd-Demi.otf');
 }
 
 @font-face
 {
   font-family: EuroStyle;
   fontWeight: bold;
-  src: url('../fonts/EurostileLTStd-Bold.otf');
+  src: url('fonts/EurostileLTStd-Bold.otf');
 }
 
 @font-face
@@ -21,5 +21,5 @@
   font-family: EuroStyle;
   fontWeight: bold;
   fontStyle: oblique;
-  src: url('../fonts/EurostileLTStd-BoldOblique.otf');
+  src: url('fonts/EurostileLTStd-BoldOblique.otf');
 }

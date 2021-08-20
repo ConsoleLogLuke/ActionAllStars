@@ -55,7 +55,7 @@ package com.sdg.display
 			private var rollupTimer:Timer;
 
 
-		public function StatsDisplay( container:Box, plevelName:String,
+		public function StatsDisplay( container:com.sdg.display.Box, plevelName:String, // Non-SDG - explicitly specify the package of Box
 											pnumXpPoints:int,pnumTokens:int,
 											pnumxpPointsAward:int = 1,  pnumTokensAward:int = 1  )
 		{

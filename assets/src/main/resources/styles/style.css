@@ -4,7 +4,7 @@
 {
   font-family: GillSans;
   fontWeight: normal;
-  src: url("../fonts/GIL.TTF");
+  src: url("fonts/GIL.TTF");
 }
 
 @font-face
@@ -12,14 +12,14 @@
   font-family: GillSans;
   fontWeight: normal;
   fontStyle: italic;
-  src: url("../fonts/GILI.TTF");
+  src: url("fonts/GILI.TTF");
 }
 
 @font-face
 {
   font-family: GillSans;
   fontWeight: bold;
-  src: url("../fonts/GILB.TTF");
+  src: url("fonts/GILB.TTF");
 }
 
 @font-face
@@ -27,21 +27,21 @@
   font-family: GillSans;
   fontWeight: bold;
   fontStyle: italic;
-  src: url("../fonts/GILBI.TTF");
+  src: url("fonts/GILBI.TTF");
 }
 
 @font-face
 {
   font-family: EuroStyle;
   fontWeight: normal;
-  src: url('../fonts/EurostileLTStd-Demi.otf');
+  src: url('fonts/EurostileLTStd-Demi.otf');
 }
 
 @font-face
 {
   font-family: EuroStyle;
   fontWeight: bold;
-  src: url('../fonts/EurostileLTStd-Bold.otf');
+  src: url('fonts/EurostileLTStd-Bold.otf');
 }
 
 @font-face
@@ -49,7 +49,7 @@
   font-family: EuroStyle;
   fontWeight: bold;
   fontStyle: oblique;
-  src: url('../fonts/EurostileLTStd-BoldOblique.otf');
+  src: url('fonts/EurostileLTStd-BoldOblique.otf');
 }
 
 @font-face
@@ -57,7 +57,7 @@
   font-family: EuroStyle;
   fontWeight: normal;
   fontStyle: oblique;
-  src: url('../fonts/EurostileLTStd-Oblique.otf');
+  src: url('fonts/EurostileLTStd-Oblique.otf');
 }
 
 /* Color Table

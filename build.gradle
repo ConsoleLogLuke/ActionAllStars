@@ -19,13 +19,16 @@ subprojects {
     version '1.0.0'
 
     ext {
-        flexSdkName = 'flex3'
-        flexSdkVersion = '3.6.0.16995A'
+        flexSdkName = 'flex4.6'
+        flexSdkVersion = '4.6.0.23201B'
     }
 
     dependencies {
         flexSDK rootProject.files("sdks/flex_sdk_${flexSdkVersion}.zip")
     }
+
+
+    additionalCompilerOptions = ['-warnings=false']
 
     afterEvaluate {
         def sdkDir = rootProject.file('sdks')
@@ -43,6 +46,11 @@ subprojects {
             dest sdkDir
             overwrite false
         }
+    }
+
+    compileFlex.doFirst {
+        def haloSwc = "$flexHome/frameworks/themes/Halo/halo.swc"
+        additionalCompilerOptions += "-theme=$haloSwc"
     }
 }
 
